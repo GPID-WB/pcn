@@ -17,7 +17,7 @@ Output:
               0: Program set up
 ==================================================*/
 program define pcn_groupdata, rclass
-syntax anything(name=subcmd id="subcommand"),  ///
+syntax [anything(name=subcmd id="subcommand")],  ///
 [                                         ///
 			COUNtries(string)                   ///
 			Years(numlist)                      ///
