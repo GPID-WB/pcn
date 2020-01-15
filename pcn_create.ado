@@ -87,9 +87,6 @@ while (`i' < `n') {
 	local surdir   = "`r(surdir)'"
 	return add
 	
-	*--------Create folders
-	cap mkdir "`surdir'/`survin'PCN"
-	cap mkdir "`surdir'/`survin'PCN/Data"
 	
 	/*==================================================
 	3:  Clear and save data
@@ -130,18 +127,18 @@ while (`i' < `n') {
 	order weight welfare
 	
 	//------------Uncollapsed data
-	save "`surdir'/`survin'PCN/Data/`survin'.dta", `replace'
+	save "`surdir'/`survid'/Data/`survid'_PCN.dta", `replace'
 	
-	export delimited using "`surdir'/`survin'PCN/Data/`country'`year'.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`survid'_PCN.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	
 	//------------ collapse data
 	collapse (sum) weight, by(welfare)
 	
-	save "`surdir'/`survin'PCN/Data/`survin'collapsed.dta", `replace'
+	save "`surdir'/`survid'/Data/`survid'_PCNC.dta", `replace'
 	
-	export delimited using "`surdir'/`survin'PCN/Data/`country'`year'_collapsed.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`survid'_PCNC.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	* mata: P = pcn_info(P)
