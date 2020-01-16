@@ -134,7 +134,22 @@ if ("`year'" == "") {
 *----------1.2: Path
 
 if ("`survey'" == "") {
+	
+	//------------very inefficient solution
+	
+	if ("`module'" == "BIN") local lis "LIS"
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
+	
+	if ("`module'" == "GPWG") {
+		local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+		local dirs: list dirs2 - dirs
+	}
+	/*
+	This section is part of the inefficiencies mentioned above. It is hardcoded and 
+	inelegant. We need to find a better solution. 
+	*/
+	//------------------------------------------
+	
 
 	if (wordcount(`"`dirs'"') == 1) {
 		if regexm(`dirs', "([0-9]+)_(.+)$") local survey = regexs(2)
