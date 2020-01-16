@@ -30,6 +30,7 @@ syntax [anything(name=subcmd id="subcommand")],  ///
 			MODule(string)                ///
 			clear                         ///
 			pause                         ///
+			lis                           ///
 ] 
 
 version 14
@@ -56,15 +57,30 @@ local user=c(username)
 * ----- Initial conditions
 
 local country = upper("`country'")
+local lis = upper("`lis'")
+
+/* The `lis` option is an inelegant solution because it is too specific and does not 
+allow the code to be generalized. Yet, it works fine for now. Also, we should add 
+a condition that automates the identification of module. Right now it is hardcoded.
+See for instance the following cases: 
+
+pcn load, countr(EST) year(2004) clear              // works
+pcn load, countr(EST) year(2004) clear module(GPWG) // does nor work
+pcn load, countr(EST) year(2004) clear module(BIN)  // does nor work
+pcn load, countr(EST) year(2004) clear lis          // works
+
+*/
 
 
 *---------- conditions
 if ("`type'" == "") local type "GMD"
+if ("`lis'" == "LIS") local module "BIN"
+
 
 if (inlist("`type'", "GMD", "GPWG")) {
 	local collection "GMD"
-	local module "GPWG"
 }
+/* 
 else if (inlist("`type'", "txt", "text", "pcn")) {
 	local collection "PCN"
 }
@@ -73,6 +89,7 @@ else if (upper("`type'") == "LIS") {
 	local module ""
 	local maindir "p:\01.PovcalNet\04.LIS\02.data"
 }
+ */
 else {
 	noi disp as error "type: `type' is not valid"
 	error
@@ -117,7 +134,23 @@ if ("`year'" == "") {
 *----------1.2: Path
 
 if ("`survey'" == "") {
-	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+	
+	//------------very inefficient solution to pick surveys
+	/*
+	This section is part of the inefficiencies mentioned above. It is hardcoded and 
+	inelegant. We need to find a better solution. 
+	*/
+	
+	if ("`module'" == "BIN") local lis "LIS"
+	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
+	
+	if ("`module'" == "GPWG") {
+		local dirs1: dir "`maindir'/`country'" dirs "`country'_`year'*LIS", respectcase
+		local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+		local dirs: list dirs2 - dirs1
+	}
+	//------------------------------------------
+	
 
 	if (wordcount(`"`dirs'"') == 1) {
 		if regexm(`dirs', "([0-9]+)_(.+)$") local survey = regexs(2)
@@ -142,6 +175,10 @@ else {
 	local survey = upper("`survey'")
 }
 
+if ("`module'" == "") {
+	if regexm("`survey'", "LIS$") local module "BIN"
+	else                          local module "GPWG"
+}
 
 *-------- 1.3 version
 local surdir "`maindir'/`country'/`country'_`year'_`survey'"
@@ -208,7 +245,7 @@ else {
 
 return local surdir = "`surdir'"
 return local survid = "`survid'"
-return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A_"
+return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A"
 return local filename = "`filename'"
 
 
