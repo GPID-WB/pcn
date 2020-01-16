@@ -30,6 +30,7 @@ syntax [anything(name=subcmd id="subcommand")],  ///
 			MODule(string)                ///
 			clear                         ///
 			pause                         ///
+			lis                           ///
 ] 
 
 version 14
@@ -56,15 +57,18 @@ local user=c(username)
 * ----- Initial conditions
 
 local country = upper("`country'")
+local lis = upper("`lis'")
 
 
 *---------- conditions
 if ("`type'" == "") local type "GMD"
+if ("`lis'" == "LIS") local module "BIN"
+
 
 if (inlist("`type'", "GMD", "GPWG")) {
 	local collection "GMD"
-	local module "GPWG"
 }
+/* 
 else if (inlist("`type'", "txt", "text", "pcn")) {
 	local collection "PCN"
 }
@@ -73,10 +77,13 @@ else if (upper("`type'") == "LIS") {
 	local module ""
 	local maindir "p:\01.PovcalNet\04.LIS\02.data"
 }
+ */
 else {
 	noi disp as error "type: `type' is not valid"
 	error
 }
+
+if ("`module'" == "") local module "GPWG"
 
 
 
@@ -117,7 +124,7 @@ if ("`year'" == "") {
 *----------1.2: Path
 
 if ("`survey'" == "") {
-	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
 
 	if (wordcount(`"`dirs'"') == 1) {
 		if regexm(`dirs', "([0-9]+)_(.+)$") local survey = regexs(2)
@@ -208,7 +215,7 @@ else {
 
 return local surdir = "`surdir'"
 return local survid = "`survid'"
-return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A_"
+return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A"
 return local filename = "`filename'"
 
 
