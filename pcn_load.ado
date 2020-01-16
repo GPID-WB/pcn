@@ -87,8 +87,6 @@ else {
 	error
 }
 
-if ("`module'" == "") local module "GPWG"
-
 
 
 /*==================================================
@@ -153,6 +151,10 @@ else {
 	local survey = upper("`survey'")
 }
 
+if ("`module'" == "") {
+	if regexm("`survey'", "LIS$") local module "BIN"
+	else                          local module "GPWG"
+}
 
 *-------- 1.3 version
 local surdir "`maindir'/`country'/`country'_`year'_`survey'"
