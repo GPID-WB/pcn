@@ -21,14 +21,14 @@
 {viewerjumpto "Countries" "pcn_countries##countries"}{...}
 {title:Title}
 
-{* Title}
 {p2colset 10 17 16 2}{...}
 {p2col:{cmd:pcn} {hline 2}}Stata package to manage {ul:{it:PovcalNet}} files and folders.{p_end}
-{* short description}
+
 {p 4 4 2}{bf:{ul:Description (short)}}{p_end}
-{pstd}
-The {cmd:pcn} command, throughout a series of subcommands, allows Stata users to manage the PovcalNet files and folders in a comprensive way. Using the command the user will be able to load data into stata, get the main aggregates, keep up with the latest updates in the datesets and more.{p_end}
-{pstd}
+{p 4 4 2}
+The {cmd:pcn} command, throughout a series of subcommands, allows Stata users to manage the PovcalNet files and folders in a comprensive way. Using the command the user will be able to load data into stata, get the main aggregates, and keep up with updates.{p_end}
+
+{p 4 4 2}
 A more comprensive {it:{help pcn##description:description}} is avialable {help pcn##description:below}.{p_end}
 
 {marker syntax}{...}
@@ -40,13 +40,13 @@ A more comprensive {it:{help pcn##description:description}} is avialable {help p
 {p 4 4 2} Where parameters identify the characteristics of the file to be used. {p_end}
 
 {p 4 4 2} {ul:{title:Subcommands}}
-The available subcommnds are the following:
+The available subcommands are the following:
 
 {col 5}Subcommand{col 30}Description
 {space 4}{hline}
 {p2colset 5 30 29 2}{...}
 {p2col:{opt load}}Loads into memory the file corresponding the parameters given by the user.{p_end}
-{p2col:{opt create}}Create weights and index (why?){p_end}
+{p2col:{opt create}}Creates a datset containing weights and welfare.{p_end}
 {p2col:{ul:{opt group}}{opt data}}Tricky thing, (Somthing is not working w/ this command CHECK).{p_end}
 {p2col:{opt download}}(Rarely used). Downloads the latest file(s) availible. Should be only used when mayor updates are released.{p_end}
 {space 4}{hline}
@@ -60,8 +60,12 @@ The {bf:pcn} command requires the following parameters:
 {col 5}Parameter{col 30}Description
 {space 4}{hline}
 {p2col:{opt country:}(3-letter code)}List of country code (accepts multiples) [{it:all} is not accepted]{p_end}
-{p2col:{opt years:}(numlist|string)}List of years (accepts multiples) [all is not accepted] {p_end}
-{p2col:{opt type:}(string)}Type ?{p_end}
+{p2col:{opt years:}(numlist|string)}Four-digit year [all is not accepted] {p_end}
+{p2col:{opt type:}(string)}Type of ONE collection requested. Currently the only COLLECTIONS available are: eappov, ecapov, ecaraw, eu-lfs, udb-c or eusilc, udb-l (panel eusilc), mnapov, mnaraw, {it:sa t:ssapov}, gmd, sarraw, eapraw, ssaraw, sedlac, lablac, conlac and many more.{p_end}
+
+
+ 
+
 {space 4}{hline}
 {p 4 4 2}
 Further explanation on the {help pcn##param:parameters} is found {help pcn##param:below}.{p_end}
@@ -119,10 +123,20 @@ The parameters are the main input to define the data source to work with. Beyond
 {cmdab:pcn:} [{it:{help pcn##subcommands:subcommand}}] [{cmd:,} {opt countr:ies(3-letter code)} {opt year(####)} {opt type(string)} {it:{help pcn##options:Options}}]{p_end}
 
 {p 4 4 2}
-The {opt countr:ies} and {opt year} are (in general) mandatory, nonetheless in some cases the omision will not result in an error, but insted it will deploy a list of the availible data given the parameters input. The {opt type} parameter determines the {p_end}
+The {opt countr:ies} and {opt year} are (in general) mandatory, nonetheless in some cases the omision will not result in an error, but insted it will deploy a list of the available data given the parameters input. The {opt type} parameter determines the collection in which the data will be search.{p_end}
+
+{p 4 4 2}
+The {opt countr:ies} parameter requires a list of country code(s) to be lookup in the available Povcalnet files. The country codes correspond to the standard World Bank three letter codes.{p_end}
+
+{p 4 4 2}
+The {opt year} parameter requires a year to be lookup in the available Povcalnet files. The year must be provided as a four-digit number or string (ex. 2016, 1990 or 2008).{p_end}
+
 
 {marker options}{...}
 {title:Options}
+
+{p 4 4 2}
+The complete list of options is as follows:{p_end}
 
 {dlgtab:Main}
 
@@ -132,7 +146,10 @@ The {opt countr:ies} and {opt year} are (in general) mandatory, nonetheless in s
 
 {p2col:{opt verm:aster(#)}}Specifies the master version to be used. By default, the latest version is selected if it is omitted.{p_end}
 
-{p2col:{opt vera:lt(#)}}Specifies the harmonization version to be used. By default, the latest harmonization version is selected for the latest master version if it is omitted. {p_end}
+{p2col:{opt vera:lt(#)}}Specifies the harmonization version to be used. By default, the latest harmonization version is selected for the latest master version if it is omitted.{p_end}
+
+{p2col: {opt w:orking}}Calls the working version. This version contains updates and editions to the latest version available but not released.(NOT YET AVAILIBLE, BUT MAY BE USEFULL WHEN THE UPDATE KICKS IN){p_end}
+
 
 {marker examples}{...}
 {title:Examples}

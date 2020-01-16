@@ -46,8 +46,8 @@ The available subcommands are the following:
 {space 4}{hline}
 {p2colset 5 30 29 2}{...}
 {p2col:{opt load}}Loads into memory the file corresponding the parameters given by the user.{p_end}
-{p2col:{opt create}}Creates a datset containing weights and welfare.{p_end}
-{p2col:{ul:{opt group}}{opt data}}Tricky thing, (Somthing is not working w/ this command CHECK).{p_end}
+{p2col:{opt create}}Creates a dataset containing weights and welfare.{p_end}
+{p2col:{ul:{opt group}}{opt data}}Tricky thing.{p_end}
 {p2col:{opt download}}(Rarely used). Downloads the latest file(s) availible. Should be only used when mayor updates are released.{p_end}
 {space 4}{hline}
 {p 4 4 2}
