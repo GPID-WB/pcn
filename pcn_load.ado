@@ -59,7 +59,7 @@ local user=c(username)
 local country = upper("`country'")
 local lis = upper("`lis'")
 
-/* The lis option is an inelegant solution because it is too specific and does not 
+/* The `lis` option is an inelegant solution because it is too specific and does not 
 allow the code to be generalized. Yet, it works fine for now. Also, we should add 
 a condition that automates the identification of module. Right now it is hardcoded.
 See for instance the following cases: 
@@ -135,19 +135,20 @@ if ("`year'" == "") {
 
 if ("`survey'" == "") {
 	
-	//------------very inefficient solution
+	//------------very inefficient solution to pick surveys
+	/*
+	This section is part of the inefficiencies mentioned above. It is hardcoded and 
+	inelegant. We need to find a better solution. 
+	*/
 	
 	if ("`module'" == "BIN") local lis "LIS"
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
 	
 	if ("`module'" == "GPWG") {
+		local dirs1: dir "`maindir'/`country'" dirs "`country'_`year'*LIS", respectcase
 		local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
-		local dirs: list dirs2 - dirs
+		local dirs: list dirs2 - dirs1
 	}
-	/*
-	This section is part of the inefficiencies mentioned above. It is hardcoded and 
-	inelegant. We need to find a better solution. 
-	*/
 	//------------------------------------------
 	
 
