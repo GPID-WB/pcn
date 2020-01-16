@@ -61,7 +61,15 @@ local lis = upper("`lis'")
 
 /* The lis option is an inelegant solution because it is too specific and does not 
 allow the code to be generalized. Yet, it works fine for now. Also, we should add 
-a condition that automates the identification of module. Right now it is hardcoded.*/
+a condition that automates the identification of module. Right now it is hardcoded.
+See for instance the following cases: 
+
+pcn load, countr(EST) year(2004) clear              // works
+pcn load, countr(EST) year(2004) clear module(GPWG) // does nor work
+pcn load, countr(EST) year(2004) clear module(BIN)  // does nor work
+pcn load, countr(EST) year(2004) clear lis          // works
+
+*/
 
 
 *---------- conditions
