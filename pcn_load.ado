@@ -59,6 +59,10 @@ local user=c(username)
 local country = upper("`country'")
 local lis = upper("`lis'")
 
+/* The lis option is an inelegant solution because it is too specific and does not 
+allow the code to be generalized. Yet, it works fine for now. Also, we should add 
+a condition that automates the identification of module. Right now it is hardcoded.*/
+
 
 *---------- conditions
 if ("`type'" == "") local type "GMD"
