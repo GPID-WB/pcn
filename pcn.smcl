@@ -221,17 +221,19 @@ Naturally the parameters and options set for {cmd:pcn} are inherited into {cmd:p
 2. The function will seach in the P drive for the path specified by the user. The funtion will go to "01.PovcalNet/01.Vintage_control", unless the path is changed (by changing {opt maindir:(string)}).{p_end}
 
 {p 7 7 2}
-3. Given the {opt country} parameter input, the function will seach for the country folder. Once the folder is found, if {opt year} is missing it will take the last year for which data is available if not it will continue. {p_end}
+3. Given the {opt country} parameter input, the function will seach for the country's folder. Once the folder is found, if {opt year} is missing it will take the last year for which data is available. {p_end}
 
 {p 7 7 2}
-4. If the {opt survey} option is not set, then it checks for the available surveys for the given year. If the {opt module} is given it will search specifilly for those either "LIS" or "GPWG" surveys. If multiple surveys fill the criteria a list of surveys it's deployed. {p_end}
+4. If the {opt survey} option is not set, then it checks for the available surveys for the given year. If the {opt module} is given, it will search accordingly for those either "LIS" or "GPWG" surveys. If multiple surveys fill the criteria a list of surveys will be deployed. {p_end}
 
 {p 7 7 2}
-5. 
+5. Once the survey has been defined, the version is checked. If the user species the version ({opt vermast} or {opt veralt} options), the specific version of the survey is looked up; otherwise the lastest master and alternative versions are set as default.{p_end}
 
+{p 7 7 2}
+6. The file corresponding to the request is loaded.{p_end}
 
-
-
+{p 7 7 2}
+{bf: Note:} At any point between steps 1 to 5 if a parameter results in an inexisting file (folder), this will be notified to the user and the function will stop. {p_end}
 
 {dlgtab:pcn_create}
 {dlgtab:pcn_groupdata}
