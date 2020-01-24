@@ -152,7 +152,11 @@ if ("`survey'" == "") {
 	//------------------------------------------
 	
 
-	if (wordcount(`"`dirs'"') == 1) {
+	if (wordcount(`"`dirs'"') == 0) {
+		noi disp in r "no survey in `country'-`year'"
+		error
+	}
+	else if (wordcount(`"`dirs'"') == 1) {
 		if regexm(`dirs', "([0-9]+)_(.+)$") local survey = regexs(2)
 	}
 	else {  // if more than 1 survey per year
