@@ -124,7 +124,7 @@ while (`i' < `n') {
 				preserve   // I cannot use  copy because I nees the pcn_datetime char
 				
 				use "`dirname'/`filename'.dta", clear
-				saveold "`dirname'/_vintage/`filename'_`:char _dta[pcn_datetime]'", clear
+				saveold "`dirname'/_vintage/`filename'_`:char _dta[pcn_datetime]'", replace
 				
 				restore
 				
