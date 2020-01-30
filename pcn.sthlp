@@ -118,7 +118,7 @@ Sections are presented under the following headings:
 {pstd}
 PovcalNet is a tool that allows computing poverty and inequality indicators for more than
  160 countries and regions, inside the World Bank's database of household surveys
- (check {help povcalnet:povcalnet} command). The {cmd:pcn} command(s) command(s) 
+ (check {help povcalnet:povcalnet} command). The {cmd:pcn} command(s) 
  allows Stata users to easly navigate the PovcalNet files and folders. In other words, 
  the {cmd:pcn} command allows working directly with the underlining data used by the PovcalNet 
  tool. Therefore, giving quick and easy access to, up to date, data for more than 160 
@@ -155,8 +155,8 @@ One of the most simple queries possible is only setting the country and a year:{
 {stata pcn load, countries(col) year(2016) clear}
 
 {p 4 4 2}
- In this example, as there is more than one survey that fulfils the conditions a list 
- is deployed, and the user must choose among the options.{p_end}
+ In this example, as there is more than one survey that fulfils the conditions, a list 
+ with available options is displayed, and the user must choose among the options.{p_end}
 
 {p 4 4 2}
 Even if sometimes useful, the list is not always ideal. The user may be more specific
@@ -173,8 +173,8 @@ The same result is obtained with:{p_end}
 {stata pcn load, countries(col) year(2016) module(BIN) clear}
 
 {p 4 4 2}
-Remark the followin, the use of the option {opt lis} implies {opt module(BIN)}. Under no
-circumstance combine {opt lis} and {opt module(GPWG)}.{p_end}
+The use of the option {opt lis} implies {opt module(BIN)}. If options {opt lis} 
+and {opt module(GPWG)}, {opt lis} would take predominance.{p_end}
 
 {p 4 4 2}
  Notice that the latest master version is the one loaded in the previous examples. 
@@ -192,7 +192,7 @@ You may also specify the survey needed:{p_end}
 {stata pcn load, countries(nor) year(2010) survey(His-lis)}
 
 {p 4 4 2}
-Finally. Is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
+Finally, it is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
  always set. Nonetheless, only setting the year is possible, in such case the lastest 
  survey year is set as default.{p_end}
  
@@ -825,7 +825,21 @@ the vectors from the 1 step. {p_end}
 {p 7 7 2}
 3. If P it's not empty the value of the vectors are added to the existing data. {p_end}
 
+{marker contact}{...}
+{title:Contact}
+{pstd}
+Any comments, suggestions, or bugs can be reported in the 
+{browse "https://github.com/worldbank/pcn/issues":GitHub issues page}.
+All the files are available in the {browse "https://github.com/worldbank/pcn":GitHub repository}
 
+{title:Author}
+{p 4 4 4}R.Andres Castaneda, The World Bank{p_end}
+{p 6 6 4}Email {browse "acastanedaa@worldbank.org":acastanedaa@worldbank.org}{p_end}
+{p 6 6 4}GitHub: {browse "https://github.com/randrescastaneda":randrescastaneda }{p_end}
 
+{title:Maintainer}
+{p 4 4 4}David L. Vargas Mogollon, The World Bank{p_end}
+{p 6 6 4}Email: {browse "dvargasm@worldbank.org":dvargasm@worldbank.org}{p_end}
+{p 6 6 4}GitHub: {browse "https://github.com/davidlvargas":davidlvargas }{p_end}
 
 
