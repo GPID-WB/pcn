@@ -30,6 +30,7 @@ syntax [anything(name=subcmd id="subcommand")],  ///
 			MODule(string)                ///
 			clear                         ///
 			pause                         ///
+			status(string)                ///
 ] 
 
 version 14
@@ -43,7 +44,8 @@ else                      pause off
               1: 
 ==================================================*/
 
-primus query, overalls(approved)
+if ("`status'" == "") local status "approved"
+primus query, overalls(`status')
 
 * replace those that finish in GPWG and SARMD or something else. 
 replace survey_id = regexs(1)+"GMD" if regexm(survey_id , "(.*)(GPWG.*)$")
