@@ -105,9 +105,21 @@ else {
 	exit
 }
 
-
+//------------Changes in the data
+local vers = 0
 if (`dserr' == 9) {
-
+	local files: dir "`dirname'"  files "`wkyr'_`meeting'_*.dta", respectcase
+	
+	foreach file of local files {
+		if regexm("`dirname'", "`wkyr'_`meeting'_([0-9]+)\.dta") {
+			local ver = regexs(1)
+			local vers "`vers' `ver'"
+		}
+	}
+	
+	local vers: subsintr local vers " " ",", all
+	local ver = max(`vers')
+	
 }
 
 
