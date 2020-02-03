@@ -76,13 +76,43 @@ qui {
 	if ("`maindir'" == "") local maindir "`drive':/`root'"
 	
 	
+	//------------ Download functions
+	
+	if regexm("`subcmd'", "download") {
+		local dldb  "gpwg pending" // download databases
+		if length("`subcmd'") != 2 {
+				noi disp as text "Options available to download"
+
+				local i = 0
+				noi disp _n "select survey to load" _request(_survey)
+				foreach db of local dldb {
+					local ++i
+					noi disp `"   `i' {c |} {stata `db'}"'
+				}
+				noi disp _n "Select Database to download" _request(_db)
+		}
+		else {
+			local db: word 2 `subcmd'
+			local dldb_: subinstr local dldb " " "|", all
+			cap regexm(lower("`db'"), "`dldb_'")
+			if (_rc) {
+				noi disp in red " Options available to download are "
+				foreach db of local dldb {
+					noi disp `"   `i' {c |}`db'"'
+				}
+				error
+			}
+		}
+	}
+	
+	
 	// ----------------------------------------------------------------------------------
 	// Download GPWG
 	// ----------------------------------------------------------------------------------
 	
-	if ("`subcmd'" == "download") {
+	if ("`subcmd'" == "download" & "`db'" == "gpwg") {
 		
-		pcn_download, countries(`countries') years(`years') /*
+		pcn_download_gpwg, countries(`countries') years(`years') /*
 		*/ maindir("`maindir'")  `pause' `clear' `options'
 		return add
 		exit
@@ -129,7 +159,16 @@ qui {
 		exit
 	}
 	
-	
+	//========================================================
+	// Pending data in primus
+	//========================================================
+	if ("`subcmd'" =="pending" & "`db'" == "pending") {
+		
+		noi pcn_download_pending, countries(`countries') years(`years')  /*
+		*/ `pause' `clear' `options'
+		return add
+		exit
+	}
 	
 	// ----------------------------------------------------------------------------------
 	//  create text file (collapsed)
