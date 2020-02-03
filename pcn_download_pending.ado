@@ -42,23 +42,8 @@ local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 local datetimeHRF = trim("`datetimeHRF'")
 local user=c(username)
 
+
 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
-
-/*==================================================
-1:
-==================================================*/
-pcn_primus_query, countries(`countries') years(`years') ///
-`pause' status(pending)
-
-local varlist = "`r(varlist)'"
-local n = _N
-
-if (`n' == 0) {
-	noi disp as error "There is no data in PRIMUS for the convination of " ///
-	"country/years selected"
-	error
-}
-
 
 //========================================================
 // Check version of pending data
@@ -68,7 +53,7 @@ if (`n' == 0) {
 local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
 
 *Working year
-local wkyr:  disp %tdyy date("`c(current_date)'", "DMY")
+local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
 
 * Either Annual meeting (AM) or Spring meeting (SM)
 
@@ -82,6 +67,49 @@ if inrange(`cmonth', 11, 12) {
 return local wkyr = `wkyr'
 return local meeting = "`meeting'"
 
+/*==================================================
+downloading transaction_id from primus
+==================================================*/
+
+pcn_primus_query, countries(`countries') years(`years') ///
+`pause' status(pending)
+
+local varlist = "`r(varlist)'"
+local n = _N
+
+if (`n' == 0) {
+	noi disp as error "There is no data in PRIMUS for the convination of " ///
+	"country/years selected"
+	error
+}
+
+//========================================================
+// check if transaction IDs have changed
+//========================================================
+
+cap mkdir "`dir'/`wkyr'_`meeting'"
+
+local dirname "`dir'/`wkyr'_`meeting'/vintage"
+cap mkdir "`dirname'"
+
+cap noi datasignature confirm using "`dirname'/`wkyr'_`meeting'"
+if (_rc ) { // file not found
+	local dserr = _rc
+	datasignature set, reset saving("`dirname'/`wkyr'_`meeting'", replace)
+	save "`dirname'/`wkyr'_`meeting'.dta", replace
+	save "`dirname'/`wkyr'_`meeting'_`date_time'.dta", replace
+
+}
+else {
+	noi disp in y "File `wkyr'_`meeting' has not changed since last time"
+	exit
+}
+
+
+if (`dserr' == 9) {
+
+}
+
 
 /*==================================================
 2:  Loop over surveys
@@ -89,28 +117,27 @@ return local meeting = "`meeting'"
 
 drop _all
 tempfile dlf
-save `dfl', empty
+save `dlf', empty
 
 mata: P  = J(0,0, .z)   // matrix with information about each survey
 local i = 0
-while (`i' < `n') {
+qui while (`i' < `n') {
 	local ++i
 	local status     ""
 	local dlwnote  ""
-	
-	
+
+
 	mata: pcn_ind(R)
 	primus download , tranxid(`transaction_id')
-	append using `dfl', force
-	save `dfl', replace
-	
+	append using `dlf', force
+	save `dlf', replace
+
 } // end of while
 
 //========================================================
 // save and arrange data
 //========================================================
 
-cap mkdir "`dir'/`wkyr'_`meeting'"
 cap mkdir "`dir'/`wkyr'_`meeting'/estimates"
 
 
@@ -148,16 +175,16 @@ T = ("a", "b")
 A = asarray_create()
 
 for (f=1; f<=cols(T); f++) {
-	
+
 	asarray(A, T[1,f], st_local(T[1,f]))
-	
+
 }
 
 
 for (loc=asarray_first(A); loc!=NULL; loc=asarray_next(A, loc)) {
-	
+
 	asarray_contents(A, loc)
-	
+
 }
 
 asarray(A, T[1,f])

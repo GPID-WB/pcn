@@ -18,16 +18,16 @@ Output:
 program define pcn, rclass
 syntax anything(name=subcmd id="subcommand"),  ///
 [                                         ///
-			COUNtries(string)                   ///
-			Years(numlist)                      ///
-			REGions(string)                     ///
-			maindir(string)                     ///
-			type(string)                        ///
-			clear                               ///
-			pause                               ///
-			vermast(string)                     ///
-			veralt(string)                      ///
-			*                                   ///
+COUNtries(string)                   ///
+Years(numlist)                      ///
+REGions(string)                     ///
+maindir(string)                     ///
+type(string)                        ///
+clear                               ///
+pause                               ///
+vermast(string)                     ///
+veralt(string)                      ///
+*                                   ///
 ] 
 version 14
 
@@ -80,22 +80,22 @@ qui {
 	
 	if regexm("`subcmd'", "download") {
 		local dldb  "gpwg pending" // download databases
-		if length("`subcmd'") != 2 {
-				noi disp as text "Options available to download"
-
-				local i = 0
-				noi disp _n "select survey to load" _request(_survey)
-				foreach db of local dldb {
-					local ++i
-					noi disp `"   `i' {c |} {stata `db'}"'
-				}
-				noi disp _n "Select Database to download" _request(_db)
+		if wordcount("`subcmd'") != 2 {
+			noi disp as text "Options available to download"
+			
+			local i = 0
+			noi disp _n "select survey to load" _request(_survey)
+			foreach db of local dldb {
+				local ++i
+				noi disp `"   `i' {c |} {stata `db'}"'
+			}
+			noi disp _n "Select Database to download" _request(_db)
 		}
 		else {
-			local db: word 2 `subcmd'
+			local db: word 2 of `subcmd'
 			local dldb_: subinstr local dldb " " "|", all
-			cap regexm(lower("`db'"), "`dldb_'")
-			if (_rc) {
+			
+			if !(regexm(lower("`db'"), "`dldb_'")) {
 				noi disp in red " Options available to download are "
 				foreach db of local dldb {
 					noi disp `"   `i' {c |}`db'"'
@@ -162,7 +162,7 @@ qui {
 	//========================================================
 	// Pending data in primus
 	//========================================================
-	if ("`subcmd'" =="pending" & "`db'" == "pending") {
+	if regexm("`subcmd'", "download[ ]+pending") {
 		
 		noi pcn_download_pending, countries(`countries') years(`years')  /*
 		*/ `pause' `clear' `options'
