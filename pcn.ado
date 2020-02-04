@@ -174,9 +174,9 @@ qui {
 	// Download wrk version data
 	//========================================================
 	if regexm("`subcmd'", "download[ ]+wrk") {
-		
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
 		noi pcn_download_wrk, countries(`countries') years(`years')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause' `clear' `options' maindir("`maindir'")
 		return add
 		exit
 	}
