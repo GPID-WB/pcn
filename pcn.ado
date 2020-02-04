@@ -1,15 +1,15 @@
 /*==================================================
 project:       Stata package to manage PovcalNet files and folders
-Author:        R.Andres Castaneda 
+Author:        R.Andres Castaneda
 E-email:       acastanedaa@worldbank.org
 url:           https://github.com/randrescastaneda/pcn
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:    29 Jul 2019 - 09:18:01
-Modification Date:   
+Modification Date:
 Do-file version:    01
-References:          
-Output:             
+References:
+Output:
 ==================================================*/
 
 /*==================================================
@@ -28,7 +28,7 @@ pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
 *                                   ///
-] 
+]
 version 14
 
 *---------- conditions
@@ -38,15 +38,15 @@ else                      pause off
 
 qui {
 	/*==================================================
-	Dependencies         
+	Dependencies
 	==================================================*/
 	if ("${pcn_ssccmd}" == "") {
 		*--------------- SSC commands
 		local cmds missings
-		
-		noi disp in y "Note: " in w "{cmd:pcn} requires the packages below: " /* 
+
+		noi disp in y "Note: " in w "{cmd:pcn} requires the packages below: " /*
 		*/ _n in g "`cmds'"
-		
+
 		foreach cmd of local cmds {
 			capture which `cmd'
 			if (_rc != 0) {
@@ -58,31 +58,31 @@ qui {
 		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update ssconly
 		global pcn_ssccmd = 1  // make sure it does not execute again per session
 	}
-	
-	
-	
+
+
+
 	// ---------------------------------------------------------------------------------
 	//  initial parameters
 	// ---------------------------------------------------------------------------------
-	
+
 	* Directory path
 	if ("`drive'" == "") {
 		if ("`c(hostname)'" == "wbgmsbdat002") local drive "Q"
 		else                                   local drive "P"
 	}
-	
+
 	if ("`root'" == "") local root "01.PovcalNet/01.Vintage_control"
-	
+
 	if ("`maindir'" == "") local maindir "`drive':/`root'"
-	
-	
+
+
 	//------------ Download functions
-	
+
 	if regexm("`subcmd'", "download") {
 		local dldb  "gpwg pending wrk" // download databases
 		if wordcount("`subcmd'") != 2 {
 			noi disp as text "Options available to download"
-			
+
 			local i = 0
 			noi disp _n "select survey to load" _request(_survey)
 			foreach db of local dldb {
@@ -94,7 +94,7 @@ qui {
 		else {
 			local db: word 2 of `subcmd'
 			local dldb_: subinstr local dldb " " "|", all
-			
+
 			if !(regexm(lower("`db'"), "`dldb_'")) {
 				noi disp in red " Options available to download are "
 				foreach db of local dldb {
@@ -104,72 +104,72 @@ qui {
 			}
 		}
 	}
-	
-	
+
+
 	// ----------------------------------------------------------------------------------
 	// Download GPWG
 	// ----------------------------------------------------------------------------------
-	
+
 	if ("`subcmd'" == "download" & "`db'" == "gpwg") {
-		
+
 		pcn_download_gpwg, countries(`countries') years(`years') /*
 		*/ maindir("`maindir'")  `pause' `clear' `options'
 		return add
 		exit
 	}
-	
+
 	// ----------------------------------------------------------------------------------
 	// Load
 	// ----------------------------------------------------------------------------------
-	
+
 	if ("`subcmd'" == "load") {
-		
+
 		noi pcn_load, country(`countries') year(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause' `clear' `options'
 		return add
 		exit
 	}
-	
-	
+
+
 	// ----------------------------------------------------------------------------------
 	//  create text file (collapsed)
 	// ----------------------------------------------------------------------------------
-	
+
 	if ("`subcmd'" == "create") {
-		
+
 		noi pcn_create, countries(`countries') years(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause' `clear' `options'
 		return add
 		exit
 	}
-	
-	
+
+
 	//========================================================
 	// Group data
 	//========================================================
-	
+
 	if inlist(lower("`subcmd'"), "group", "groupdata", "gd", "groupd") {
-		
+
 		noi pcn_groupdata, countries(`countries') years(`years') type(`type')  /*
 		*/  vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause' `clear' `options'
 		return add
 		exit
 	}
-	
+
 	//========================================================
 	// Pending data in primus
 	//========================================================
 	if regexm("`subcmd'", "download[ ]+pending") {
-		
+
 		noi pcn_download_pending, countries(`countries') years(`years')  /*
 		*/ `pause' `clear' `options'
 		return add
 		exit
 	}
-	
+
 	//========================================================
 	// Download wrk version data
 	//========================================================
@@ -180,20 +180,20 @@ qui {
 		return add
 		exit
 	}
-	
+
 	// ----------------------------------------------------------------------------------
 	//  create text file (collapsed)
 	// ----------------------------------------------------------------------------------
-	
+
 	if ("`subcmd'" == "test") {
-		
+
 		noi pcn_test
 		exit
 	}
-	
-	
-	
-	
+
+
+
+
 } // end of qui
 
 end
@@ -239,12 +239,12 @@ if ("`createrepo'" != "" & "`calcset'" == "repo") {
 	local dt = trim("`dt'")
 	if ("`repofromfile'" == "") {
 		cap datalibweb, repo(erase `repository', force) reporoot("`reporoot'") type(GMD)
-		datalibweb, repo(create `repository') reporoot("`reporoot'") /* 
-		*/         type(GMD) country(`countries') year(`years')       /* 
+		datalibweb, repo(create `repository') reporoot("`reporoot'") /*
+		*/         type(GMD) country(`countries') year(`years')       /*
 		*/         region(`regions') module(`module')
 		noi disp "repo `repository' has been created successfully."
 		use "`reporoot'\repo_`repository'.dta", clear
-		append using "`reporoot'\repo_gpwg2.dta"			
+		append using "`reporoot'\repo_gpwg2.dta"
 	}
 	else {
 		use "`reporoot'\repo_`repository'.dta", clear
@@ -257,10 +257,10 @@ if ("`createrepo'" != "" & "`calcset'" == "repo") {
 		foreach x in 0 1 2 {
 			while regexm(`var', "_V`x'") {
 				replace `var' = regexr(`var', "_V`x'", "_v`x'")
-			}	
+			}
 		}
 	}
-	
+
 	duplicates drop filename, force
 	save "`reporoot'\repo_`repository'.dta", replace
 	* confirm file exists
@@ -269,7 +269,7 @@ if ("`createrepo'" != "" & "`calcset'" == "repo") {
 		gen vc_`dt' = 1
 		save "`reporoot'\repo_vc_`repository'.dta", replace
 		noi disp "repo_vc_`repository' successfully updated"
-		exit 
+		exit
 	}
 	use "`reporoot'\repo_vc_`repository'.dta", clear
 	* Fix names of surveyid and files
@@ -280,10 +280,10 @@ if ("`createrepo'" != "" & "`calcset'" == "repo") {
 		foreach x in 0 1 2 {
 			while regexm(`var', "_V`x'") {
 				replace `var' = regexr(`var', "_V`x'", "_v`x'")
-			}	
+			}
 		}
 	}
-	
+
 	duplicates drop filename, force
 	merge 1:1 filename using "`reporoot'\repo_`repository'.dta"
 	cap confirm new var vc_`dt'
