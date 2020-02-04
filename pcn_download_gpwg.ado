@@ -62,6 +62,7 @@ if (`n' == 0) {
 ==================================================*/
 mata: P  = J(0,0, .z)   // matrix with information about each survey
 local i = 0
+noi _dots 0, title(Downloading GPWG data) reps(`n')
 while (`i' < `n') {
 	local ++i
 	local status     ""
@@ -80,70 +81,24 @@ while (`i' < `n') {
 		local dlwnote "datalibweb, country(`country') year(`year') surveyid(`survey') type(GMD) mod(GPWG) vermast(`vermast') veralt(`veralt') clear"
 
 		mata: P = pcn_info(P)
+		noi _dots `i' 1
 		continue
 	}
 
-	*------Parameter of the file
+	cap pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') /* 
+             */  year(`year') survey_id(`survey_id') maindir(`maindir')
+	
+	if (_rc) {
+		local status "saving error"
 
-	if regexm("`r(filename)'", "(.*)(\.dta)$") local filename = regexs(1)
+		local dlwnote "pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') year(`year') survey_id(`survey_id') maindir(`maindir')"
 
-	local dirname "`maindir'/`country'/`country'_`year'_`survey'"
-	local dirname "`dirname'/`survey_id'/Data"
-
-	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
-	char _dta[pcn_datetime]       "`date_time'"
-	char _dta[pcn_user]           "`user'"
-
-	* Confirm file exists
-	cap confirm file "`dirname'/`filename'.dta"
-
-  if (_rc) {  // if file does not exist
-
-		mata: st_local("direxists", strofreal(direxists("`dirname'")))
-
-		if (`direxists' != 1) { // if folder does not exist
-			cap mkdir "`maindir'/`country'"
-			cap mkdir "`maindir'/`country'/`country'_`year'_`survey'"
-			cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'"
-			cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'/Data"
-		}
-
-		datasignature set, reset saving("`dirname'/`filename'", replace)
-
-		saveold "`dirname'/`filename'.dta"
-		local status "saved"
+		mata: P = pcn_info(P)
+		noi _dots `i' -1
+		continue
 	}
-
-	else {  // If file exists, check data signature
-		cap noi datasignature confirm using "`dirname'/`filename'"
-
-		if (_rc) { // if data do not match
-			if ("`replace'" != "") {
-
-				cap mkdir "`dirname'/_vintage"
-				preserve   // I cannot use  copy because I nees the pcn_datetime char
-
-				use "`dirname'/`filename'.dta", clear
-				saveold "`dirname'/_vintage/`filename'_`:char _dta[pcn_datetime]'", replace
-
-				restore
-
-				saveold "`dirname'/`filename'.dta", replace
-				local status "replaced"
-			}
-
-			else { // if replace option not selected
-				local status "not replaced"
-			}
-		}
-
-		else {  // if data is the same
-			local status "unchanged"
-		}
-
-	}  //  end of file exists condition
-
-
+	local status = "`r(status)'"
+	noi _dots `i' 0
 	mata: P = pcn_info(P)
 
 } // end of while
