@@ -168,6 +168,11 @@ qui {
 	}
 	save "`filename'.dta", replace 
 	
+	/* DAVID: Please reshape the data in such a way that it is easi to comparate to 
+	PovcalNet output. And save it with a meaningful name. 
+	save "`filename'_reshaped.dta", replace  */
+	
+	
 } // end of qui
 end
 
