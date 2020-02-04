@@ -51,29 +51,34 @@ local dir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
 qui {
 	* working month
 	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
-	
+
 	*Working year
 	local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
-	
+
 	* Either Annual meeting (AM) or Spring meeting (SM)
-	
+
 	if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
 	if inrange(`cmonth', 5, 10) local meeting "AM"
-	
+
 	if inrange(`cmonth', 11, 12) {
 		local wkyr = `wkyr' + 1  // workign for the next year's meeting
 	}
-	
+
 	return local wkyr = `wkyr'
 	return local meeting = "`meeting'"
-	
+
 	/*==================================================
 	Get lattest version of pending data
 	==================================================*/
 	local dirname "`dir'/`wkyr'_`meeting'/vintage"
 	use "`dirname'/`wkyr'_`meeting'.dta"
-	
-		
+
+	//------------ Send to Mata
+	qui ds
+	local varlist = "`r(varlist)'"
+	mata: R = st_sdata(.,tokens(st_local("varlist")))
+
+
 } // end of qui
 end
 
