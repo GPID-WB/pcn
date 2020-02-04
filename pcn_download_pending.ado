@@ -111,6 +111,7 @@ qui {
 		
 		local vers: subsintr local vers " " ",", all
 		local ver = max(`vers')
+		datasignature set, reset saving("`dirname'/`wkyr'_`meeting'", replace)
 		save "`dirname'/`wkyr'_`meeting'.dta", replace
 		save "`dirname'/`wkyr'_`meeting'_`date_time'.dta", replace
 		
@@ -136,11 +137,12 @@ qui {
 	drop _all
 	tempfile dlf
 	save `dlf', empty
-	
+	noi disp in y "Progress" _c
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
 	local i = 0
 	qui while (`i' < `n') {
 		local ++i
+		noi disp "." _c
 
 		mata: pcn_ind(R)
 		primus download , tranxid(`transaction_id')
