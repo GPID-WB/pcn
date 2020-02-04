@@ -133,22 +133,23 @@ qui {
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
-	
+		
 	drop _all
 	tempfile dlf
 	save `dlf', empty
-	noi disp in y "Progress" _c
+	noi _dots 0, title(Progress of downloading transactions)
+	
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
 	local i = 0
 	qui while (`i' < `n') {
 		local ++i
-		noi disp "." _c
+		noi _dots `i' 0
 
 		mata: pcn_ind(R)
 		primus download , tranxid(`transaction_id')
 		append using `dlf', force
 		save `dlf', replace
-		
+
 	} // end of while
 	
 	cap mkdir "`dir'/`wkyr'_`meeting'/estimates" // create folder is it does not exist
