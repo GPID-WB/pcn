@@ -137,10 +137,10 @@ qui {
 	drop _all
 	tempfile dlf
 	save `dlf', empty
-	noi _dots 0, title(Progress of downloading transactions)
 	
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
 	local i = 0
+	noi _dots 0, title(Progress of downloading transactions) reps(`n')
 	qui while (`i' < `n') {
 		local ++i
 		noi _dots `i' 0
