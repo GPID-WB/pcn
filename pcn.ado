@@ -79,7 +79,7 @@ qui {
 	//------------ Download functions
 	
 	if regexm("`subcmd'", "download") {
-		local dldb  "gpwg pending" // download databases
+		local dldb  "gpwg pending wrk" // download databases
 		if wordcount("`subcmd'") != 2 {
 			noi disp as text "Options available to download"
 			
@@ -165,6 +165,17 @@ qui {
 	if regexm("`subcmd'", "download[ ]+pending") {
 		
 		noi pcn_download_pending, countries(`countries') years(`years')  /*
+		*/ `pause' `clear' `options'
+		return add
+		exit
+	}
+	
+	//========================================================
+	// Download wrk version data
+	//========================================================
+	if regexm("`subcmd'", "download[ ]+wrk") {
+		
+		noi pcn_download_wrk, countries(`countries') years(`years')  /*
 		*/ `pause' `clear' `options'
 		return add
 		exit

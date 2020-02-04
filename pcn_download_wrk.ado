@@ -70,7 +70,8 @@ qui {
 	/*==================================================
 	Get lattest version of pending data
 	==================================================*/
-	
+	local dirname "`dir'/`wkyr'_`meeting'/vintage"
+	use "`dirname'/`wkyr'_`meeting'.dta"
 	
 		
 } // end of qui
