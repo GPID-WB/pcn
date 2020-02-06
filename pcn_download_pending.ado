@@ -136,7 +136,7 @@ qui {
 	}
 	else {
 		noi disp in y "File `wkyr'_`meeting' has not changed since last time"
-		exit
+		if ("`replace'" == "") exit
 	}
 	
 	/*==================================================
