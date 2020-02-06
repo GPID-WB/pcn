@@ -192,8 +192,12 @@ qui {
 	if (_rc) {
 		append using "`filename'.dta"
 	}
-	duplicates drop
-	save "`filename'.dta", replace 
+*##s
+	ds
+	local duplvars = "`r(varlist)'"
+	local duplvars: subinstr local duplvars "date" "", word
+	duplicates drop `duplvars' , force
+	* save "`filename'.dta", replace 
 	
 	
 	
@@ -211,10 +215,15 @@ qui {
 	*/
 	
 	
-	local keepers "cal_applicationid countrycode country_name region_code coverage_type reporting_year survey_year data_type is_interpolated use_microdata pppyear cal_pppvalue cal_pppadjuster cal_cpivalue cal_povertylineppp  cal_headcount cal_povgap cal_povgapsqr cal_watts gini mld decile1 decile2 decile3 decile4 decile5 decile6 decile7 decile8 decile9 decile10 survey_id date status datetime transaction_id name department"
+	local keepers "cal_applicationid countrycode country_name region_code coverage_type reporting_year survey_year data_type is_interpolated use_microdata pppyear cal_pppvalue cal_pppadjuster cal_cpivalue cal_povertylineppp  cal_headcount cal_povgap cal_povgapsqr cal_watts gini mld decile1 decile2 decile3 decile4 decile5 decile6 decile7 decile8 decile9 decile10 survey_id status date datetime transaction_id name department"
+	
+	ds
+	local allvars = "`r(varlist)'"
+	disp "`: list allvars - keepers'"
 	
 	keep `keepers'
 	order `keepers'
+	duplicates drop 
 	
 	foreach element of local keepers {
 		local arm = subinstr("`element'","cal_","",.)
@@ -239,7 +248,7 @@ qui {
 	drop if povertyline == .
 	
 	reshape wide `varnames', i(year countrycode povertyline surveyid department) j(applicationid) string
-	
+*##e
 	save "`filename'_reshaped.dta", replace
 	
 } // end of qui
