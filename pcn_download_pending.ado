@@ -177,7 +177,7 @@ qui {
 		else     noi _dots `i' 0
 		
 	} // end of while
-	
+	noi disp _n ""
 	cap mkdir "`dir'/`wkyr'_`meeting'/estimates" // create folder if it does not exist
 	//============================================
 	// save and arrange data
@@ -192,7 +192,9 @@ qui {
 	if (_rc) {
 		append using "`filename'.dta"
 	}
+	duplicates drop
 	save "`filename'.dta", replace 
+	
 	
 	
 	//========================================================
