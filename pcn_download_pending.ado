@@ -202,10 +202,12 @@ qui {
 	format date %tcDDmonCCYY_HH:MM:SS
 	
 	local filename "`dir'/`wkyr'_`meeting'/estimates/primus_estimates"
+	if ("`replace'"!="") local filename "`filename'_replaced"
+	noi di "`filename'"
 	save "`filename'_`date_time'.dta", replace
 	cap confirm new file "`filename'.dta"
-	if (_rc) {
-		append using "`filename'.dta"
+	if (_rc != 0 & "`replace'"=="") {
+		append using "`filename'.dta", force
 	}
 
 	ds
