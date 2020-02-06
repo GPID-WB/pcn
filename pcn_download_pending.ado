@@ -199,10 +199,12 @@ qui {
 	format date %tcDDmonCCYY_HH:MM:SS
 	
 	local filename "`dir'/`wkyr'_`meeting'/estimates/primus_estimates"
+	if ("`replace'"!="") local filename "`filename'_replaced"
+	noi di "`filename'"
 	save "`filename'_`date_time'.dta", replace
 	cap confirm new file "`filename'.dta"
-	if (_rc) {
-		append using "`filename'.dta"
+	if (_rc != 0 & "`replace'"=="") {
+		append using "`filename'.dta", force
 	}
 	save "`filename'.dta", replace 
 	
@@ -249,7 +251,7 @@ qui {
 		local varnames `varnames' `arm'
 	}
 	
-	foreach v in year countrycode povertyline applicationid surveyid department {
+	foreach v in year countrycode povertyline applicationid surveyid department pppadjuster{
 		local varnames = regexr("`varnames'","^`v' "," ")
 		local varnames = regexr("`varnames'"," `v' "," ")
 		local varnames = regexr("`varnames'","`v'$"," ")
@@ -257,7 +259,7 @@ qui {
 	
 	drop if povertyline == .
 	
-	reshape wide `varnames', i(year countrycode povertyline surveyid department) j(applicationid) string
+	reshape wide `varnames', i(year countrycode povertyline surveyid department pppadjuster) j(applicationid) string
 	
 	save "`filename'_reshaped.dta", replace
 	
