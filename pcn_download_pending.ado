@@ -138,7 +138,7 @@ qui {
 		noi disp in y "File `wkyr'_`meeting' has not changed since last time"
 		if ("`replace'" == "") exit
 	}
-	
+	sample 5 // to delete 
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
