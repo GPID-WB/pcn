@@ -181,9 +181,29 @@ qui {
 	use `stage2', clear
 	merge m:1 countrycode cpi_time using `cf', nogen
 	
-	order countrycode countryname year datayear cpi_time coveragetype data_coverage
+	local varord "countrycode countryname  year cpi_time datayear  coveragetype data_coverage"
+	order `varord'
+	sort `varord'
+	
+	//------------ update PPP value
+	/* Very inefficient way to update ppp values, but I need to make sure the 
+	 order of the data is not messed up by the sorting of Stata. Let's think
+	 on a more efficient way to do it with clever sorting*/
+	 
+	 levelsof countrycode, local(codes)
+	 ds ppp*, has(type numeric)
+	 local pppvars = "`r(varlist)'"
+	 
+	 foreach code of local codes {
+			foreach pvar of local pppvars {
+				sum `pvar' if countrycode  == "`code'", meanonly
+				local p = r(mean)
+				replace `pvar' = `p' if (countrycode  == "`code'" & `pvar' == .)
+			} 
+	 }
 	
 	
+*##e
 	
 	//========================================================
 	// label variables and chracteristics
@@ -240,7 +260,7 @@ qui {
 	}
 	
 } // end of qui
-*##e
+
 
 end
 exit
