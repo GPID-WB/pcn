@@ -23,7 +23,6 @@ Years(numlist)                      ///
 REGions(string)                     ///
 maindir(string)                     ///
 type(string)                        ///
-clear                               ///
 pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
@@ -113,7 +112,7 @@ qui {
 	if regexm("`subcmd'", "download[ ]+gpwg") {
 
 		pcn_download_gpwg, countries(`countries') years(`years') /*
-		*/ maindir("`maindir'")  `pause' `clear' `options'
+		*/ maindir("`maindir'")  `pause' `options'
 		return add
 		exit
 	}
@@ -124,7 +123,7 @@ qui {
 	if regexm("`subcmd'", "download[ ]+pending") {
 
 		noi pcn_download_pending, countries(`countries') years(`years')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause' `options'
 		return add
 		exit
 	}
@@ -135,7 +134,7 @@ qui {
 	if regexm("`subcmd'", "download[ ]+wrk") {
 		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
 		noi pcn_download_wrk, countries(`countries') years(`years')  /*
-		*/ `pause' `clear' `options' maindir("`maindir'")
+		*/ `pause'  `options' maindir("`maindir'")
 		return add
 		exit
 	}
@@ -148,7 +147,7 @@ qui {
 
 		noi pcn_load, country(`countries') year(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
@@ -162,7 +161,7 @@ qui {
 
 		noi pcn_create, countries(`countries') years(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
@@ -176,7 +175,7 @@ qui {
 
 		noi pcn_groupdata, countries(`countries') years(`years') type(`type')  /*
 		*/  vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
@@ -197,7 +196,7 @@ qui {
 	
 	if regexm("`subcmd'", "load[ ]+cpi") {
 
-		noi pcn_load_cpi,  `pause' `options' 
+		noi pcn_load_cpi,  `pause' `options'  
 		return add
 		exit
 	}
