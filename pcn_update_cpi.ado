@@ -236,7 +236,7 @@ qui {
 	if (_rc | "`replace'" != "") {
 		datasignature set, reset saving("`outdir'/povcalnet_cpi", replace)
 		save "`outdir'/vintage/povcalnet_cpi_`date_time'.dta"
-		save "`outdir'/povcalnet_cpi.dta", replace
+		noi save "`outdir'/povcalnet_cpi.dta", replace
 	}
 	
 } // end of qui
