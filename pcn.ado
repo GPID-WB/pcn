@@ -180,6 +180,16 @@ qui {
 		return add
 		exit
 	}
+	
+	//========================================================
+	// Update CPI
+	//========================================================
+	if regexm("`subcmd'", "update[ ]+cpi") {
+
+		noi pcn_update_cpi,  `pause' `options' 
+		return add
+		exit
+	}
 
 
 	// ----------------------------------------------------------------------------------
@@ -191,9 +201,6 @@ qui {
 		noi pcn_test
 		exit
 	}
-
-
-
 
 } // end of qui
 
@@ -228,6 +235,8 @@ pcn create, countries(all) replace
 pcn download gpwg
 pcn download pending
 pcn download wrk
+pcn update cpi
+
 
 
 
