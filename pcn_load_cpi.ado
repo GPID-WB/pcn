@@ -74,9 +74,11 @@ if ("`version'" != "") {
       }
       local vcnumber: disp %13.0f clock("`version'", "DMYhms")
     }
-    use "`outdir'/vintage/povcalnet_cpi_`vcnumber'.dta", `clear'
-    noi disp in y "File " in g "{stata br:povcalnet_cpi_`vcnumber'.dta}" in y " loaded"
-  }
+  }  // end of checking version format
+  
+  use "`outdir'/vintage/povcalnet_cpi_`vcnumber'.dta", `clear'
+  noi disp in y "File " in g "{stata br:povcalnet_cpi_`vcnumber'.dta}" /* 
+  */ in y " has been loaded"
   
 } // end of version != ""
 
@@ -85,7 +87,8 @@ if ("`version'" != "") {
 //========================================================
 else {
   use "`outdir'/povcalnet_cpi.dta"
-  noi disp in y "File " in g "{stata br:povcalnet_cpi.dta}" in y " loaded"
+  noi disp in y "File " in g "{stata br:povcalnet_cpi.dta}" /* 
+  */ in y " has been loaded"
 }
 
 end
