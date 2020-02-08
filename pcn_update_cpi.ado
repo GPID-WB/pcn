@@ -1,19 +1,19 @@
 /*==================================================
 project:       Update current CPI data base
-Author:        R.Andres Castaneda 
+Author:        R.Andres Castaneda
 E-email:       acastanedaa@worldbank.org
-url:           
+url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     7 Feb 2020 - 18:01:05
-Modification Date:   
+Modification Date:
 Do-file version:    01
-References:          
-Output:             
+References:
+Output:
 ==================================================*/
 
 /*==================================================
-              0: Program set up
+0: Program set up
 ==================================================*/
 program define pcn_update_cpi, rclass
 syntax [anything], [ ///
@@ -26,7 +26,7 @@ version 14
 if ("`pause'" == "pause") pause on
 else                      pause off
 
-cap 
+cap
 
 *##s
 * ---- Initial parameters
@@ -37,13 +37,13 @@ local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 local datetimeHRF = trim("`datetimeHRF'")
 local user=c(username)
 
-// Output directory 
+// Output directory
 local outdir "p:\01.PovcalNet\01.Vintage_control\_aux\cpi\"
 
 
 /*=================================================
-1: Load CPI and add CPI_time variable to 
-   make it match with povcalnet
+1: Load CPI and add CPI_time variable to
+make it match with povcalnet
 ==================================================*/
 
 *------------------ Initial Parameters  ------------------
@@ -54,12 +54,12 @@ local vcnumbers: subinstr local mfiles "Master_" "", all
 local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
 local vcnumbers: list sort vcnumbers
 
-mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /* 
-	 */ st_local("maxvc", strofreal(max(VC), "%15.0f"))
-	 
+mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
+*/ st_local("maxvc", strofreal(max(VC), "%15.0f"))
+
 //------------Load Master CPI
 
-import excel using "`masterdir'/Master_`maxvc'.xlsx", /* 
+import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
 */ sheet("CPI") clear firstrow case(lower)
 missings dropvars, force
 missings dropobs, force
@@ -68,12 +68,12 @@ ds
 local varlist = "`r(varlist)'"
 foreach v of local varlist {
 	local n: variable label `v'
-	cap confirm number `n' 
+	cap confirm number `n'
 	if (_rc) continue
 	rename `v' cpi`n'
 }
 
-reshape long cpi, i(countrycode coverqge) j(year) 
+reshape long cpi, i(countrycode coverqge) j(year)
 drop if cpi == .
 
 * fix mismatches between the two dataset
@@ -94,8 +94,8 @@ rename year cpi_time
 tempfile fcpi
 save `fcpi'
 
-//------------Load data with cpi_time variable 
-import excel using "`masterdir'/Master_`maxvc'.xlsx", /* 
+//------------Load data with cpi_time variable
+import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
 */ sheet("SurveyMean") clear firstrow case(lower)
 missings dropvars, force
 missings dropobs, force
@@ -113,48 +113,126 @@ save `fkey', replace
 //------------Load povcalnet make coincide data year and cpi_time
 povcalnet, clear
 replace datayear = round(datayear, .01)
-tostring datayear, replace force format(%8.0g)  
+tostring datayear, replace force format(%8.0g)
 
 merge m:1 countrycode datayear using `fkey', keep(match) nogen
 
-gen data_coverage = cond(coveragetype == 1, "Rural", /* 
- */            cond(coveragetype == 2, "Urban", "National"))
+gen data_coverage = cond(coveragetype == 1, "Rural", /*
+*/            cond(coveragetype == 2, "Urban", "National"))
 
 keep countrycode cpi_time data_coverage year datayear
 
 
 merge m:1 countrycode cpi_time data_coverage using `fcpi', nogen
-gen id = countrycode + "-" + strofreal(cpi_time)
+
+replace coveragetype = data_coverage if  coveragetype == ""
 
 tempfile stage1
 save `stage1'
+
+/*==================================================
+2: Incorporate PPP data
+==================================================*/
+
+import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
+*/ sheet("PPP") clear firstrow case(lower)
+
+missings dropvars, force
+missings dropobs, force
+
+tempfile fppp
+save `fppp'
+
+use `stage1', clear
+merge m:1 countrycode coveragetype using `fppp', update nogen
+
+tempfile stage2
+save  `stage2'
+
+/*==================================================
+3: Incorporate Currency conversion factor
+==================================================*/
+
+import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
+*/ sheet("CurrencyConversion") clear firstrow case(lower)
+
+
+import excel using "p:/01.PovcalNet/00.Master/02.vintage/Master_${maxvc}.xlsx", /*
+*/ sheet("CurrencyConversion") clear firstrow case(lower)
+
+missings dropvars, force
+missings dropobs, force
+
+ds
+local varlist = "`r(varlist)'"
+foreach v of local varlist {
+	local n: variable label `v'
+	cap confirm number `n'
+	if (_rc) continue
+	rename `v' cf`n'
+}
+
+//------------Rename variables
+drop country coverage
+rename code countrycode
+rename (year ratio) cf=
+
+foreach u in oldunit newunit {
+	replace `u' =   ustrtrim(`u')
+}
+
+reshape long cf, i(countrycode cfyear cfratio oldunit newunit) j(cpi_time)
+tempfile cf
+save `cf' 
+
+use `stage2', clear
+merge m:1 countrycode cpi_time using `cf', nogen 
+
+order countrycode countryname year datayear cpi_time coveragetype data_coverage 
+
+
+
+//========================================================
+// label variables and save
+//========================================================
+
+/*  Code to create labels 
+ds
+local as = "`r(varlist)'"
+foreach a of local as {
+ disp "label var" _col(12) "`a'" _col(30) `""`: variable label `a''""'
+}
+
+ */
+
+label var  countrycode       "Country Code"
+label var  countryname       "Country Name"
+label var  year              "Year of point estimate"
+label var  datayear          "Survey year"
+label var  cpi_time          "year of the CPI used in PovcalNet"
+label var  coveragetype      "Coverqge"
+label var  data_coverage     "Covarage of the survey"
+label var  cpi               "CPI"
+label var  ppp1993           "PPP1993"
+label var  ppp2005           "PPP2005"
+label var  ppp2011           "PPP2011"
+label var  pppyear           "PPPYear"
+label var  estimationmethod  "EstimationMethod"
+label var  cfyear            "Year"
+label var  cfratio           "Ratio"
+label var  oldunit           "Old Currency Unit"
+label var  newunit           "New Currency Unit"
+label var  cf                "Currency conversion factor"
 
 
 *##e
 
 
-coveragetype 
+coveragetype
 
-
-rename coverqge coverage
 char _dta[masterdate]   "`maxvc'"
 
 
-
-
-
-
-
-
-*----------2.1:
-
-
-*----------2.2:
-
-
-/*==================================================
-              3: 
-==================================================*/
 
 
 *----------3.1:
@@ -179,5 +257,4 @@ Notes:
 
 
 Version Control:
-
 
