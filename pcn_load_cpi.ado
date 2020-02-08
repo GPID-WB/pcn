@@ -86,7 +86,7 @@ if ("`version'" != "") {
 //  current file 
 //========================================================
 else {
-  use "`outdir'/povcalnet_cpi.dta"
+  use "`outdir'/povcalnet_cpi.dta", `clear'
   noi disp in y "File " in g "{stata br:povcalnet_cpi.dta}" /* 
   */ in y " has been loaded"
 }
