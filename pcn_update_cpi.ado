@@ -18,6 +18,7 @@ Output:
 program define pcn_update_cpi, rclass
 syntax [anything], [ ///
 replace              ///
+cpivin(string)       ///
 ]
 
 version 14
@@ -41,207 +42,35 @@ qui {
 	local outdir "p:/01.PovcalNet/01.Vintage_control/_aux/cpi"
 	
 	
-	/*=================================================
-	1: Load CPI and add CPI_time variable to
-	make it match with povcalnet
-	==================================================*/
+	//========================================================
+	// Load latest data on datalibweb
+	//========================================================
 	
-	*------------------ Initial Parameters  ------------------
-	local masterdir "p:/01.PovcalNet/00.Master/02.vintage"
+	if ("`cpivin'" == "") {
+		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
+		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
+		
+		local cpivins "0"
+		foreach cpidir of local cpidirs {
+			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
+			local cpivins "`cpivins', `cpivin'"
+		}
+		local cpivin = max(`cpivins')
+	} // if no cpi vintage is selected
 	
-	local mfiles: dir "`masterdir'" files "Master_*.xlsx", respect
-	local vcnumbers: subinstr local mfiles "Master_" "", all
-	local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
-	local vcnumbers: list sort vcnumbers
+	qui datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
+	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta) 
 	
-	mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
-	*/ st_local("maxvc", strofreal(max(VC), "%15.0f"))
-	
-	//------------Load Master CPI
-	
-	import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
-	*/ sheet("CPI") clear firstrow case(lower)
-	missings dropvars, force
-	missings dropobs, force
-	
-	ds
-	local varlist = "`r(varlist)'"
-	foreach v of local varlist {
-		local n: variable label `v'
-		cap confirm number `n'
-		if (_rc) continue
-		rename `v' cpi`n'
-	}
-	
-	reshape long cpi, i(countrycode coverqge) j(year)
-	drop if cpi == .
-	
-	* fix mismatches between the two dataset
-	rename coverqge coveragetype
-	clonevar data_coverage = coveragetype
-	
-	replace data_coverage = "Urban" if countrycode == "ARG"
-	replace data_coverage = "Rural" if countrycode == "ETH" & year == 1981
-	replace data_coverage = "Urban" if countrycode == "BOL" & year == 1992
-	replace data_coverage = "Urban" if countrycode == "ECU" & year == 1995
-	replace data_coverage = "Urban" if countrycode == "FSM" & year == 2000
-	replace data_coverage = "Urban" if countrycode == "HND" & year == 1986
-	replace data_coverage = "Urban" if countrycode == "COL" & inrange(year, 1980,1991)
-	replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
-	
-	rename year cpi_time
-	
-	tempfile fcpi
-	save `fcpi'
-	
-	//------------Load data with cpi_time variable
-	import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
-	*/ sheet("SurveyMean") clear firstrow case(lower)
-	missings dropvars, force
-	missings dropobs, force
-	
-	duplicates drop countrycode  surveytime  cpi_time, force
-	keep countrycode  surveytime  cpi_time
-	
-	rename surveytime datayear
-	replace datayear = round(datayear, .01)
-	tostring datayear, replace force
-	
-	tempfile fkey
-	save `fkey', replace
-	
-	//------------Load povcalnet make coincide data year and cpi_time
-	povcalnet, clear
-	replace datayear = round(datayear, .01)
-	tostring datayear, replace force format(%8.0g)
-	
-	merge m:1 countrycode datayear using `fkey', keep(match) nogen
-	
-	gen data_coverage = cond(coveragetype == 1, "Rural", /*
-	*/            cond(coveragetype == 2, "Urban", "National"))
-	
-	keep countrycode cpi_time data_coverage year datayear
-	merge m:1 countrycode cpi_time data_coverage using `fcpi', nogen
-	replace coveragetype = data_coverage if  coveragetype == ""
-	
-	tempfile stage1
-	save `stage1'
-	
-	/*==================================================
-	2: Incorporate PPP data
-	==================================================*/
-	
-	import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
-	*/ sheet("PPP") clear firstrow case(lower)
-	
-	missings dropvars, force
-	missings dropobs, force
-	
-	tempfile fppp
-	save `fppp'
-	
-	use `stage1', clear
-	merge m:1 countrycode coveragetype using `fppp', update nogen
-	
-	tempfile stage2
-	save  `stage2'
-	
-	/*==================================================
-	3: Incorporate Currency conversion factor
-	==================================================*/
-	
-	import excel using "`masterdir'/Master_`maxvc'.xlsx", /*
-	*/ sheet("CurrencyConversion") clear firstrow case(lower)
-	
-	missings dropvars, force
-	missings dropobs, force
-	
-	ds
-	local varlist = "`r(varlist)'"
-	foreach v of local varlist {
-		local n: variable label `v'
-		cap confirm number `n'
-		if (_rc) continue
-		rename `v' cf`n'
-	}
-	
-	//------------Rename variables
-	drop country coverage
+	collapse (mean) cpi* icp* cur_adj, by(code countryname region year)
 	rename code countrycode
-	rename (year ratio) cf=
+	gen ccf = 1/cur_adj // Currency Conversion Factor
 	
-	foreach u in oldunit newunit {
-		replace `u' =   ustrtrim(`u')
-	}
+	order region countrycode countryname year cpi2011 icp2011  ccf cur_adj
 	
-	reshape long cf, i(countrycode cfyear cfratio oldunit newunit) j(cpi_time)
-	tempfile cf
-	save `cf'
-	
-	use `stage2', clear
-	merge m:1 countrycode cpi_time using `cf', nogen
-	
-	local varord "countrycode countryname  year cpi_time datayear  coveragetype data_coverage"
-	order `varord'
-	sort `varord'
-	
-	//------------ update PPP value
-	/* Very inefficient way to update ppp values, but I need to make sure the 
-	 order of the data is not messed up by the sorting of Stata. Let's think
-	 on a more efficient way to do it with clever sorting*/
-	 
-	 levelsof countrycode, local(codes)
-	 ds ppp*, has(type numeric)
-	 local pppvars = "`r(varlist)'"
-	 
-	 foreach code of local codes {
-			foreach pvar of local pppvars {
-				sum `pvar' if countrycode  == "`code'", meanonly
-				local p = r(mean)
-				replace `pvar' = `p' if (countrycode  == "`code'" & `pvar' == .)
-			} 
-	 }
-	
-	
-*##e
-	
-	//========================================================
-	// label variables and chracteristics
-	//========================================================
-	
-	/*  Code to create labels
-	ds
-	local as = "`r(varlist)'"
-	foreach a of local as {
-	disp "label var" _col(12) "`a'" _col(30) `""`: variable label `a''""'
-	}
-	
-	*/
-	
-	//------------Labels
-	
-	label var  countrycode       "Country Code"
-	label var  countryname       "Country Name"
-	label var  year              "Year of point estimate"
-	label var  datayear          "Survey year"
-	label var  cpi_time          "year of the CPI used in PovcalNet"
-	label var  coveragetype      "Coverqge"
-	label var  data_coverage     "Covarage of the survey"
-	label var  cpi               "CPI"
-	label var  ppp1993           "PPP1993"
-	label var  ppp2005           "PPP2005"
-	label var  ppp2011           "PPP2011"
-	label var  pppyear           "PPPYear"
-	label var  estimationmethod  "EstimationMethod"
-	label var  cfyear            "Year"
-	label var  cfratio           "Ratio"
-	label var  oldunit           "Old Currency Unit"
-	label var  newunit           "New Currency Unit"
-	label var  cf                "Currency conversion factor"
 	
 	//------------Characteristics
 	
-	char _dta[masterdate]         "`maxvc'"
+	char _dta[dlwversion]         "`cpivin'"
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
 	char _dta[pcn_datetime]       "`date_time'"
 	char _dta[pcn_user]           "`user'"
