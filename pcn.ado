@@ -195,9 +195,24 @@ qui {
 	//========================================================
 	
 	if regexm("`subcmd'", "load[ ]+cpi") {
-
 		noi pcn_load_cpi,  `pause' `options'  
 		return add
+		exit
+	}
+	
+	
+	//========================================================
+	// Master File
+	//========================================================
+	if regexm("`subcmd'", "master") {
+		if regexm("`options'", "update\(.*\)") {
+			noi pcn_master_update,  `pause' `options'  
+			return add
+		}
+		if regexm("`options'", "load\(.*\)") {
+			noi pcn_master_load,  `pause' `options'  
+			return add
+		}
 		exit
 	}
 

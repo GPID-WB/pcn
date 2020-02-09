@@ -21,7 +21,13 @@ update(string)             ///
 [                          ///
 cpivin(string)             ///
 ]
-version 16
+
+version 15 // this is really important 
+
+*---------- conditions
+if ("`pause'" == "pause") pause on
+else                      pause off
+
 
 *------------------ Initial Parameters  ------------------
 local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
@@ -68,7 +74,7 @@ qui {
       local cpivin = max(`cpivins')
     } // if no cpi vintage is selected
 
-    datalibweb, country(Support) year(2005) type(GMDRAW)   /*
+    cap datalibweb, country(Support) year(2005) type(GMDRAW)   /*
      */ fileserver surveyid(Support_2005_CPI_v0`cpivin'_M) /*
      */ filename(Final_CPI_PPP_to_be_used.dta)
 
@@ -80,14 +86,14 @@ qui {
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
 
-    mat list `C'
-
     //------------Rename to match Master file especifications
     rename (cpi2011 code levelnote countryname) (y CountryCode Coverqge CountryName)
     keep y CountryCode Coverqge CountryName survname year
     reshape wide y, i(CountryCode CountryName Coverqge survname) j(year)
 
     collapse (mean) y*, by(CountryCode CountryName Coverqge)
+    tempname D
+    mkmat y*, matrix(`D')
 
     //------------ Find most recent version of master file
 
@@ -100,7 +106,7 @@ qui {
     */ st_local("maxvc", strofreal(max(VC), "%15.0f"))
 
     //------------Load Master CPI
-    local msheet   "CPI"
+    local msheet "CPI"
     copy "`mastervin'/Master_`maxvc'.xlsx" "`mastervin'/`newfile'.xlsx" , replace
 
     //------------ modify country name and coverage
@@ -108,15 +114,15 @@ qui {
     */ using "`mastervin'/`newfile'.xlsx", /*
     */ sheet("`msheet'") sheetreplace firstrow(variables)
 
-    tempname D
-    mkmat y*, matrix(`D')
 
     //------------ Add cpi values
-    putexcel set "Master_test.xlsx", modify sheet("`msheet'")
+    putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
     putexcel D1 = matrix(`C')
     putexcel D2 = matrix(`D')
-    putexcel describe
     putexcel save
+    
+    //------------Update current version
+    copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
 
     local success = 1
 
@@ -181,8 +187,6 @@ qui {
   7: modify vintage control
   ==================================================*/
 
-  //------------
-
   if (`success' == 1) {
 
     import excel "`masterdir'/_vintage_control.xlsx", describe
@@ -194,12 +198,12 @@ qui {
     putexcel A`lr' = "`newfile'"
     putexcel B`lr' = "`user'"
     putexcel C`lr' = "`msheet'"
-    putexcel D`lr' = "Update `update' using datalibweb cpi version `cpivin'"
+    putexcel D`lr' = "Update `update' using datalibweb cpi version `cpivin'. Stata: pcn master, update(`update')"
 
     putexcel save
+    
+    noi disp in y "sheet(`msheet') in Master data has been update."
   } // end of success
-
-
 } // end of qui
 
 end
