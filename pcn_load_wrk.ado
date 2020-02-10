@@ -115,6 +115,8 @@ if ("`year'" == "") {
 	local year = max(0, `years') 
  
 } 
+
+	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
  
 *----------1.2: Path 
  
