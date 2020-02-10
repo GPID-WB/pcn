@@ -23,7 +23,6 @@ Years(numlist)                      ///
 REGions(string)                     ///
 maindir(string)                     ///
 type(string)                        ///
-clear                               ///
 pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
@@ -78,7 +77,7 @@ qui {
 
 	//------------ Download functions
 
-	if regexm("`subcmd'", "download") {
+	if regexm("`subcmd'", "^download") {
 		local dldb  "gpwg pending wrk" // download databases
 		if wordcount("`subcmd'") != 2 {
 			noi disp as text "Options available to download"
@@ -106,27 +105,49 @@ qui {
 	}
 
 
-	// ----------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------------
 	// Download GPWG
-	// ----------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------
 
-	if ("`subcmd'" == "download" & "`db'" == "gpwg") {
+	if regexm("`subcmd'", "download[ ]+gpwg") {
 
 		pcn_download_gpwg, countries(`countries') years(`years') /*
-		*/ maindir("`maindir'")  `pause' `clear' `options'
+		*/ maindir("`maindir'")  `pause' `options'
+		return add
+		exit
+	}
+	
+	//========================================================
+	// Pending data in primus
+	//========================================================
+	if regexm("`subcmd'", "download[ ]+pending") {
+
+		noi pcn_download_pending, countries(`countries') years(`years')  /*
+		*/ `pause' `options'
 		return add
 		exit
 	}
 
-	// ----------------------------------------------------------------------------------
+	//========================================================
+	// Download wrk version data
+	//========================================================
+	if regexm("`subcmd'", "download[ ]+wrk") {
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
+		noi pcn_download_wrk, countries(`countries') years(`years')  /*
+		*/ `pause'  `options' maindir("`maindir'")
+		return add
+		exit
+	}
+
+	// -------------------------------------------------------------------------------
 	// Load
-	// ----------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------
 
 	if ("`subcmd'" == "load") {
 
 		noi pcn_load, country(`countries') year(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
@@ -140,7 +161,7 @@ qui {
 
 		noi pcn_create, countries(`countries') years(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
@@ -154,32 +175,47 @@ qui {
 
 		noi pcn_groupdata, countries(`countries') years(`years') type(`type')  /*
 		*/  vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause' `clear' `options'
+		*/ `pause'  `options'
 		return add
 		exit
 	}
-
+	
 	//========================================================
-	// Pending data in primus
+	// Update CPI
 	//========================================================
-	if regexm("`subcmd'", "download[ ]+pending") {
+	if regexm("`subcmd'", "update[ ]+cpi") {
 
-		noi pcn_download_pending, countries(`countries') years(`years')  /*
-		*/ `pause' `clear' `options'
+		noi pcn_update_cpi,  `pause' `options' 
 		return add
 		exit
 	}
-
+	
 	//========================================================
-	// Download wrk version data
+	// Load CPI
 	//========================================================
-	if regexm("`subcmd'", "download[ ]+wrk") {
-		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
-		noi pcn_download_wrk, countries(`countries') years(`years')  /*
-		*/ `pause' `clear' `options' maindir("`maindir'")
+	
+	if regexm("`subcmd'", "load[ ]+cpi") {
+		noi pcn_load_cpi,  `pause' `options'  
 		return add
 		exit
 	}
+	
+	
+	//========================================================
+	// Master File
+	//========================================================
+	if regexm("`subcmd'", "master") {
+		if regexm("`options'", "update\(.*\)") {
+			noi pcn_master_update,  `pause' `options'  
+			return add
+		}
+		if regexm("`options'", "load\(.*\)") {
+			noi pcn_master_load,  `pause' `options'  
+			return add
+		}
+		exit
+	}
+
 
 	// ----------------------------------------------------------------------------------
 	//  create text file (collapsed)
@@ -190,9 +226,6 @@ qui {
 		noi pcn_test
 		exit
 	}
-
-
-
 
 } // end of qui
 
@@ -221,6 +254,15 @@ Notes:
 
 //------------Create
 pcn create, countries(all) replace
+
+//------------download
+
+pcn download gpwg
+pcn download pending
+pcn download wrk
+pcn update cpi
+
+
 
 
 Version Control:
