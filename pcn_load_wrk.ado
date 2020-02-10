@@ -115,8 +115,6 @@ if ("`year'" == "") {
 	local year = max(0, `years') 
  
 } 
-
-	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
  
 *----------1.2: Path 
  
@@ -153,7 +151,6 @@ else {
 local surdir "`maindir'/`country'/`country'_`year'_`survey'" 
  
 * vermast 
-
  
 if ("`vermast'" == "") { 
 	local dirs: dir "`surdir'" dirs "*`type'", respectcase 
@@ -194,87 +191,6 @@ local survid = "`country'_`year'_`survey'_V`vermast'_M_WRK_A_GMD"
 local dirname "`maindir'/`country'/`country'_`year'_`survey'/`survid'/Data" 
  
 local files: dir "`dirname'"  files "*.dta", respectcase 
-
-/** There should be only one file per folder **/
-
-if (wordcount(`"`files'"') == 0) { 
-		noi disp in r "no survey in `country'-`year'" 
-		error 
-	} 
-	else if (wordcount(`"`files'"') == 1) { 
-		local filename = regexr(`files',`".dta"',"")
-	} 
-	else {  // if more than 1 file (should not happen, but just in case)
- 
-		noi disp as text "list of available surveys for `country'- `year'" 
- 
-		local i = 0 
-		foreach file of local files { 
-			local ++i 
-			noi disp `"  `i' {c |} {stata `file'}"' 
-		} 
-		noi disp _n "select file to load" _request(_file)
-		local filename = regexr(`"`file'"',".dta",`""')
-	} 
-
-
-return local surdir = "`surdir'" 
-return local survid = "`survid'" 
-return local survin = "`country'_`year'_`survey'_v`vermast'_M_WRK_A" 
-return local filename = "`filename'"
- 
-use "`surdir'/`survid'/Data/`filename'.dta", clear
-noi disp as text "`filename'.dta" as res " successfully loaded" 
-/*================================================== 
-              3:  
-==================================================*/ 
- 
- 
-*----------3.1: 
- 
- 
-*----------3.2: 
- 
-end 
-exit 
-/* End of do-file */ 
- 
-><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< 
- 
-Notes: 
-1. 
-2. 
-3. 
- 
- 
-Version Control: 
- 
- *** Feb 11
- 
-if (wordcount(`"`files'"') == 0) { 
-		noi disp in r "no survey in `country'-`year'" 
-		error 
-	} 
-	else if (wordcount(`"`files'"') == 1) { 
-		if regexm(`files', "_v`vermast'_M_WRK_A_GMD_(.+).dta") local ending = regexs(1) 
-	} 
-	else {  // if more than 1 survey per year 
-		foreach file of local files { 
-			if regexm(`"`file'"', "_v`vermast'_M_WRK_A_GMD_(.+).dta") local a = regexs(1) 
-			local ending = "`ending' `a'" 
-		} 
- 
-		noi disp as text "list of available surveys for `country'- `year'" 
- 
-		local i = 0 
-		foreach e of local ending { 
-			local ++i 
-			noi disp `"   `i' {c |} {stata `survey' GMD `e'}"' 
-		} 
-		noi disp _n "select survey to load" _request(_ending) 
-	} 
- 
- *** Feb 13
  
  
 ** serch for the ending 
@@ -300,14 +216,71 @@ else if (`k' == 1) {
 } 
 else{ 
 	foreach ending of local endings { 
-		local ++i 
-		noi disp `"   `i' {c |} {stata `survey' GMD `ending'}"' 
-	} 
-	noi disp _n "select survey to load" _request(_ending) 	 
+			local ++i 
+			noi disp `"   `i' {c |} {stata `survey' GMD `ending'}"' 
+		} 
+		noi disp _n "select survey to load" _request(_ending) 
+		 
 } 
  
  
 if ("`ending'" != "") local filename "`survid'_`ending'" 
 else 				  local filename "`survid'" 
+ 
+return local surdir = "`surdir'" 
+return local survid = "`survid'" 
+return local survin = "`country'_`year'_`survey'_v`vermast'_M_WRK_A" 
+return local filename = "`filename'" 
+ 
+use "`surdir'/`survid'/Data/`filename'.dta", clear 
+noi disp as text "`filename'.dta" as res " successfully loaded" 
+/*================================================== 
+              3:  
+==================================================*/ 
+ 
+ 
+*----------3.1: 
+ 
+ 
+*----------3.2: 
+ 
+end 
+exit 
+/* End of do-file */ 
+ 
+><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>< 
+ 
+Notes: 
+1. 
+2. 
+3. 
+ 
+ 
+Version Control: 
+ 
+ 
+if (wordcount(`"`files'"') == 0) { 
+		noi disp in r "no survey in `country'-`year'" 
+		error 
+	} 
+	else if (wordcount(`"`files'"') == 1) { 
+		if regexm(`files', "_v`vermast'_M_WRK_A_GMD_(.+).dta") local ending = regexs(1) 
+	} 
+	else {  // if more than 1 survey per year 
+		foreach file of local files { 
+			if regexm(`"`file'"', "_v`vermast'_M_WRK_A_GMD_(.+).dta") local a = regexs(1) 
+			local ending = "`ending' `a'" 
+		} 
+ 
+		noi disp as text "list of available surveys for `country'- `year'" 
+ 
+		local i = 0 
+		foreach e of local ending { 
+			local ++i 
+			noi disp `"   `i' {c |} {stata `survey' GMD `e'}"' 
+		} 
+		noi disp _n "select survey to load" _request(_ending) 
+	} 
+ 
  
  
