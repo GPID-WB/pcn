@@ -143,7 +143,7 @@ qui {
 	// Load
 	// -------------------------------------------------------------------------------
 
-	if ("`subcmd'" == "load") {
+	if ("`subcmd'" == "load" | "`subcmd'" == "load[ ]+gpwg") { 
 
 		noi pcn_load, country(`countries') year(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
@@ -151,6 +151,20 @@ qui {
 		return add
 		exit
 	}
+	
+	//======================================================== 
+	// load wrk version data 
+	//======================================================== 
+	if regexm("`subcmd'", "load[ ]+wrk") { 
+	 
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending" 
+		 
+		noi pcn_load_wrk, country(`countries') year(`years')  /* 
+		*/ maindir("`maindir'") vermast(`vermast')  /* 
+		*/ `pause' `clear' `options' 
+		return add 
+		exit 
+	} 
 
 
 	// ----------------------------------------------------------------------------------
