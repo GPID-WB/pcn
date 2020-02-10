@@ -96,13 +96,36 @@ qui {
 		
 		mata: pcn_ind(R)
 		
-		if regexm("`survey'", "LIS$") {
+		if regexm("`survey'", "(LIS|SILC)$") | ("`type'" == "PCN") {
 			local mod "bin"
 			local try 0
 		}
 		else {
 			local mod "ALL"
 			local try 1
+		}
+		
+		//------------ change to veralt to working version
+		if regexm("`survey_id'", "(.*_M_)[Vv][0-9]+(_A_.*)") {
+			local survey_id = regexs(1) + "WRK" + regexs(2)
+		}
+		
+		local datadir "`wrkdir'/`country'/`country'_`year'_`survey'/`survey_id'/Data"
+		pause before confirm file exists 
+		
+		cap {
+			// there should be just one
+			local file: dir "`datadir'" file "`survey_id'*.dta",  respectcase  
+			confirm file "`datadir'/`file'" // if file exists and no option replace 
+			pause after confirming file 
+		}
+		if (_rc == 0 & "`replace'" == "") {
+			local status "not replaced"
+			local dlwnote "Data exists and it was not replaced"
+			
+			mata: P = pcn_info(P)
+			noi _dots `i' 0
+			continue 
 		}
 		
 		*--------------------2.2: Load data
