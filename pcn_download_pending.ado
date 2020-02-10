@@ -126,11 +126,14 @@ qui {
 		merge 1:1 survey_id using "`dirname'/`wkyr'_`meeting'_`ver'.dta", /* 
 		*/ keep(master) nogen
 		
+		pause after merge 
 		//------------Send to MATA
 		qui ds
 		local varlist = "`r(varlist)'"
+		local n = _N
 		mata: R = st_sdata(.,tokens(st_local("varlist")))
 		
+		pause after sendin to mata
 	}
 	else {
 		noi disp in y "File `wkyr'_`meeting' has not changed since last time"
