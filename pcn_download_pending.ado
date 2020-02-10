@@ -193,13 +193,13 @@ qui {
 	if (_rc) {
 		append using "`filename'.dta"
 	}
-*##s
+
 	ds
 	local duplvars = "`r(varlist)'"
 	local duplvars: subinstr local duplvars "date" "", word
 	duplicates drop `duplvars' , force
-	* save "`filename'.dta", replace 
-	
+	save "`filename'.dta", replace 
+*##s
 	
 	
 	//========================================================
@@ -247,6 +247,13 @@ qui {
 	local varnames: list varnames - rmvars
 	
 	drop if povertyline == .
+	drop if countrycode == "IDN"
+	
+	//------------drop duplicates removing date
+	ds
+	local duplvars = "`r(varlist)'"
+	local duplvars: subinstr local duplvars "date" "", word
+	duplicates drop `duplvars' , force
 	
 	reshape wide `varnames', i(year countrycode povertyline surveyid department) j(applicationid) string
 *##e
