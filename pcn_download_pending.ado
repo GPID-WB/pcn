@@ -107,11 +107,9 @@ qui {
 	else if (_rc ==9) {
 		local files: dir "`dirname'"  files "`wkyr'_`meeting'_*.dta", respectcase
 		
-		
 		local vers = 0  
 		foreach file of local files {
 			if regexm("`file'", "`wkyr'_`meeting'_([0-9]+)\.dta") {
-				local ++k
 				local ver = regexs(1)
 				local vers "`vers' `ver'"
 			}
