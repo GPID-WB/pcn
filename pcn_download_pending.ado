@@ -247,10 +247,12 @@ qui {
 	local rmvars "year countrycode povertyline applicationid surveyid department"
 	local varnames: list varnames - rmvars
 	
-	drop if povertyline == .
+	// temporal "fix" for indonesia data
+	*drop if povertyline == .
+	drop if countrycode == "IDN"
 	
 	reshape wide `varnames', i(year countrycode povertyline surveyid department) j(applicationid) string
-*##e
+
 	save "`filename'_reshaped.dta", replace
 	
 } // end of qui
