@@ -164,8 +164,42 @@ qui {
     local fver: disp %tdCCYY-NN-DD `maxdate' // file version 
     local fver = trim("`fver'")
     
+    import excel using "`popdir'/population_country_`fver'.xlsx", describe
+    if regexm("`r(range_1)'", ":([A-Z]+)[0-9]+$") local lc = regexs(1)
+    local sheet = "`r(worksheet_1)'"
+    
+    //------------ Find years available
     import excel using "`popdir'/population_country_`fver'.xlsx", /* 
-     */ cellrange(F1)
+     */ cellrange(F1:`lc'1) clear sheet("`sheet'") 
+    ds 
+    local vars = "`r(varlist)'"
+    rename (`vars') year=
+    gen n = 1
+    reshape long year, i(n) j(col) string
+    replace col = upper(col)
+    sort year
+    drop n
+    
+    tempfile fyear
+    save `fyear'
+    
+    //------------Data available
+    import excel using "`popdir'/population_country_`fver'.xlsx", /* 
+     */ cellrange(A3) clear sheet("`sheet'") firstrow 
+    cap drop scale
+    
+    ds, has(type string)
+    local idvars = "`r(varlist)'"
+    
+    ds, has(type numeric)
+    disp "`r(varlist)'"
+    local vars = "`r(varlist)'"
+    rename (`vars') pop=
+    reshape long pop, i(`idvars') j(col) string
+    replace col = upper(col)
+    sort `idvars' pop
+    
+    merge m:1 col using `fyear'
     
     
     
