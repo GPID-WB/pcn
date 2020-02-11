@@ -50,38 +50,38 @@ local user=c(username)
 qui {
 	* working month
 	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
-	
+
 	*Working year
 	local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
-	
+
 	* Either Annual meeting (AM) or Spring meeting (SM)
-	
+
 	if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
 	if inrange(`cmonth', 5, 10) local meeting "AM"
-	
+
 	if inrange(`cmonth', 11, 12) {
 		local wkyr = `wkyr' + 1  // workign for the next year's meeting
 	}
-	
+
 	return local wkyr = `wkyr'
 	return local meeting = "`meeting'"
-	
+
 	/*==================================================
 	Get lattest version of pending data
 	==================================================*/
 	local wrkdir "`maindir'/`wkyr'_`meeting'/wrk"
 	cap mkdir "`wrkdir'"
 	use "`maindir'/`wkyr'_`meeting'/vintage/`wkyr'_`meeting'.dta", clear
-	
-	
+
+
 	//------------ Send to Mata
 	qui ds
 	local varlist = "`r(varlist)'"
 	mata: R = st_sdata(.,tokens(st_local("varlist")))
-	
+
 	local n = _N
-	
-	
+
+
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
@@ -92,10 +92,10 @@ qui {
 		local ++i
 		local status   ""
 		local dlwnote  ""
-		
-		
+
+
 		mata: pcn_ind(R)
-		
+
 		if regexm("`survey'", "(LIS|SILC)$") | ("`type'" == "PCN") {
 			local mod "bin"
 			local try 0
@@ -104,58 +104,60 @@ qui {
 			local mod "ALL"
 			local try 1
 		}
-		
+
 		//------------ change to veralt to working version
 		if regexm("`survey_id'", "(.*_M_)[Vv][0-9]+(_A_.*)") {
 			local survey_id = regexs(1) + "WRK" + regexs(2)
 		}
-		
+
 		local datadir "`wrkdir'/`country'/`country'_`year'_`survey'/`survey_id'/Data"
-		pause before confirm file exists 
-		
-		cap {
-			// there should be just one
-			local file: dir "`datadir'" file "`survey_id'*.dta",  respectcase  
-			confirm file "`datadir'/`file'" // if file exists and no option replace 
-			pause after confirming file 
+
+
+
+		// there should be just one
+		cap local file: dir "`datadir'" file "`survey_id'*.dta",  respectcase
+		if (_rc == 0) {
+			cap confirm file "`datadir'/`file'" // if file exists and no option replace
 		}
+		pause after confirming file
+
 		if (_rc == 0 & "`replace'" == "") {
 			local status "not replaced"
 			local dlwnote "Data exists and it was not replaced"
-			
+
 			mata: P = pcn_info(P)
 			noi _dots `i' 0
-			continue 
+			continue
 		}
-		
+
 		*--------------------2.2: Load data
 		cap datalibweb, country(`country') year(`year')  /*
 		*/   type(GMD) mod(`mod') veralt(wrk) clear
-		
+
 		if (_rc != 0 & `try' == 1) {
 			local mod "gpwg"
 			cap datalibweb, country(`country') year(`year')  /*
 			*/   type(GMD) mod(`mod') veralt(wrk) clear
 		}
 		if (_rc) {
-			
+
 			local status "dlw error"
-			
+
 			local dlwnote "datalibweb, country(`country') year(`year') type(GMD) mod(`mod') veralt(wrk) clear"
-			
+
 			mata: P = pcn_info(P)
 			noi _dots `i' 1
 			continue
 		}
-		
+
 		cap pcn_savedata , filename(`r(filename)') country(`country') survey(`survey') /*
 		*/  year(`year') survey_id(`survey_id') maindir(`wrkdir')
-		
+
 		if (_rc) {
 			local status "saving error"
-			
+
 			local dlwnote "pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') year(`year') survey_id(`survey_id') maindir(`wrkdir')"
-			
+
 			mata: P = pcn_info(P)
 			noi _dots `i' -1
 			continue
@@ -163,33 +165,33 @@ qui {
 		local status = "`r(status)'"
 		noi _dots `i' 0
 		mata: P = pcn_info(P)
-		
+
 	} // end of while
 	/*==================================================
 	3: import results file
 	==================================================*/
-	
+
 	*----------3.1:
 	drop _all
-	
+
 	getmata (surveyid status dlwnote) = P
-	
+
 	* Add chars
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
 	char _dta[pcn_datetime]       "`date_time'"
 	char _dta[pcn_user]           "`user'"
-	
-	
+
+
 	*----------3.2:
 	cap mkdir "`maindir'/`wkyr'_`meeting'/_aux"
 	cap noi datasignature confirm using "`maindir'/`wkyr'_`meeting'/_aux/pcn_info"
 	if (_rc) {
-		
+
 		datasignature set, reset saving("`maindir'/`wkyr'_`meeting'/_aux/pcn_info", replace)
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info_`date_time'.dta"
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info.dta", replace
-	}	
-	
+	}
+
 } // end of qui
 end
 
