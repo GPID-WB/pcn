@@ -98,7 +98,7 @@ qui {
     mkmat y*, matrix(`D')
     
     //------------ Find most recent version of master file 
-    _pcn_max_master, masterdir("`masterdir'") newfile("`newfile'")
+    _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
     local newfile = "`r(newfile)'"
     
     //------------ modify country name and coverage
@@ -125,6 +125,72 @@ qui {
   /*=================================================
   GDP
   ==================================================*/
+  if (inlist(lower("`update'"),"gdp")) {
+    
+    //------------gets data from WDI API
+    
+    /* Note: This section is based on Espen's do-files available in 
+    p:\02.personal\_handover\Espen\NAS process\*/
+    
+    *##s
+    set checksum off
+    wbopendata, indicator(NE.CON.PRVT.PC.KD;NY.GDP.PCAP.KD) long clear 
+    ren ne_con_prvt_pc_kd wdi_pce 
+    ren ny_gdp_pcap_kd wdi_gdp
+    keep countrycode year wdi*
+    
+    local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
+    merge 1:1 countrycode year using "`madison'", nogen 
+    rename rgdpnapc mdp_gdp
+    
+    replace mdp_gdp = . if year>1999 // do not use madison for recent spells 
+    
+    /* Note: I still need to figure out the special cases like IND */
+    gen new_gdp=wdi_gdp  // default
+    gen coverage = "National"  // for now 
+    
+    * Espen's code 
+    local s "mdp_gdp"
+    
+    bys countrycode coverage (year): gen lfbck_`s'= /* 
+      */ (new_gdp!=. & new_gdp[_n-1]==. & _n!=1)*new_gdp/`s'
+    
+    bys countrycode coverage (year): egen lfbck_`s'i=max(lfbck_`s')
+    
+    // Linking factors, forward
+    bys countrycode coverage (year): gen lffwd_`s'= /* 
+     */  (new_gdp!=. & new_gdp[_n+1]==. & _n!=_N)*new_gdp/`s'
+    
+    bys countrycode coverage (year): egen lffwd_`s'i=max(lffwd_`s')
+    
+    // Assess where to apply (forward==1 or backward==1)
+    bys countrycode coverage (year): gen gap_`s'=1 if new_gdp==. & new_gdp[_n-1]!=.
+    bys countrycode coverage (year): replace gap_`s'=1 if _n==1
+    bys countrycode coverage (year): gen gapsum_`s'=sum(gap_`s')
+    
+    // Apply: create linked value
+    gen lvfwd_`s'=`s'*lffwd_`s'i
+    gen lvbck_`s'=`s'*lfbck_`s'i
+    
+    // Replace where missing and indicate source 
+    
+    // fwd
+    * replace source`n'="`s'" if new`n'==. & gapsum_`s'==2 & lvfwd_`s'!=.
+    replace new`n'= lvfwd_`s' if new`n'==. & gapsum_`s'==2
+    
+    // bck
+    * replace source`n'="`s'" if new`n'==. & gapsum_`s'==1 & lvbck_`s'!=.
+    replace new`n'= lvbck_`s' if new`n'==. & gapsum_`s'==1
+    
+    
+    
+    
+    *##e
+    
+    
+    
+    
+  }
   
   
   //=================================================
@@ -143,7 +209,7 @@ qui {
     */
     
     //------------If data comes from Emi Suzuki
-    *##s
+    
     
     //------------Find most recent version
     local popdir "p:\01.PovcalNet\03.QA\03.Population\data"
@@ -191,7 +257,7 @@ qui {
     rename (`vars') pop=
     reshape long pop, i(`idvars') j(col) string
     replace col = upper(col)
-    sort `idvars' pop
+    replace pop = pop/1e6   // divide by million 
     
     //------------Merge data and clean
     merge m:1 col using `fyear', keep(match) nogen
@@ -200,12 +266,11 @@ qui {
     */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
     
     drop if series == "SP.URB.TOTL.IN.ZS"
-    drop series_name col
-    drop series
-    drop year > 2018 // change this to `popmaxyear'
+    drop series_name col series
+    drop if year > `popmaxyear' 
     sort country year
     
-    
+    //------------Matrix with years available
     sum year, meanonly
     local ymin = r(min)
     local ymax = r(max)
@@ -213,21 +278,38 @@ qui {
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
     
-    reshape wide pop, i(country country_name coverage) j(year)
-    sort country coverage 
-    
-    tempname D
-    mkmat pop*, matrix(`D')
-    
-    
-    
+    local idvars "country_name coverage country"
+    reshape wide pop, i(`idvars') j(year)
+    order `idvars'
+    sort `idvars'
     label var coverage     "Coverage"
     label var country_name "Country Name"
     label var country      "Country Code"
+    //------------Matrix with population values
+    tempname D
+    mkmat pop*, matrix(`D')    
     
-    *##e
+    //------------Find most recent master file 
+    _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
+    local newfile = "`r(newfile)'"
     
-  }
+    //------------ modify country name and coverage
+    local msheet "Population"
+    export excel `idvars' using "`mastervin'/`newfile'.xlsx",   /*
+    */ sheet("`msheet'") sheetreplace firstrow(varlabels)
+    
+    
+    //------------ Add cpi values
+    putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
+    putexcel D1 = matrix(`C')
+    putexcel D2 = matrix(`D')
+    putexcel save
+    
+    //------------Update current version
+    copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
+    
+    local success = 1
+    }
   
   /*==================================================
   PPP
@@ -245,11 +327,11 @@ qui {
   ==================================================*/
   
   if (`success' == 1) {
-    
+  
     import excel "`masterdir'/_vintage_control.xlsx", describe
     if regexm("`r(range_1)'", "([0-9]+$)") {
-      local lr = real(regexs(1))+1 // last row
-    }
+    local lr = real(regexs(1))+1 // last row
+      }
     
     putexcel set "`masterdir'/_vintage_control.xlsx", modify sheet("_vintage")
     putexcel A`lr' = "`newfile'"
@@ -260,8 +342,8 @@ qui {
     putexcel save
     
     noi disp in y "sheet(`msheet') in Master data has been update."
-  } // end of success
-} // end of qui
+    } // end of success
+  } // end of qui
 
 end
 
