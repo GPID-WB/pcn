@@ -126,7 +126,7 @@ qui {
 			local dlwnote "Data exists and it was not replaced"
 
 			mata: P = pcn_info(P)
-			noi _dots `i' 0
+			noi _dots `i' -1
 			continue
 		}
 
@@ -159,7 +159,7 @@ qui {
 			local dlwnote "pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') year(`year') survey_id(`survey_id') maindir(`wrkdir')"
 
 			mata: P = pcn_info(P)
-			noi _dots `i' -1
+			noi _dots `i' 2
 			continue
 		}
 		local status = "`r(status)'"
