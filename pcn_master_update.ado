@@ -42,6 +42,7 @@ local user=c(username)
 local masterdir "p:/01.PovcalNet/00.Master"
 local mastervin "`masterdir'/02.vintage"
 local newfile "Master_`datetimeMaster'"
+local popdir   "p:/01.PovcalNet/03.QA/03.Population/data"
 
 local success = 0
 //========================================================
@@ -128,63 +129,64 @@ qui {
 
   } // end of CPI update
 
-  /*==================================================
-  2: PPP
+
+  /*=================================================
+  GDP
   ==================================================*/
 
 
-  *----------2.1:
-
-
-  *----------2.2:
+  //=================================================
+  // PCE
+  //=================================================
 
 
   /*==================================================
-  3: CCF
+  Population
+  ==================================================*/
+  
+  if (inlist(lower("`update'"),"pop", "popu", "population")) {
+    /* there is no way to know the starting point of the data. So, 
+    the we have to hardcode the limits. 
+    There are two different procedures: WDI or data sent by Emi Suzuki
+    */
+    
+    //------------If data comes from Emi Suzuki
+*##s
+    local popdir "p:\01.PovcalNet\03.QA\03.Population\data"
+    local files: dir "`popdir'" files "population_country*xlsx"
+    local vers = 0
+    foreach file of local files {
+      if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
+      local sdata = date("`fdate'", "YMD")
+      local vers "`vers', `sdata'"
+    }
+    local maxdate = max(`vers')
+    local fver: disp %tdCCYY-NN-DD `maxdate' // file version 
+    local fver = trim("`fver'")
+    
+    import excel using "`popdir'/population_country_`fver'.xlsx", /* 
+     */ cellrange(F1)
+    
+    
+    
+    
+*##e
+    
+  }
+
+  /*==================================================
+  PPP
   ==================================================*/
 
 
-  *----------3.1:
-
-
-  *----------3.2:
-
-
   /*==================================================
-  4: GDP
+  CCF
   ==================================================*/
 
 
-  *----------4.1:
-
-
-  *----------4.2:
-
 
   /*==================================================
-  5: Population
-  ==================================================*/
-
-
-  *----------5.1:
-
-
-  *----------5.2:
-
-
-  /*==================================================
-  6:
-  ==================================================*/
-
-
-  *----------6.1:
-
-
-  *----------6.2:
-
-
-  /*==================================================
-  7: modify vintage control
+  modify vintage control
   ==================================================*/
 
   if (`success' == 1) {
