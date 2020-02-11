@@ -85,6 +85,10 @@ qui {
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
+	noi disp as txt ". " in y "= saved successfully" 
+	noi disp as txt "s " in y "= skipped - already exists"
+	noi disp as err "e " in y "= error saving"
+	noi disp as err "x " in y "= error in datalibweb"
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
 	local i = 0
 	noi _dots 0, title(Downloading WRK data) reps(`n')
@@ -117,10 +121,11 @@ qui {
 		// there should be just one
 		cap local file: dir "`datadir'" file "`survey_id'*.dta",  respectcase
 		if (_rc == 0) {
+			local file `file'
 			cap confirm file "`datadir'/`file'" // if file exists and no option replace
 		}
-		pause after confirming file
 
+		pause after confirming file
 		if (_rc == 0 & "`replace'" == "") {
 			local status "not replaced"
 			local dlwnote "Data exists and it was not replaced"
@@ -170,6 +175,8 @@ qui {
 	/*==================================================
 	3: import results file
 	==================================================*/
+	
+	noi disp _n ""
 
 	*----------3.1:
 	drop _all
@@ -191,6 +198,8 @@ qui {
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info_`date_time'.dta"
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info.dta", replace
 	}
+	
+	noi disp as result "Click {stata br:here} to see results"
 
 } // end of qui
 end
