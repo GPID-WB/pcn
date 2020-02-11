@@ -98,25 +98,11 @@ qui {
     mkmat y*, matrix(`D')
     
     //------------ Find most recent version of master file 
-    /* Note: This could be automated with a program so it does not have to be 
-    copied and pasted in each place where the most recent version of the master 
-    file is needed 
-    */
-    //------- Start
-    local mfiles: dir "`mastervin'" files "Master_*.xlsx", respect
-    local vcnumbers: subinstr local mfiles "Master_" "", all
-    local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
-    local vcnumbers: list sort vcnumbers
-    
-    mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
-    */ st_local("maxvc", strofreal(max(VC), "%15.0f"))
-    
-    //----Load Master CPI
-    local msheet "CPI"
-    copy "`mastervin'/Master_`maxvc'.xlsx" "`mastervin'/`newfile'.xlsx" , replace
-    //----- END 
+    _pcn_max_master, masterdir("`masterdir'") newfile("`newfile'")
+    local newfile = "`r(newfile)'"
     
     //------------ modify country name and coverage
+    local msheet "CPI"
     export excel CountryName Coverqge CountryCode         /*
     */ using "`mastervin'/`newfile'.xlsx", /*
     */ sheet("`msheet'") sheetreplace firstrow(variables)
@@ -211,7 +197,7 @@ qui {
     merge m:1 col using `fyear', keep(match) nogen
     rename *, lower
     gen coverage = cond(series == "SP.POP.TOTL", "National", /* 
-     */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
+    */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
     
     drop if series == "SP.URB.TOTL.IN.ZS"
     drop series_name col
@@ -232,7 +218,7 @@ qui {
     
     tempname D
     mkmat pop*, matrix(`D')
-
+    
     
     
     label var coverage     "Coverage"
@@ -262,7 +248,7 @@ qui {
     
     import excel "`masterdir'/_vintage_control.xlsx", describe
     if regexm("`r(range_1)'", "([0-9]+$)") {
-    local lr = real(regexs(1))+1 // last row
+      local lr = real(regexs(1))+1 // last row
     }
     
     putexcel set "`masterdir'/_vintage_control.xlsx", modify sheet("_vintage")
@@ -275,21 +261,46 @@ qui {
     
     noi disp in y "sheet(`msheet') in Master data has been update."
   } // end of success
-  } // end of qui
-  
-  end
-  exit
-  /* End of do-file */
-  
-  ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
-  
-  Notes:
-  1.
-  2.
-  3.
-  
-  
-  Version Control:
-    
-    
-        
+} // end of qui
+
+end
+
+
+//========================================================
+// Aux programs
+//========================================================
+
+//------------ Find most recent Master file 
+program _pcn_max_master, rclass
+
+syntax, mastervin(string) newfile(string)
+
+local mfiles: dir "`mastervin'" files "Master_*.xlsx", respect
+local vcnumbers: subinstr local mfiles "Master_" "", all
+local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
+local vcnumbers: list sort vcnumbers
+
+mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
+*/ st_local("maxvc", strofreal(max(VC), "%15.0f"))
+
+copy "`mastervin'/Master_`maxvc'.xlsx" "`mastervin'/`newfile'.xlsx" , replace
+
+return local newfile = "`newfile'"
+
+end
+
+
+exit
+/* End of do-file */
+
+><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+
+Notes:
+1.
+2.
+3.
+
+
+Version Control:
+
+
