@@ -149,7 +149,7 @@ qui {
     gen new_gdp=wdi_gdp  // default
     gen coverage = "National"  // for now 
     
-    * Espen's code 
+    //---- Espen's code ----- Start
     local s "mdp_gdp"
     
     bys countrycode coverage (year): gen lfbck_`s'= /* 
@@ -181,7 +181,7 @@ qui {
     // bck
     * replace source`n'="`s'" if new`n'==. & gapsum_`s'==1 & lvbck_`s'!=.
     replace new`n'= lvbck_`s' if new`n'==. & gapsum_`s'==1
-    
+    //---- Espen's code ----- End
     
     
     
