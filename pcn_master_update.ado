@@ -147,6 +147,17 @@ qui {
     
     /* Note: I still need to figure out the special cases like IND */
     gen new_gdp=wdi_gdp  // default
+    
+    //------------Special cases
+    expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
+    bysort countrycode year: egen coverage = seq()
+    tostring coverage, replace
+    replace coverage =cond(coverage == "1", "National", /* 
+    */                cond(coverage == "2", "Urban", "Rural"))
+    
+*##e
+
+    
     gen coverage = "National"  // for now 
     
     //---- Espen's code ----- Start
@@ -182,9 +193,10 @@ qui {
     * replace source`n'="`s'" if new`n'==. & gapsum_`s'==1 & lvbck_`s'!=.
     replace new`n'= lvbck_`s' if new`n'==. & gapsum_`s'==1
     //---- Espen's code ----- End
-    *##e
+    
     
     keep if year >= 1960
+    missings dropobs, force
     keep countrycode coverage year new_gdp 
     preserve 
     datalibweb_inventory, clear
@@ -213,7 +225,7 @@ qui {
     local idvars "countryname coverage countrycode note"
     order `idvars'
     sort  `idvars'
-    
+
     //------------ modify master file
     
     tempname D
@@ -238,10 +250,6 @@ qui {
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
     
     local success = 1
-    
-*##e
-    
-    
     
   }
   
