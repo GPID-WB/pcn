@@ -153,13 +153,13 @@ qui {
     local s "mdp_gdp"
     
     bys countrycode coverage (year): gen lfbck_`s'= /* 
-      */ (new_gdp!=. & new_gdp[_n-1]==. & _n!=1)*new_gdp/`s'
+    */ (new_gdp!=. & new_gdp[_n-1]==. & _n!=1)*new_gdp/`s'
     
     bys countrycode coverage (year): egen lfbck_`s'i=max(lfbck_`s')
     
     // Linking factors, forward
     bys countrycode coverage (year): gen lffwd_`s'= /* 
-     */  (new_gdp!=. & new_gdp[_n+1]==. & _n!=_N)*new_gdp/`s'
+    */  (new_gdp!=. & new_gdp[_n+1]==. & _n!=_N)*new_gdp/`s'
     
     bys countrycode coverage (year): egen lffwd_`s'i=max(lffwd_`s')
     
@@ -182,11 +182,64 @@ qui {
     * replace source`n'="`s'" if new`n'==. & gapsum_`s'==1 & lvbck_`s'!=.
     replace new`n'= lvbck_`s' if new`n'==. & gapsum_`s'==1
     //---- Espen's code ----- End
-    
-    
-    
     *##e
     
+    keep if year >= 1960
+    keep countrycode coverage year new_gdp 
+    preserve 
+    datalibweb_inventory, clear
+    tempfile dlw
+    save `dlw'
+    restore
+    merge m:1 countrycode  using `dlw', keep(match) nogen
+
+    //--vector of available years
+    sum year, meanonly
+    local ymin = r(min)
+    local ymax = r(max)
+    tempname C
+    mata: C = `ymin'..`ymax'; /*
+    */  st_matrix("`C'", C)
+    
+    rename new_gdp y
+    reshape wide y, i(countryname countrycode coverage) j(year)
+    
+    // cleaning
+    drop if inlist(region, "NAC", "OTHERS")
+    drop region
+    missings dropvars, force
+    
+    gen note = ""
+    local idvars "countryname coverage countrycode note"
+    order `idvars'
+    sort  `idvars'
+    
+    //------------ modify master file
+    
+    tempname D
+    mkmat y*, matrix(`D')
+    
+    //------------ Find most recent version of master file 
+    _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
+    local newfile = "`r(newfile)'"
+    
+    //------------ modify country name and coverage
+    local msheet "GDP"
+    export excel `idvars' using "`mastervin'/`newfile'.xlsx", /*
+    */ sheet("`msheet'") sheetreplace firstrow(varlabels)
+    
+    //------------ Add cpi values
+    putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
+    putexcel E1 = matrix(`C')
+    putexcel E2 = matrix(`D')
+    putexcel save
+    
+    //------------Update current version
+    copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
+    
+    local success = 1
+    
+*##e
     
     
     
