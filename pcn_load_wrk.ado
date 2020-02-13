@@ -153,6 +153,7 @@ else {
 local surdir "`maindir'/`country'/`country'_`year'_`survey'" 
  
 * vermast 
+
  
 if ("`vermast'" == "") { 
 	local dirs: dir "`surdir'" dirs "*`type'", respectcase 
@@ -193,48 +194,36 @@ local survid = "`country'_`year'_`survey'_V`vermast'_M_WRK_A_GMD"
 local dirname "`maindir'/`country'/`country'_`year'_`survey'/`survid'/Data" 
  
 local files: dir "`dirname'"  files "*.dta", respectcase 
- 
- 
-** serch for the ending 
-local k = 0 
-foreach file of local files { 
-	local ++k 
-	if regexm("`file'", "`survid'_(.+)\.dta"){ 
-		local e = regexs(1) 
-		local endings "`endings' `e'" 
-	} 
-	else{ 
-		local endings "`endings'"  
-	} 
-} 
- 
-* select file ending  
-if (`k' == 0) { 
-	noi disp in r "no survey in `country'-`year'" 
+
+/** There should be only one file per folder **/
+
+if (wordcount(`"`files'"') == 0) { 
+		noi disp in r "no survey in `country'-`year'" 
 		error 
-} 
-else if (`k' == 1) { 
-	local ending = subinstr("`endings'"," ","",.) 
-} 
-else{ 
-	foreach ending of local endings { 
+	} 
+	else if (wordcount(`"`files'"') == 1) { 
+		local filename = regexr(`files',`".dta"',"")
+	} 
+	else {  // if more than 1 file (should not happen, but just in case)
+ 
+		noi disp as text "list of available surveys for `country'- `year'" 
+ 
+		local i = 0 
+		foreach file of local files { 
 			local ++i 
-			noi disp `"   `i' {c |} {stata `survey' GMD `ending'}"' 
+			noi disp `"  `i' {c |} {stata `file'}"' 
 		} 
-		noi disp _n "select survey to load" _request(_ending) 
-		 
-} 
- 
- 
-if ("`ending'" != "") local filename "`survid'_`ending'" 
-else 				  local filename "`survid'" 
- 
+		noi disp _n "select file to load" _request(_file)
+		local filename = regexr(`"`file'"',".dta",`""')
+	} 
+
+
 return local surdir = "`surdir'" 
 return local survid = "`survid'" 
 return local survin = "`country'_`year'_`survey'_v`vermast'_M_WRK_A" 
-return local filename = "`filename'" 
+return local filename = "`filename'"
  
-use "`surdir'/`survid'/Data/`filename'.dta", clear 
+use "`surdir'/`survid'/Data/`filename'.dta", clear
 noi disp as text "`filename'.dta" as res " successfully loaded" 
 /*================================================== 
               3:  
@@ -260,6 +249,7 @@ Notes:
  
 Version Control: 
  
+ *** Feb 11
  
 if (wordcount(`"`files'"') == 0) { 
 		noi disp in r "no survey in `country'-`year'" 
@@ -284,5 +274,40 @@ if (wordcount(`"`files'"') == 0) {
 		noi disp _n "select survey to load" _request(_ending) 
 	} 
  
+ *** Feb 13
+ 
+ 
+** serch for the ending 
+local k = 0 
+foreach file of local files { 
+	local ++k 
+	if regexm("`file'", "`survid'_(.+)\.dta"){ 
+		local e = regexs(1) 
+		local endings "`endings' `e'" 
+	} 
+	else{ 
+		local endings "`endings'"  
+	} 
+} 
+ 
+* select file ending  
+if (`k' == 0) { 
+	noi disp in r "no survey in `country'-`year'" 
+		error 
+} 
+else if (`k' == 1) { 
+	local ending = subinstr("`endings'"," ","",.) 
+} 
+else{ 
+	foreach ending of local endings { 
+		local ++i 
+		noi disp `"   `i' {c |} {stata `survey' GMD `ending'}"' 
+	} 
+	noi disp _n "select survey to load" _request(_ending) 	 
+} 
+ 
+ 
+if ("`ending'" != "") local filename "`survid'_`ending'" 
+else 				  local filename "`survid'" 
  
  
