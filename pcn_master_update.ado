@@ -20,7 +20,7 @@ syntax [anything],         ///
 update(string)             ///
 [                          ///
 cpivin(string)             ///
-POPMAXYear(integer 2018)   ///
+MAXYear(integer 2018)   ///
 ]
 
 version 15 // this is really important 
@@ -134,25 +134,20 @@ qui {
     
     /* Note: This section is based on Espen's do-files available in 
     p:\02.personal\_handover\Espen\NAS process\*/
-    
+
 *##s
     set checksum off
-    wbopendata, indicator(NE.CON.PRVT.PC.KD;NY.GDP.PCAP.KD) long clear 
-    ren ne_con_prvt_pc_kd wdi_pce 
+    wbopendata, indicator(NY.GDP.PCAP.KD) long clear 
     ren ny_gdp_pcap_kd wdi_gdp
-    keep countrycode year wdi*
+    keep countrycode year wdi_gdp
     
-    gen sourcegdp="wdi2019" 
-		gen sourcepce="wdi2019" 
+    gen sourcegdp="WDI 2019" 
 		
-    
-
     local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
     merge 1:1 countrycode year using "`madison'", nogen 
     rename rgdpnapc mdp_gdp
     
     replace sourcegdp ="Maddison 2018" if sourcegdp == ""
-		replace sourcepce ="Maddison 2018" if sourcepce == ""
     
     replace mdp_gdp = . if year>1999 // do not use madison for recent spells 
     
@@ -193,15 +188,18 @@ qui {
     use `fna', clear
     
     merge 1:1 countrycode coverage year using `sna', replace update
-    rename (gdp pce) sp_=
-    gen special=(_merge==3)
-    drop _merge    
-*##e
+    rename gdp sp_=
 
-
-    //---- Espen's code ----- Start
-    gen new_gdp=wdi_gdp  // default
+    gen special= inlist(_merge, 3, 4, 5)
+    drop _merge
     
+    //========================================================
+    // Espen's code 
+    //========================================================
+    //---- ----- Start
+    
+    gen     new_gdp=wdi_gdp               // default
+    replace new_gdp=sp_gdp   if special   // default
     
     
     local s "mdp_gdp"
@@ -229,16 +227,18 @@ qui {
     // Replace where missing and indicate source 
     
     // fwd
-    * replace source`n'="`s'" if new`n'==. & gapsum_`s'==2 & lvfwd_`s'!=.
-    replace new`n'= lvfwd_`s' if new`n'==. & gapsum_`s'==2
+    replace new_gdp= lvfwd_`s' if new_gdp==. & gapsum_`s'==2
+    replace sourcegdp="`s'" if new_gdp==. & gapsum_`s'==2 & lvfwd_`s'!=.
     
     // bck
-    * replace source`n'="`s'" if new`n'==. & gapsum_`s'==1 & lvbck_`s'!=.
-    replace new`n'= lvbck_`s' if new`n'==. & gapsum_`s'==1
-    //---- Espen's code ----- End
+    replace new_gdp   = lvbck_`s' if new_gdp==. & gapsum_`s'==1
+    replace sourcegdp = "`s'"     if new_gdp==. & gapsum_`s'==1 & lvbck_`s'!=.
+    replace sourcegdp = "NONE"    if new_gdp==.
     
+    //---- Espen's code ----- End
 
-    keep if year >= 1960
+
+    keep if inrange(year,1960, `maxyear')
     missings dropobs, force
     keep countrycode coverage year new_gdp 
     preserve 
@@ -255,10 +255,12 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-    
+
+*##e
     rename new_gdp y
     reshape wide y, i(countryname countrycode coverage) j(year)
-    
+
+
     // cleaning
     drop if inlist(region, "NAC", "OTHERS")
     drop region
@@ -300,7 +302,137 @@ qui {
   //=================================================
   // PCE
   //=================================================
+  if (inlist(lower("`update'"),"pce", "hfce")) {
+    
+    
+    //========================================================
+    // gets data from WDI API
+    //========================================================
+    
+    /* Note: This section is based on Espen's do-files available in 
+    p:\02.personal\_handover\Espen\NAS process\*/
+    
+
+    set checksum off
+    wbopendata, indicator(NE.CON.PRVT.PC.KD) long clear 
+    ren ne_con_prvt_pc_kd wdi_pce 
+    keep countrycode year wdi_pce
+    
+		gen sourcepce="WDI 2019" 
+		
+    //========================================================
+    // Special cases
+    //========================================================
+    expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
+    bysort countrycode year: egen coverage = seq()
+    tostring coverage, replace
+    replace coverage =cond(coverage == "1", "National", /* 
+    */                cond(coverage == "2", "Urban", "Rural"))
+
+    tempfile fna
+    save `fna'
+    
+    //------------Find most recent version
+    local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
+    local files: dir "`popdir'" files "NAS special*xlsx"
+    local vers = 0
+    foreach file of local files {
+      if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
+      local sdata = date("`fdate'", "YMD")
+      local vers "`vers', `sdata'"
+    }
+    local maxdate = max(`vers')
+    local fver: disp %tdCCYY-NN-DD `maxdate' // file version 
+    local fver = trim("`fver'")
+    
+    import excel using "`popdir'/NAS special_`fver'.xlsx", describe
+    
+    import excel using "`popdir'/NAS special_`fver'.xlsx", /* 
+    */  clear sheet("`sheet'") firstrow case(lower)
+    
+    tempfile sna
+    save `sna'
+    
+    * Merge with special cases and downloaded data
+    use `fna', clear
+    
+    merge 1:1 countrycode coverage year using `sna', replace update
+    rename pce sp_=
+
+    gen special= inlist(_merge, 3, 4, 5)
+    drop _merge
+    
+    //========================================================
+    // Espen's code 
+    //========================================================
+    //---- ----- Start
+
+    gen     new_pce=wdi_pce               // default
+    replace new_pce=sp_pce   if special   // default
+    replace sourcepce = "NONE"    if new_pce==.
+    
+    //---- Espen's code ----- End
+
+
+    keep if inrange(year,1960, `maxyear')
+    missings dropobs, force
+    keep countrycode coverage year new_pce 
+    preserve 
+    datalibweb_inventory, clear
+    tempfile dlw
+    save `dlw'
+    restore
+    merge m:1 countrycode  using `dlw', keep(match) nogen
+
+    //--vector of available years
+    sum year, meanonly
+    local ymin = r(min)
+    local ymax = r(max)
+    tempname C
+    mata: C = `ymin'..`ymax'; /*
+    */  st_matrix("`C'", C)
+    
+    rename new_pce y
+    reshape wide y, i(countryname countrycode coverage) j(year)
+    
+    // cleaning
+    drop if inlist(region, "NAC", "OTHERS")
+    drop region
+    missings dropvars, force
+    
+    gen note = ""
+    local idvars "countryname coverage countrycode note"
+    order `idvars'
+    sort  `idvars'
+
+    //------------ modify master file
+    
+    tempname D
+    mkmat y*, matrix(`D')
+    
+    //------------ Find most recent version of master file 
+    _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
+    local newfile = "`r(newfile)'"
+    
+    //------------ modify country name and coverage
+    local msheet "PCE"
+    export excel `idvars' using "`mastervin'/`newfile'.xlsx", /*
+    */ sheet("`msheet'") sheetreplace firstrow(varlabels)
+    
+    //------------ Add cpi values
+    putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
+    putexcel E1 = matrix(`C')
+    putexcel E2 = matrix(`D')
+    putexcel save
+    
+    //------------Update current version
+    copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
+    
+    local success = 1
+    
+  }
   
+    
   
   /*==================================================
   Population
@@ -371,7 +503,7 @@ qui {
     
     drop if series == "SP.URB.TOTL.IN.ZS"
     drop series_name col series
-    drop if year > `popmaxyear' 
+    drop if year > `maxyear' 
     sort country year
     
     //------------Matrix with years available

@@ -261,7 +261,8 @@ pcn download gpwg
 pcn download pending
 pcn download wrk
 pcn update cpi
-
+pcn master, update(gdp)
+pcn master, update(pce)
 
 
 
