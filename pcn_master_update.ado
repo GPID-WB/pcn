@@ -80,6 +80,9 @@ qui {
     */ fileserver surveyid(Support_2005_CPI_v0`cpivin'_M) /*
     */ filename(Final_CPI_PPP_to_be_used.dta)
     
+    *Special cases 
+    replace cpi2011_unadj = cpi2011 if code=="IDN"|code=="IND"|code=="CHN"
+    
     //------------ vector of available years
     sum year, meanonly
     local ymin = r(min)
@@ -89,7 +92,7 @@ qui {
     */  st_matrix("`C'", C)
     
     //------------Rename to match Master file especifications
-    rename (cpi2011 code levelnote countryname) (y CountryCode Coverqge CountryName)
+    rename (cpi2011_unadj code levelnote countryname) (y CountryCode Coverqge CountryName)
     keep y CountryCode Coverqge CountryName survname year
     reshape wide y, i(CountryCode CountryName Coverqge survname) j(year)
     
@@ -134,8 +137,8 @@ qui {
     
     /* Note: This section is based on Espen's do-files available in 
     p:\02.personal\_handover\Espen\NAS process\*/
-
-*##s
+    
+    *##s
     set checksum off
     wbopendata, indicator(NY.GDP.PCAP.KD) long clear 
     ren ny_gdp_pcap_kd wdi_gdp
@@ -159,7 +162,7 @@ qui {
     tostring coverage, replace
     replace coverage =cond(coverage == "1", "National", /* 
     */                cond(coverage == "2", "Urban", "Rural"))
-
+    
     tempfile fna
     save `fna'
     
@@ -189,7 +192,7 @@ qui {
     
     merge 1:1 countrycode coverage year using `sna', replace update
     rename gdp sp_=
-
+    
     gen special= inlist(_merge, 3, 4, 5)
     drop _merge
     
@@ -236,8 +239,8 @@ qui {
     replace sourcegdp = "NONE"    if new_gdp==.
     
     //---- Espen's code ----- End
-
-
+    
+    
     keep if inrange(year,1960, `maxyear')
     missings dropobs, force
     keep countrycode coverage year new_gdp 
@@ -247,7 +250,7 @@ qui {
     save `dlw'
     restore
     merge m:1 countrycode  using `dlw', keep(match) nogen
-
+    
     //--vector of available years
     sum year, meanonly
     local ymin = r(min)
@@ -255,12 +258,12 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-
-*##e
+    
+    *##e
     rename new_gdp y
     reshape wide y, i(countryname countrycode coverage) j(year)
-
-
+    
+    
     // cleaning
     drop if inlist(region, "NAC", "OTHERS")
     drop region
@@ -270,7 +273,7 @@ qui {
     local idvars "countryname coverage countrycode note"
     order `idvars'
     sort  `idvars'
-
+    
     //------------ modify master file
     
     tempname D
@@ -312,7 +315,7 @@ qui {
     /* Note: This section is based on Espen's do-files available in 
     p:\02.personal\_handover\Espen\NAS process\*/
     
-
+    
     set checksum off
     wbopendata, indicator(NE.CON.PRVT.PC.KD) long clear 
     ren ne_con_prvt_pc_kd wdi_pce 
@@ -328,7 +331,7 @@ qui {
     tostring coverage, replace
     replace coverage =cond(coverage == "1", "National", /* 
     */                cond(coverage == "2", "Urban", "Rural"))
-
+    
     tempfile fna
     save `fna'
     
@@ -358,7 +361,7 @@ qui {
     
     merge 1:1 countrycode coverage year using `sna', replace update
     rename pce sp_=
-
+    
     gen special= inlist(_merge, 3, 4, 5)
     drop _merge
     
@@ -366,14 +369,14 @@ qui {
     // Espen's code 
     //========================================================
     //---- ----- Start
-
+    
     gen     new_pce=wdi_pce               // default
     replace new_pce=sp_pce   if special   // default
     replace sourcepce = "NONE"    if new_pce==.
     
     //---- Espen's code ----- End
-
-
+    
+    
     keep if inrange(year,1960, `maxyear')
     missings dropobs, force
     keep countrycode coverage year new_pce 
@@ -383,7 +386,7 @@ qui {
     save `dlw'
     restore
     merge m:1 countrycode  using `dlw', keep(match) nogen
-
+    
     //--vector of available years
     sum year, meanonly
     local ymin = r(min)
@@ -404,7 +407,7 @@ qui {
     local idvars "countryname coverage countrycode note"
     order `idvars'
     sort  `idvars'
-
+    
     //------------ modify master file
     
     tempname D
@@ -432,7 +435,7 @@ qui {
     
   }
   
-    
+  
   
   /*==================================================
   Population
@@ -546,40 +549,40 @@ qui {
     
     local success = 1
     }
-  
-  /*==================================================
-  PPP
-  ==================================================*/
-  
-  
-  /*==================================================
-  CCF
-  ==================================================*/
-  
-  
-  
-  /*==================================================
-  modify vintage control
-  ==================================================*/
-  
-  if (`success' == 1) {
-  
-    import excel "`masterdir'/_vintage_control.xlsx", describe
-    if regexm("`r(range_1)'", "([0-9]+$)") {
-    local lr = real(regexs(1))+1 // last row
+    
+    /*==================================================
+    PPP
+    ==================================================*/
+    
+    
+    /*==================================================
+    CCF
+    ==================================================*/
+    
+    
+    
+    /*==================================================
+    modify vintage control
+    ==================================================*/
+    
+    if (`success' == 1) {
+      
+      import excel "`masterdir'/_vintage_control.xlsx", describe
+      if regexm("`r(range_1)'", "([0-9]+$)") {
+        local lr = real(regexs(1))+1 // last row
       }
-    
-    putexcel set "`masterdir'/_vintage_control.xlsx", modify sheet("_vintage")
-    putexcel A`lr' = "`newfile'"
-    putexcel B`lr' = "`user'"
-    putexcel C`lr' = "`msheet'"
-    putexcel D`lr' = "Update `update' using datalibweb cpi version `cpivin'. Stata: pcn master, update(`update')"
-    
-    putexcel save
-    
-    noi disp in y "sheet(`msheet') in Master data has been update."
+      
+      putexcel set "`masterdir'/_vintage_control.xlsx", modify sheet("_vintage")
+      putexcel A`lr' = "`newfile'"
+      putexcel B`lr' = "`user'"
+      putexcel C`lr' = "`msheet'"
+      putexcel D`lr' = "Update `update' using datalibweb cpi version `cpivin'. Stata: pcn master, update(`update')"
+      
+      putexcel save
+      
+      noi disp in y "sheet(`msheet') in Master data has been update."
     } // end of success
-  } // end of qui
+} // end of qui
 
 end
 
