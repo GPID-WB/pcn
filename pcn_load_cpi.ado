@@ -68,7 +68,7 @@ if ("`version'" != "") {
         
         local datesample: disp %tcDDmonCCYY_HH:MM:SS /* 
         */   clock("`c(current_date)' `c(current_time)'", "DMYhms")
-        noi disp as err "version() format must be %tdDDmonCCYY, e.g " _c /* 
+        noi disp as err "version() format must be %tcDDmonCCYY_HH:MM:SS, e.g " _c /* 
         */ `"{cmd:`=trim("`datesample'")'}"' _n
         error
       }

@@ -1,68 +1,197 @@
 /*==================================================
 project:       Load master file sheets
-Author:        R.Andres Castaneda Aguilar 
+Author:        R.Andres Castaneda Aguilar
 E-email:       acastanedaa@worldbank.org
-url:           
+url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:    13 Feb 2020 - 18:31:49
-Modification Date:   
+Modification Date:
 Do-file version:    01
-References:          
-Output:             
+References:
+Output:
 ==================================================*/
 
 /*==================================================
-              0: Program set up
+0: Program set up
 ==================================================*/
 program define pcn_master_load, rclass
-syntax [], []
-version 16
+syntax [anything], load(string) ///
+[                               ///
+version(string)                 ///
+pause                           ///
+shape(string)                   ///
+]
 
-//========================================================
-// 
-//========================================================
+version 15 // this is really important
 
+*---------- conditions
+if ("`pause'" == "pause") pause on
+else                      pause off
 
-
-//========================================================
-// 
-//========================================================
-
-
-//========================================================
-// 
-//========================================================
-
-
-
-//========================================================
-// 
-//========================================================
-
+*##s
+*------------------ Initial Parameters  ------------------
+local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
+local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
+local date_time = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
+local datetimeHRF:    disp %tcDDmonCCYY_HH:MM:SS `date_time'
+local datetimeMaster: disp %tcCCYYNNDDHHMMSS     `date_time'
+local datetimeHRF = trim("`datetimeHRF'")
+local user=c(username)
 
 
-//========================================================
-// 
-//========================================================
-
+local masterdir "p:/01.PovcalNet/00.Master"
+local mastervin "`masterdir'/02.vintage"
+local newfile "Master_`datetimeMaster'"
+local popdir   "p:/01.PovcalNet/03.QA/03.Population/data"
 
 
 //========================================================
-// 
+// Conditions
 //========================================================
 
+if ("`shape'" == "") local shape "long"
 
 //========================================================
-// 
+// Find most recent data.
 //========================================================
 
-
-//========================================================
-// 
-//========================================================
-
-
+qui {
+	
+	local mfiles: dir "`mastervin'" files "Master_*.xlsx", respect
+	local vcnumbers: subinstr local mfiles "Master_" "", all
+	local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
+	local vcnumbers: list sort vcnumbers
+	
+	mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
+	*/ st_local("maxvc", strofreal(max(VC), "%15.0f"))
+	
+	* return local vcnumbers = "`vcnumbers'"
+	if (inlist("`version'" , "pick", "choose", "select")) {
+		noi disp in y "list of available vintage control dates for file " in g "povcalnet_cpi"
+		local i = 0
+		
+		foreach vc of local vcnumbers {
+			
+			local ++i
+			if (length("`i'") == 1 ) local i = "00`i'"
+			if (length("`i'") == 2 ) local i = "0`i'"
+			
+			local svc = clock("`vc'", "YMDhms")   // stata readable form
+			local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
+			local dispdate = trim("`dispdate'")
+			
+			noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'	
+			
+		}
+		
+		noi disp _n "select vintage control date from the list above" _request(_vcnumber)
+	}
+	else if inlist(lower("`version'"), "maxvc", "max", "") {
+		local vcnumber = `maxvc'
+	}
+	else {
+		cap confirm number `version'
+		if (_rc ==0) {
+			local vcnumber  `version'
+		}
+		else {
+			if (!regexm("`version'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /*
+			*/ | length("`version'")!= 18) {
+				
+				local datesample: disp %tcDDmonCCYY_HH:MM:SS /*
+				*/   clock("`c(current_date)' `c(current_time)'", "DMYhms")
+				noi disp as err "version() format must be %tdDDmonCCYY, e.g " _c /*
+				*/ `"{cmd:`=trim("`datesample'")'}"' _n
+				error
+			}
+			local vcnumber: disp %13.0f clock("`version'", "DMYhms")
+			local vcnumber: disp %tcCCYYNNDDHHMMSS `vcnumber'
+		}
+	}  // end of checking version format
+	*##e
+	local svc = clock("`vcnumber'", "YMDhms")   // stata readable form
+	local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
+	
+	noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /* 
+  */ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'" 
+	
+	
+	//========================================================
+	//  CPI
+	//========================================================
+	if (lower("`load'") == "cpi") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("CPI") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		local varlist = "`r(varlist)'"
+		foreach v of local varlist {
+			local n: variable label `v'
+			cap confirm number `n'
+			if (_rc) continue
+			rename `v' y`n'
+		}
+		
+		if ("`shape'" == "long") {
+			reshape long y, i(countrycode coverqge) j(year)
+			rename y cpi
+			drop if cpi == .
+			
+			* fix mismatches between the two dataset
+			rename coverqge coveragetype
+			clonevar data_coverage = coveragetype
+			
+			replace data_coverage = "Urban" if countrycode == "ARG"
+			replace data_coverage = "Rural" if countrycode == "ETH" & year == 1981
+			replace data_coverage = "Urban" if countrycode == "BOL" & year == 1992
+			replace data_coverage = "Urban" if countrycode == "ECU" & year == 1995
+			replace data_coverage = "Urban" if countrycode == "FSM" & year == 2000
+			replace data_coverage = "Urban" if countrycode == "HND" & year == 1986
+			replace data_coverage = "Urban" if countrycode == "COL" & inrange(year, 1980,1991)
+			replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
+		}
+		
+		* if ("`shape'" == "long") rename year cpi_time
+	}
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+	
+	//========================================================
+	//
+	//========================================================
+	
+} // end qui 
 
 end
 exit
