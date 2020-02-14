@@ -1,37 +1,38 @@
 /*==================================================
 project:       Load data stored in P drive
-Author:        R.Andres Castaneda 
+Author:        R.Andres Castaneda
 E-email:       acastanedaa@worldbank.org
-url:           
+url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     8 Aug 2019 - 08:54:29
-Modification Date:   
+Modification Date:
 Do-file version:    01
-References:          
-Output:             
+References:
+Output:
 ==================================================*/
 
 /*==================================================
-              0: Program set up
+0: Program set up
 ==================================================*/
 program define pcn_load, rclass
 syntax [anything(name=subcmd id="subcommand")],  ///
 [                                   ///
-			country(string)               ///
-			Year(numlist)                 ///
-			REGions(string)               ///
-			maindir(string)               ///
-			type(string)                  ///
-			survey(string)                ///
-			replace                       ///
-			vermast(string)               ///
-			veralt(string)                ///
-			MODule(string)                ///
-			clear                         ///
-			pause                         ///
-			lis                           ///
-] 
+country(string)               ///
+Year(numlist)                 ///
+REGions(string)               ///
+maindir(string)               ///
+type(string)                  ///
+survey(string)                ///
+replace                       ///
+vermast(string)               ///
+veralt(string)                ///
+MODule(string)                ///
+clear                         ///
+pause                         ///
+lis                           ///
+cpi                           ///
+]
 
 version 14
 
@@ -42,12 +43,12 @@ else                      pause off
 
 * ---- Initial parameters
 
-local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY  
-local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS  
-local date_time = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS  
-local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time' 
-local datetimeHRF = trim("`datetimeHRF'")	
-local user=c(username) 
+local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
+local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
+local date_time = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
+local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
+local datetimeHRF = trim("`datetimeHRF'")
+local user=c(username)
 
 
 //========================================================
@@ -59,10 +60,10 @@ local user=c(username)
 local country = upper("`country'")
 local lis = upper("`lis'")
 
-/* The `lis` option is an inelegant solution because it is too specific and does not 
-allow the code to be generalized. Yet, it works fine for now. Also, we should add 
+/* The `lis` option is an inelegant solution because it is too specific and does not
+allow the code to be generalized. Yet, it works fine for now. Also, we should add
 a condition that automates the identification of module. Right now it is hardcoded.
-See for instance the following cases: 
+See for instance the following cases:
 
 pcn load, countr(EST) year(2004) clear              // works
 pcn load, countr(EST) year(2004) clear module(GPWG) // does nor work
@@ -80,16 +81,16 @@ if ("`lis'" == "LIS") local module "BIN"
 if (inlist("`type'", "GMD", "GPWG")) {
 	local collection "GMD"
 }
-/* 
+/*
 else if (inlist("`type'", "txt", "text", "pcn")) {
-	local collection "PCN"
+local collection "PCN"
 }
 else if (upper("`type'") == "LIS") {
-	local collection "LIS"
-	local module ""
-	local maindir "p:\01.PovcalNet\04.LIS\02.data"
+local collection "LIS"
+local module ""
+local maindir "p:\01.PovcalNet\04.LIS\02.data"
 }
- */
+*/
 else {
 	noi disp as error "type: `type' is not valid"
 	error
@@ -98,7 +99,7 @@ else {
 
 
 /*==================================================
-              1: Find path
+1: Find path
 ==================================================*/
 
 *----------1.1: Country and Year
@@ -134,23 +135,23 @@ if ("`year'" == "") {
 *----------1.2: Path
 
 if ("`survey'" == "") {
-	
+
 	//------------very inefficient solution to pick surveys
 	/*
-	This section is part of the inefficiencies mentioned above. It is hardcoded and 
-	inelegant. We need to find a better solution. 
+	This section is part of the inefficiencies mentioned above. It is hardcoded and
+	inelegant. We need to find a better solution.
 	*/
-	
+
 	if ("`module'" == "BIN") local lis "LIS"
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
-	
+
 	if ("`module'" == "GPWG") {
 		local dirs1: dir "`maindir'/`country'" dirs "`country'_`year'*LIS", respectcase
 		local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
 		local dirs: list dirs2 - dirs1
 	}
 	//------------------------------------------
-	
+
 
 	if (wordcount(`"`dirs'"') == 0) {
 		noi disp in r "no survey in `country'-`year'"
@@ -233,7 +234,7 @@ if ("`veralt'" == "") {
 
 
 /*==================================================
-       2: Loading according to type
+2: Loading according to type
 ==================================================*/
 
 
@@ -242,7 +243,7 @@ local survid = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A_`collection'"
 
 if ("`module'" != "") {
 	local filename = "`survid'_`module'"
-} 
+}
 else {
 	local filename = "`survid'"
 }
@@ -252,11 +253,24 @@ return local survid = "`survid'"
 return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A"
 return local filename = "`filename'"
 
-
 use "`surdir'/`survid'/Data/`filename'.dta", clear
 noi disp as text "`filename'.dta" as res " successfully loaded"
+
+if ("`cpi'" == "cpi") {
+	preserve
+	pcn load cpi, clear
+	keep if countrycode == "`country'" & year == `year'
+	if (_N == 1) {
+		local ccf  = cur_adj[1]
+		local ppp  = icp2011[1]
+		local cpi  = cpi2011[1]
+	}
+	restore
+}
+
+
 /*==================================================
-              3: 
+3:
 ==================================================*/
 
 
