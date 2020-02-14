@@ -206,6 +206,11 @@ qui {
 	//========================================================
 	if regexm("`subcmd'", "master") {
 		if regexm("`options'", "update\(.*\)") {
+			if !inlist("`c(username)'", "wb384996") {
+				noi disp in r "You're not authorized to execute this command"
+				error
+			}
+		
 			noi pcn_master_update,  `pause' `options'  
 			return add
 		}
