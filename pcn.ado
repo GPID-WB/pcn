@@ -165,6 +165,19 @@ qui {
 		return add 
 		exit 
 	} 
+	
+	//======================================================== 
+	// load estimates data 
+	//======================================================== 
+	if regexm("`subcmd'", "load[ ]+estimates") { 
+	 
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending" 
+		 
+		noi pcn_load_estimates, maindir("`maindir'") /* 
+		*/ `pause' `clear' `options' 
+		return add 
+		exit 
+	} 
 
 
 	// ----------------------------------------------------------------------------------
