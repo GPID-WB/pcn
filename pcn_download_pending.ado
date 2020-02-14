@@ -55,6 +55,7 @@ local dir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
 
 qui {
 	* working month
+*##s
 	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
 	
 	*Working year
@@ -69,8 +70,8 @@ qui {
 		local wkyr = `wkyr' + 1  // workign for the next year's meeting
 	}
 	
-	return local wkyr = `wkyr'
-	return local meeting = "`meeting'"
+	* return local wkyr = `wkyr'
+	* return local meeting = "`meeting'"
 	
 	/*==================================================
 	downloading transaction_id from primus
@@ -79,6 +80,19 @@ qui {
 	pcn_primus_query, countries(`countries') years(`years') ///
 	`pause' status(pending)
 	
+	if ("`meeting'" == "SM") {
+		local filtdate = "`=`wkyr'-1'-12" // filter date (december last year)
+	}
+	else {
+		// I still don't know the cut off for Annual meetings
+	}
+	
+	tempvar fd
+	gen double `fd' = clock(datetime, "DMY hms")
+	
+	keep if  `fd' >= clock("`filtdate'", "YM")
+*##e
+	ds
 	local varlist = "`r(varlist)'"
 	local n = _N
 	
@@ -107,11 +121,9 @@ qui {
 	else if (_rc ==9) {
 		local files: dir "`dirname'"  files "`wkyr'_`meeting'_*.dta", respectcase
 		
-		
 		local vers = 0  
 		foreach file of local files {
 			if regexm("`file'", "`wkyr'_`meeting'_([0-9]+)\.dta") {
-				local ++k
 				local ver = regexs(1)
 				local vers "`vers' `ver'"
 			}
@@ -128,11 +140,14 @@ qui {
 		merge 1:1 survey_id using "`dirname'/`wkyr'_`meeting'_`ver'.dta", /* 
 		*/ keep(master) nogen
 		
+		pause after merge 
 		//------------Send to MATA
-		qui ds
+		ds
 		local varlist = "`r(varlist)'"
+		local n = _N
 		mata: R = st_sdata(.,tokens(st_local("varlist")))
 		
+		pause after sendin to mata
 	}
 	else {
 		noi disp in y "File `wkyr'_`meeting' has not changed since last time"
@@ -192,13 +207,13 @@ qui {
 	if (_rc) {
 		append using "`filename'.dta"
 	}
-*##s
+
 	ds
 	local duplvars = "`r(varlist)'"
 	local duplvars: subinstr local duplvars "date" "", word
 	duplicates drop `duplvars' , force
-	* save "`filename'.dta", replace 
-	
+	save "`filename'.dta", replace 
+
 	
 	
 	//========================================================
@@ -246,9 +261,16 @@ qui {
 	local varnames: list varnames - rmvars
 	
 	drop if povertyline == .
+	drop if countrycode == "IDN"
+	
+	//------------drop duplicates removing date
+	ds
+	local duplvars = "`r(varlist)'"
+	local duplvars: subinstr local duplvars "date" "", word
+	duplicates drop `duplvars' , force
 	
 	reshape wide `varnames', i(year countrycode povertyline surveyid department) j(applicationid) string
-*##e
+
 	save "`filename'_reshaped.dta", replace
 	
 } // end of qui
