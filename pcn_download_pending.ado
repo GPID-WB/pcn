@@ -262,7 +262,8 @@ qui {
 	local rmvars "year countrycode povertyline applicationid surveyid department"
 	local varnames: list varnames - rmvars
 	
-	drop if povertyline == .
+	// temporal "fix" for indonesia data
+	*drop if povertyline == .
 	drop if countrycode == "IDN"
 	
 	//------------drop duplicates removing date
