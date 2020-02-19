@@ -51,6 +51,7 @@ The available subcommands are the following:
 {p2colset 5 30 29 2}{...}
 {p2col:{opt load}}Loads into memory the file corresponding to the parameters given by
  the user.{p_end}
+{p2col:{opt master}}Loads or updates the master file sheets.{p_end}
 {p2col:{opt create}}Creates a dataset containing weights and welfare. 
 (Relevant for PovcalNet tools.){p_end}
 {p2col:{ul:{opt group}}{opt data}}Creates group data files from raw information and 
@@ -82,6 +83,8 @@ The {bf:pcn} command has the following main options available:
 {p2col:{opt clear:}}Replaces data in memory.{p_end}
 {p2col:{opt lis:}}Only LIS surveys will be taken into account.{p_end}
 {p2col:{opt module:}}It will search accordingly for those either "BIN" or "GPWG"\"GMD" surveys.{p_end}
+{p2col:{opt load:}}[Only for master subcommand] If selected the selected sheet will be load from the master.{p_end}
+{p2col:{opt upload:}}[Only for master subcommand] If selected the selected sheet will be modified in the master. [Use restricted for the time being.]{p_end}
 {space 4}{hline}
 {p 4 4 2}
 Further explanation of the {help pcn##options:Options} is found {help pcn##options:below}. {p_end}
@@ -139,10 +142,38 @@ PovcalNet is a tool that allows computing poverty and inequality indicators for 
 {p 4 4 2}
 This subcommand loads the PovcalNet data into memory (this requires access to the P drive).
 In overall terms, the command checks the conditions given by the user, chiefly 
-{opt countries} and {opt year}, nd load the existing data that satisfies the user request, 
+{opt countries} and {opt year}, and load the existing data that satisfies the user's request, 
 or deploys a list with the surveys in stock that meets the conditions. If additional 
 conditions, such as {type} or version options, are listed then the search is refined.
 {p_end}
+
+
+{p 4 4 2}
+Four different kinds of data can be loaded, accordingly to the chosen companion word:{p_end}
+
+                {hline 73}
+                Subcommand + Companion{col 45}Action
+                {hline 25}{col 45}{hline 45}
+                load [gpwg]	{col 45}loads the GPWG surveys.
+                load wrk		{col 45}loads the working data (Not yet approved).
+                load estimates{col 45}loads the estimates provided by primus.
+                laod cpi		{col 45}loads the CPI data (datalibweb's).
+                {hline 73}
+
+
+Options and overall structure changes according to the companion word, please keep in mind the following:
+
+    {hline 93}
+    Companion{col 25}Basic recommended structure
+    {hline 15}{col 25}{hline 73}
+    gpwg		{col 20}pcn load, countr(3-letter code) year(####) [veralt(##) vermast(##)]
+    wrk			{col 20}pcn laod wrk, countr(3-letter code) year(####) 
+    estimates		{col 20}pcn load estimates [, version( mm/dd/yyyy |	Stata date | "list")) ]
+    cpi			{col 20}pcn load estimates [, version( date |"choose"|"pick")) ]
+    {hline 93}
+
+{p 4 4 2}
+{bf:{ul:Examples}}
 
 
 {p 4 4 2}
