@@ -99,14 +99,14 @@ qui {
 
 
 		mata: pcn_ind(R)
-
+		
+		local try ""
+		local mod "ALL"
 		if regexm("`survey'", "(LIS|SILC)$") | ("`type'" == "PCN") {
-			local mod "bin"
-			local try 0
+			local try "bin"
 		}
 		else {
-			local mod "ALL"
-			local try 1
+			local try "gpwg"
 		}
 
 		//------------ change to veralt to working version
@@ -139,8 +139,8 @@ qui {
 		cap datalibweb, country(`country') year(`year')  /*
 		*/   type(GMD) mod(`mod') veralt(wrk) clear
 
-		if (_rc != 0 & `try' == 1) {
-			local mod "gpwg"
+		if (_rc != 0 & "`try'" != "") {
+			local mod "`try'"
 			cap datalibweb, country(`country') year(`year')  /*
 			*/   type(GMD) mod(`mod') veralt(wrk) clear
 		}
