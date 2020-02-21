@@ -72,6 +72,16 @@ qui {
 	local wrkdir "`maindir'/`wkyr'_`meeting'/wrk"
 	cap mkdir "`wrkdir'"
 	use "`maindir'/`wkyr'_`meeting'/vintage/`wkyr'_`meeting'.dta", clear
+	
+	local countries: subinstr local countries " " "|", all
+	local years:     subinstr local years     " " "|", all
+	
+	if ("`countries'" != "") {
+		keep if regexm(country, "`countries'")
+		if ("`years'" != "") {
+			keep if regexm(year, "`years'")
+		}
+	}
 
 
 	//------------ Send to Mata
