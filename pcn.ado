@@ -111,7 +111,7 @@ qui {
 	
 	if regexm("`subcmd'", "download[ ]+gpwg") {
 		
-		pcn_download_gpwg, countries(`countries') years(`years') /*
+		noi pcn_download_gpwg, countries(`countries') years(`years') /*
 		*/ maindir("`maindir'")  `pause' `options'
 		return add
 		exit

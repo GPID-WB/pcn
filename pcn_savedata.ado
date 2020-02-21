@@ -45,7 +45,7 @@ local user=c(username)
 ==================================================*/
 
 *------Parameter of the file
-if regexm("`dlwcall'", "module\((.*)\))") local mod = upper(regexs(1))
+if regexm("`dlwcall'", "module\(([a-zA-Z0-9]+)\)") local mod = upper(regexs(1))
 
 local filename "`survey_id'_`mod'"
 local dirname "`maindir'/`country'/`country'_`year'_`survey'"
@@ -68,12 +68,13 @@ if (_rc) {  // if file does not exist
   cap `dlwcall'
   if (_rc != 0 & "`try'" != "") {
     local mod = upper("`try'")
-    local dlwcall = regexr("`dlwcall'", "(module\(.*\))", "")
+    local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
     cap `dlwcall' module(`mod')
   }
   if (_rc) {
     local dlwnote "Error on datalibweb. File does NOT exist in P drive"
-    local status 1
+    local status "datalibweb error"
+    local st 1
   }
   else {
     local filename "`survey_id'_`mod'"
@@ -83,8 +84,9 @@ if (_rc) {  // if file does not exist
     
     datasignature set, reset saving("`dirname'/`filename'", replace)
     save "`dirname'/`filename'.dta"
-    local dlwnote "Saved successfully"
-    local status 0
+    local dlwnote "Saved successfully. New file"
+    local status "Saved successfully"
+    local st 0
   }
 }
 
@@ -99,14 +101,15 @@ else {  // If file exists, check data signature
     }
     if (_rc) {
       local dlwnote "Error on datalibweb. File already exists in P drive"
-      local status 1
+      local status "datalibweb error"
+      local st 1
     }
     else {
       local filename "`survey_id'_`mod'"
       char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
       char _dta[pcn_datetime]       "`date_time'"
       char _dta[pcn_user]           "`user'"
-      cap noi datasignature confirm using "`dirname'/`filename'"
+      cap datasignature confirm using "`dirname'/`filename'"
     }
     if (_rc) { // if data do not match
       
@@ -120,20 +123,24 @@ else {  // If file exists, check data signature
       
       save "`dirname'/`filename'.dta", replace
       local dlwnote "Saved and replaced successfully"
-      local status 0
+      local status "Saved successfully"
+      local st 0
     }
     else { // if replace option not selected
       local dlwnote "File are identical. Skiped"
-      local status -1
+      local status "not saved"
+      local st -1
     }
   }
   else { // if replace option not selected
     local dlwnote "Not replaced. Skiped"
-    local status -1
+    local status "not saved"
+    local st -1
   }
 }  //  end of file exists condition
 
-return local status  = `status'
+return local st      = `st'
+return local status  = "`status'"
 return local dlwnote = "`dlwnote'"
 
 
