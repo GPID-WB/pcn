@@ -127,18 +127,18 @@ while (`i' < `n') {
 	order weight welfare
 	
 	//------------Uncollapsed data
-	save "`surdir'/`survid'/Data/`survid'_PCN.dta", `replace'
+	save "`surdir'/`survid'/Data/`filename'-PCN.dta", `replace'
 	
-	export delimited using "`surdir'/`survid'/Data/`survid'_PCN.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`filename'-PCN.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	
 	//------------ collapse data
 	collapse (sum) weight, by(welfare)
 	
-	save "`surdir'/`survid'/Data/`survid'_PCNC.dta", `replace'
+	save "`surdir'/`survid'/Data/`filename'-PCNc.dta", `replace'
 	
-	export delimited using "`surdir'/`survid'/Data/`survid'_PCNC.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`filename'-PCNc.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	* mata: P = pcn_info(P)
