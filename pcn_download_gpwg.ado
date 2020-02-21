@@ -60,6 +60,11 @@ if (`n' == 0) {
 /*==================================================
 2:  Loop over surveys
 ==================================================*/
+noi disp as txt ". " in y "= saved successfully" 
+noi disp as txt "s " in y "= skipped - already exists"
+noi disp as err "e " in y "= error saving"
+noi disp as err "x " in y "= error in datalibweb"
+
 mata: P  = J(0,0, .z)   // matrix with information about each survey
 local i = 0
 noi _dots 0, title(Downloading GPWG data) reps(`n')
@@ -67,40 +72,42 @@ while (`i' < `n') {
 	local ++i
 	local status     ""
 	local dlwnote  ""
-
-
+	
+	
 	mata: pcn_ind(R)
-
-	*--------------------2.2: Load data
-	cap datalibweb, country(`country') year(`year') surveyid(`survey')  /*
-	*/   type(GMD) mod(GPWG) vermast(`vermast') veralt(`veralt') clear
-
-	if (_rc) {
-		local status "dlw error"
-
-		local dlwnote "datalibweb, country(`country') year(`year') surveyid(`survey') type(GMD) mod(GPWG) vermast(`vermast') veralt(`veralt') clear"
-
-		mata: P = pcn_info(P)
-		noi _dots `i' 1
-		continue
+	
+	local try ""
+	local mod "ALL"
+	if regexm("`survey'", "(LIS|SILC)$") {
+		local try "bin"
 	}
-
-	cap pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') /* 
-             */  year(`year') survey_id(`survey_id') maindir(`maindir')
+	else {
+		local try "gpwg"
+	}
+	
+	*--------------------2.2: Load data
+	local dlwcall "datalibweb, country(`country') year(`year') surveyid(`survey') type(GMD) module(`mod') vermast(`vermast') veralt(`veralt') clear"
+	
+	
+	cap pcn_savedata , country(`country') survey(`survey')  year(`year') /* 
+	*/                 survey_id(`survey_id') maindir(`maindir')        /* 
+	*/                 dlwcall("`dlwcall'") try(`try')
 	
 	if (_rc) {
 		local status "saving error"
-
-		local dlwnote "pcn_savedata , filename("`r(filename)'") country(`country') survey(`survey') year(`year') survey_id(`survey_id') maindir(`maindir')"
-
+		
+		local dlwnote "pcn_savedata , country(`country') survey(`survey')  year(`year')  survey_id(`survey_id') maindir(`maindir') dlwcall("`dlwcall'") try(`try')"
+		
 		mata: P = pcn_info(P)
-		noi _dots `i' -1
+		noi _dots `i' 2
 		continue
 	}
-	local status = "`r(status)'"
-	noi _dots `i' 0
+	local status = `r(status)'
+	local dlwnote = "`r(local dlwnote)'"
+	
+	noi _dots `i' `status'
 	mata: P = pcn_info(P)
-
+	
 } // end of while
 
 
@@ -123,11 +130,11 @@ char _dta[pcn_user]           "`user'"
 
 cap noi datasignature confirm using "`maindir'/_aux/info/pcn_info"
 if (_rc) {
-
+	
 	datasignature set, reset saving("`maindir'/_aux/info/pcn_info", replace)
 	saveold "`maindir'/_aux/info/_vintage/pcn_info_`date_time'.dta"
 	saveold "`maindir'/_aux/info/pcn_info.dta", replace
-
+	
 }
 
 
@@ -164,16 +171,16 @@ T = ("a", "b")
 A = asarray_create()
 
 for (f=1; f<=cols(T); f++) {
-
+	
 	asarray(A, T[1,f], st_local(T[1,f]))
-
+	
 }
 
 
 for (loc=asarray_first(A); loc!=NULL; loc=asarray_next(A, loc)) {
-
+	
 	asarray_contents(A, loc)
-
+	
 }
 
 asarray(A, T[1,f])
