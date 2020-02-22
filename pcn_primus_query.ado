@@ -82,6 +82,7 @@ order country year survey vermast veralt type survey_id datetime
 
 replace veralt  = substr(veralt, 2, .)
 replace vermast = substr(vermast, 2, .)
+drop if type == "PCN"
 
 * : list posof "country" in varlist 
 

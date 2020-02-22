@@ -62,9 +62,16 @@ local n = _N
 /*==================================================
 2:  Loop over surveys
 ==================================================*/
+noi disp as txt ". " in y "= saved successfully" 
+noi disp as txt "s " in y "= skipped - already exists"
+noi disp as err "e " in y "= error saving"
+noi disp as err "x " in y "= error in datalibweb"
+
+
 mata: P  = J(0,0, .z)   // matrix with information about each survey
 local i = 0
 local previous ""
+noi _dots 0, title(Creating PCN files) reps(`n')
 while (`i' < `n') {
 	local ++i
 	
@@ -73,11 +80,10 @@ while (`i' < `n') {
 	if ("`previous'" == "`country'-`year'") continue
 	else local previous "`country'-`year'"
 	
-	
-	*--------------------2.2: Load data
+	//------------ get metadata
 	cap noi pcn_load, country(`country') year(`year') type(`type') /*
 	*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-	*/ survey("`survey'") `pause' `clear' `options'
+	*/ survey("`survey'") `pause' `clear' `options' noload
 	
 	if (_rc) continue
 	
@@ -86,6 +92,12 @@ while (`i' < `n') {
 	local survid   = "`r(survid)'"
 	local surdir   = "`r(surdir)'"
 	return add
+	
+	
+	*--------------------2.2: Load data
+	cap noi pcn_load, country(`country') year(`year') type(`type') /*
+	*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
+	*/ survey("`survey'") `pause' `clear' `options' 
 	
 	
 	/*==================================================
@@ -127,18 +139,18 @@ while (`i' < `n') {
 	order weight welfare
 	
 	//------------Uncollapsed data
-	save "`surdir'/`survid'/Data/`filename'-PCN.dta", `replace'
+	save "`surdir'/`survid'/Data/`survid'_PCN.dta", `replace'
 	
-	export delimited using "`surdir'/`survid'/Data/`filename'-PCN.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`survid'_PCN.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	
 	//------------ collapse data
 	collapse (sum) weight, by(welfare)
 	
-	save "`surdir'/`survid'/Data/`filename'-PCNc.dta", `replace'
+	save "`surdir'/`survid'/Data/`survid'_PCNc.dta", `replace'
 	
-	export delimited using "`surdir'/`survid'/Data/`filename'-PCNc.txt", ///
+	export delimited using "`surdir'/`survid'/Data/`survid'_PCNc.txt", ///
 	novarnames nolabel delimiter(tab) `replace'
 	
 	* mata: P = pcn_info(P)
