@@ -27,6 +27,7 @@ syntax [anything(name=subcmd id="subcommand")],  ///
 			pause                               ///
 			vermast(string)                     ///
 			veralt(string)                      ///
+			replace
 			*                                   ///
 ] 
 version 14
@@ -37,7 +38,6 @@ else                      pause off
 
 
 //------------set up
-*##s
 if ("`maindir'" == "") cd "p:\01.PovcalNet\03.QA\01.GroupData"
 else                   cd "`maindir'"
 
@@ -106,16 +106,16 @@ qui foreach id of local ids {
 	keep if id == "`id'"
 	keep weight  welfare 
 	
-	local signature "`cc'_`yr'_`sy'_PCNGD-`cg'"
+	local signature "`cc'_`yr'_`sy'_GMD_GROUP-`cg'"
 	cap datasignature confirm using /* 
-	*/ "02.datasignature/`signature'", strict
+	*/ "02.datasignature/`signature'", strict // deberia ir a la misma carpeta de la data
 	local dsrc = _rc
 	if (`dsrc' == 601) {
-		local fileid "`cc'_`yr'_`sy'_v01_M_v01_A_PCNGD"
+		local fileid "`cc'_`yr'_`sy'_v01_M_v01_A_GMD"
 	}
 	if (`dsrc' == 9) {
 		
-		local dirs: dir "`sydir'" dirs "*PCNGD", respect
+		local dirs: dir "`sydir'" dirs "*GMD", respect
 		
 		local fe = ""  // file exists
 		local va = ""
@@ -123,7 +123,7 @@ qui foreach id of local ids {
 			
 			if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 			
-			local exfile: dir "`sydir'/`dir'/Data" files "*PCNGD-`cg'.dta", respect
+			local exfile: dir "`sydir'/`dir'/Data" files "*GMD-`cg'.dta", respect
 			if (`"`exfile'"' != "") continue
 			else local fe = "`dir'"  // file does not exists
 		}
@@ -135,7 +135,7 @@ qui foreach id of local ids {
 		else               local va = max(`va') 
 		
 		if length("`va'") == 1 local va = "0"+"`va'"
-		local fileid "`cc'_`yr'_`sy'_v01_M_v`va'_A_PCNGD"
+		local fileid "`cc'_`yr'_`sy'_v01_M_v`va'_A_GMD"
 	}
 	if (`dsrc' != 0) {
 		local verid "`sydir'/`fileid'"
@@ -206,7 +206,7 @@ qui foreach id of local ids {
 	local cc = upper("`cc'")
 	local sydir "../../01.Vintage_control/`cc'/`cc'_`yr'_`sy'"
 	
-	local dirs: dir "`sydir'" dirs "*PCNGD", respect
+	local dirs: dir "`sydir'" dirs "*GMD", respect
 	
 	local fe = ""  // file exists
 	local va = ""
@@ -214,7 +214,7 @@ qui foreach id of local ids {
 		
 		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 		
-		local exfile: dir "`sydir'/`dir'/Data" files "*PCNGD-`cg'.dta", respect
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD-`cg'.dta", respect
 		if (`"`exfile'"' != "") continue
 		else local fe = "`dir'"  // file does not exists
 	}
