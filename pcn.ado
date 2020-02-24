@@ -118,12 +118,23 @@ qui {
 	}
 	
 	//========================================================
-	// Pending data in primus
+	// Data in primus
 	//========================================================
-	if regexm("`subcmd'", "download[ ]+pending") {
-		
-		noi pcn_download_pending, countries(`countries') years(`years')  /*
-		*/ `pause' `options'
+
+	if regexm("`subcmd'", "primus[ ]+approved") {
+		if regexm("`options'", "down\(.*\)") {
+		noi pcn_primus_download, countries(`countries') years(`years')  /*
+		*/ status(approved) `pause' `options'
+		}
+		return add
+		exit
+	}
+	
+	if regexm("`subcmd'", "primus[ ]+pending") {
+		if regexm("`options'", "down\(.*\)") {
+		noi pcn_primus_download, countries(`countries') years(`years')  /*
+		*/  status(pending) `pause' `options'
+		}
 		return add
 		exit
 	}
