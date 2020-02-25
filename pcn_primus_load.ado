@@ -184,9 +184,9 @@ qui {
 					noi disp as text "list of available versions for that date:" 
 					local i = 0 
 					foreach version of local versions{
-					loc ++i
-					local human: disp %tcDDmonCCYY_HH:MM:SS `version'
-					local human = trim("`human'")
+						loc ++i
+						local human: disp %tcDDmonCCYY_HH:MM:SS `version'
+						local human = trim("`human'")
 					noi disp `"  `i' {c |} {stata `version': `human'}"'
 					}
 					noi disp _n "select file to load" _request(_version)
