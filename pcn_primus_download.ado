@@ -80,8 +80,8 @@ qui {
 		local wkyr = `wkyr' + 1  // workign for the next year's meeting
 	}
 	
-	* return local wkyr = `wkyr'
-	* return local meeting = "`meeting'"
+	 return local wkyr = `wkyr'
+	 return local meeting = "`meeting'"
 	
 
 	//===========================================================
@@ -90,20 +90,30 @@ qui {
 	if ("`transfile'" == ""){
 	noi pcn_primus_download_trans, countries(`countries') years(`years') status(`status') ///
 	wkyr(`wkyr') meeting(`meeting') dir(`dir') date_time(`date_time')
+	return local change = "`r(change)'"
 	}
+	else {
+	return local change = "User given"
+	}
+
 	//===========================================================
 	// Download estimates (If demanded)
 	//===========================================================
-	if ("`download'" == "trans" | "`download'" == "transactions") {
-	// nothing happens
+	if ("`r(change)'" != "No Change") {
+		if ("`download'" == "trans" | "`download'" == "transactions") {
+			// nothing happens
+		}
+		else if ("`download'" == "" | "`download'" == "estimates") {
+			noi pcn_primus_download_estimates, status(`status') date_time(`date_time') ///
+			wkyr(`wkyr') meeting(`meeting') dir(`dir') transfile(`transfile')
+		}
+		else {
+			noi di as err "Only estimates or transactions are allowed to be loaded."
+			error	
+		}
 	}
-	else if ("`download'" == "" | "`download'" == "estimates") {
-	noi pcn_primus_download_estimates, status(`status') date_time(`date_time') ///
-	wkyr(`wkyr') meeting(`meeting') dir(`dir') transfile(`transfile')
-	}
-	else {
-		noi di as err "Only estimates or transactions are allowed to be loaded."
-		error	
+	else{
+		noi di as result "Not new estimates to download"
 	}
 	
 }

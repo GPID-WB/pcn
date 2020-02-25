@@ -83,7 +83,7 @@ qui {
 		save "`dirname'/`wkyr'_`meeting'_`date_time'.dta", replace
 		noi di as text "Data siganture not found"
 		noi di as result "Data siganture created"
-		
+		local change = "Real Change"
 	}
 	else if (_rc ==9) {
 		local files: dir "`dirname'"  files "`wkyr'_`meeting'_*.dta", respectcase
@@ -108,12 +108,20 @@ qui {
 		*/ keep(master) nogen
 		
 		pause after merge 
+
+		local change = "Real Change"
 	}
 	else {
 		noi disp in y "File `wkyr'_`meeting' has not changed since last time"
-		if ("`replace'" == "") exit
-		else local nochange "nochange"
+		if ("`replace'" == ""){
+			local change = "No Change"
+			return local change = "`change'"
+			exit
+		}
+		else local change = "Replace"
 	}
+	
+	return local change = "`change'"
 	
 	noi di as result "Transactions have been correctly downloaded"
 	noi di as text   "at: `dirname'/`wkyr'_`meeting'.dta"
