@@ -17,7 +17,7 @@ void pcn_ind(string matrix R) {
 	for (j =1; j<=cols(vars); j++) {
 		//printf("j=%s\n", R[i,j])
 		st_local(vars[j], R[i,j] )
-	} 
+	}
 } // end of IDs variables
 
 string matrix pcn_info(matrix P) {
@@ -35,7 +35,7 @@ string matrix pcn_info(matrix P) {
 	else {
 		P = P \ (survey, status, dlwnote)
 	}
-	
+
 	return(P)
 }
 
