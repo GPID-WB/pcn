@@ -27,7 +27,7 @@ clear                               ///
 pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
-replace
+replace								///
 *                                   ///
 ]
 version 14
@@ -108,7 +108,7 @@ qui foreach id of local ids {
 
 	local signature "`cc'_`yr'_`sy'_GMD_GROUP-`cg'"
 	cap datasignature confirm using /*
-	*/ "02.datasignature/`signature'", strict // deberia ir a la misma carpeta de la data
+	*/ "`sydir'/`signature'", strict // deberia ir a la misma carpeta de la data
 	local dsrc = _rc
 	if (`dsrc' == 601) {
 		local fileid "`cc'_`yr'_`sy'_v01_M_v01_A_GMD"
@@ -123,7 +123,7 @@ qui foreach id of local ids {
 
 			if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 
-			local exfile: dir "`sydir'/`dir'/Data" files "*GMD-`cg'.dta", respect
+			local exfile: dir "`sydir'/`dir'/Data" files "*GMD-GROUP`cg'.dta", respect
 			if (`"`exfile'"' != "") continue
 			else local fe = "`dir'"  // file does not exists
 		}
@@ -143,7 +143,7 @@ qui foreach id of local ids {
 		cap mkdir "`verid'/Data"
 
 		noi datasignature set, reset /*
-		*/ saving("02.datasignature/`signature'", replace)
+		*/ saving("`sydir'/`signature'", replace)
 
 
 		//------------Include Characteristics
@@ -151,7 +151,7 @@ qui foreach id of local ids {
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]     `fileid'-`cg'.dta
+		char _dta[filename]     `fileid'-GROUP`cg'.dta
 		char _dta[id]           `fileid'
 		char _dta[datatype]     `dt'
 		char _dta[countrycode]  `cc'
@@ -162,11 +162,11 @@ qui foreach id of local ids {
 		char _dta[datetime]     `datetime'
 		char _dta[datetimeHRF]  `datetimeHRF'
 
+		cap mkdir "`sydir'/vintage"
+		save "`sydir'/vintage/`signature'_`datetime'.dta", replace
+		save "`verid'/Data/`fileid'-GROUP`cg'.dta", replace
 
-		save "03.vintage/`signature'_`datetime'.dta", replace
-		save "`verid'/Data/`fileid'-`cg'.dta", replace
-
-		export delimited using "`verid'/Data/`fileid'-`cg'.txt", ///
+		export delimited using "`verid'/Data/`fileid'-GROUP`cg'.txt", ///
 		novarnames nolabel delimiter(tab) `replace'
 
 		export delimited using "`verid'/Data/`cc'`cov'`l2y'.T`ft'", ///
@@ -174,7 +174,7 @@ qui foreach id of local ids {
 
 	}
 	else {
-		noi disp in y "File " in w "`fileid'-`cg'.dta" in /*
+		noi disp in y "File " in w "`fileid'-GROUP`cg'.dta" in /*
 		*/ y " is up to date."
 	}
 
@@ -214,14 +214,14 @@ qui foreach id of local ids {
 
 		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 
-		local exfile: dir "`sydir'/`dir'/Data" files "*GMD-`cg'.dta", respect
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD-GROUP`cg'.dta", respect
 		if (`"`exfile'"' != "") continue
 		else local fe = "`dir'"  // file does not exists
 	}
 
 	if ("`fe'" != "") {
 
-		local mfiles: dir "03.vintage" files "`signature'*.dta", respect
+		local mfiles: dir "`sydir'/vintage" files "`signature'*.dta", respect
 		disp `"`mfiles'"'
 		local vcs: subinstr local mfiles "`signature'_" "", all
 		local vcs: subinstr local vcs ".dta" "", all
@@ -231,21 +231,21 @@ qui foreach id of local ids {
 		mata: VC = strtoreal(tokens(`"`vcs'"'));  /*
 		*/	  st_local("mvc", strofreal(max(VC), "%15.0f"))
 
-		copy "03.vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'-`cg'.dta"
+		copy "`sydir'/vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'-GROUP`cg'.dta"
 
-		use "`sydir'/`fe'/Data/`fe'-`cg'.dta", clear
+		use "`sydir'/`fe'/Data/`fe'-GROUP`cg'.dta", clear
 
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]     `fe'-`cg'.dta
+		char _dta[filename]     `fe'-GROUP`cg'.dta
 		char _dta[id]           `fe'
 		char _dta[datetime]     `datetime'
 		char _dta[datetimeHRF]  `datetimeHRF'
 
 		save, replace
 
-		export delimited using "`sydir'/`fe'/Data/`fileid'-`cg'.txt", ///
+		export delimited using "`sydir'/`fe'/Data/`fileid'-GROUP`cg'.txt", ///
 		novarnames nolabel delimiter(tab) `replace'
 
 		export delimited using "`sydir'/`fe'/Data/`cc'`cov'`l2y'.T`ft'", ///
