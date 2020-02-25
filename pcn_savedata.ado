@@ -55,16 +55,16 @@ local dirname "`dirname'/`survey_id'/Data"
 cap confirm file "`dirname'/`filename'.dta"
 
 if (_rc) {  // if file does not exist
-  
+
   mata: st_local("direxists", strofreal(direxists("`dirname'")))
-  
+
   if (`direxists' != 1) { // if folder does not exist
     cap mkdir "`maindir'/`country'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'/Data"
   }
-  
+
   cap `dlwcall'
   if (_rc != 0 & "`try'" != "") {
     local mod = upper("`try'")
@@ -81,7 +81,7 @@ if (_rc) {  // if file does not exist
     char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
     char _dta[pcn_datetime]       "`date_time'"
     char _dta[pcn_user]           "`user'"
-    
+
     datasignature set, reset saving("`dirname'/`filename'", replace)
     save "`dirname'/`filename'.dta"
     local dlwnote "Saved successfully. New file"
@@ -91,7 +91,7 @@ if (_rc) {  // if file does not exist
 }
 
 else {  // If file exists, check data signature
-  
+
   if ("`replace'" != "") {
     cap `dlwcall'
     if (_rc != 0 & "`try'" != "") {
@@ -112,15 +112,15 @@ else {  // If file exists, check data signature
       cap datasignature confirm using "`dirname'/`filename'"
     }
     if (_rc) { // if data do not match
-      
+
       cap mkdir "`dirname'/_vintage"
       preserve   // I cannot use  copy because I need the pcn_datetime char
-      
+
       use "`dirname'/`filename'.dta", clear
       save "`dirname'/_vintage/`filename'_`:char _dta[pcn_datetime]'", replace
-      
+
       restore
-      
+
       save "`dirname'/`filename'.dta", replace
       local dlwnote "Saved and replaced successfully"
       local status "Saved successfully"

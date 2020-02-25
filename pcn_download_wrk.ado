@@ -72,10 +72,10 @@ qui {
 	local wrkdir "`maindir'/`wkyr'_`meeting'/wrk"
 	cap mkdir "`wrkdir'"
 	use "`maindir'/`wkyr'_`meeting'/vintage/`wkyr'_`meeting'.dta", clear
-	
+
 	local countries: subinstr local countries " " "|", all
 	local years:     subinstr local years     " " "|", all
-	
+
 	if ("`countries'" != "") {
 		keep if regexm(country, "`countries'")
 		if ("`years'" != "") {
@@ -95,7 +95,7 @@ qui {
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
-	noi disp as txt ". " in y "= saved successfully" 
+	noi disp as txt ". " in y "= saved successfully"
 	noi disp as txt "s " in y "= skipped - already exists"
 	noi disp as err "e " in y "= error saving"
 	noi disp as err "x " in y "= error in datalibweb"
@@ -109,7 +109,7 @@ qui {
 
 
 		mata: pcn_ind(R)
-		
+
 		local try ""
 		local mod "ALL"
 		if regexm("`survey'", "(LIS|SILC)$") | ("`type'" == "PCN") {
@@ -185,7 +185,7 @@ qui {
 	/*==================================================
 	3: import results file
 	==================================================*/
-	
+
 	noi disp _n ""
 
 	*----------3.1:
@@ -208,7 +208,7 @@ qui {
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info_`date_time'.dta"
 		saveold "`maindir'/`wkyr'_`meeting'/_aux/pcn_info.dta", replace
 	}
-	
+
 	noi disp as result "Click {stata br:here} to see results"
 
 } // end of qui

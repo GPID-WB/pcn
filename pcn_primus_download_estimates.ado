@@ -25,7 +25,7 @@ TRANSfile(string)						///
 date_time(string)						///
 wkyr(string)							///
 meeting(string)						///
-replace                             /// 
+replace                             ///
 clear                              ///
 pause                              ///
 ]
@@ -44,12 +44,12 @@ local date_time = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
 local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 local datetimeHRF = trim("`datetimeHRF'")
 local user=c(username)
-	
-	/*==================================================
-	1:  Load transctions
-	==================================================*/
-qui {
 
+/*==================================================
+1:  Load transctions
+==================================================*/
+qui {
+	
 	if ("`transfile'" != ""){
 		cap confirm file "`transfile'"
 		if _rc{
@@ -62,13 +62,13 @@ qui {
 	}
 	
 	//------------Send to MATA
-		ds
-		local varlist = "`r(varlist)'"
-		local n = _N	
-		mata: R = st_sdata(.,tokens(st_local("varlist")))
-		
-		pause after sendin to mata
-		
+	ds
+	local varlist = "`r(varlist)'"
+	local n = _N
+	mata: R = st_sdata(.,tokens(st_local("varlist")))
+	
+	pause after sendin to mata
+	
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
@@ -84,25 +84,25 @@ qui {
 		local ++i
 		drop _all
 		
-		// chunk of code that should be executed with no failure 
+		// chunk of code that should be executed with no failure
 		cap {
 			mata: pcn_ind(R)
 			primus download , tranxid(`transaction_id')
 			
 			ds comments*
 			local commvars "`r(varlist)'"
-			tostring `commvars', replace force 
+			tostring `commvars', replace force
 			
-			ds, has(type string) 
+			ds, has(type string)
 			local strvars "`r(varlist)'"
 			
 			foreach v of local strvars{
-				replace `v' = "" if inlist(lower(`v'), "n.a.", ".") 
+				replace `v' = "" if inlist(lower(`v'), "n.a.", ".")
 			}
 			destring `strvars', replace
 			append using `dlf', force
 			save `dlf', replace
-		}  
+		}
 		if (_rc) noi _dots `i' 1
 		else     noi _dots `i' 0
 		
@@ -125,7 +125,7 @@ qui {
 	if (_rc != 0 & "`replace'"=="") {
 		append using "`filename'.dta", force
 	}
-
+	
 	ds
 	local duplvars = "`r(varlist)'"
 	local duplvars: subinstr local duplvars "date" "", word

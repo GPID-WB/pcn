@@ -1,37 +1,37 @@
 /*==================================================
 project:       Primus Query
-Author:        R.Andres Castaneda 
+Author:        R.Andres Castaneda
 E-email:       acastanedaa@worldbank.org
-url:           
+url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     9 Aug 2019 - 12:23:48
-Modification Date:   
+Modification Date:
 Do-file version:    01
-References:          
-Output:             
+References:
+Output:
 ==================================================*/
 
 /*==================================================
-              0: Program set up
+0: Program set up
 ==================================================*/
 program define pcn_primus_query, rclass
 syntax [anything(name=subcmd id="subcommand")],  ///
 [                                   ///
-			COUNTries(string)               ///
-			Years(numlist)                 ///
-			REGions(string)               ///
-			maindir(string)               ///
-			type(string)                  ///
-			survey(string)                ///
-			replace                       ///
-			vermast(string)               ///
-			veralt(string)                ///
-			MODule(string)                ///
-			clear                         ///
-			pause                         ///
-			status(string)                ///
-] 
+COUNTries(string)               ///
+Years(numlist)                 ///
+REGions(string)               ///
+maindir(string)               ///
+type(string)                  ///
+survey(string)                ///
+replace                       ///
+vermast(string)               ///
+veralt(string)                ///
+MODule(string)                ///
+clear                         ///
+pause                         ///
+status(string)                ///
+]
 
 version 14
 
@@ -41,18 +41,18 @@ else                      pause off
 
 
 /*==================================================
-              1: 
+1:
 ==================================================*/
 
 if ("`status'" == "") local status "approved"
 primus query, overalls(`status')
 
-* replace those that finish in GPWG and SARMD or something else. 
+* replace those that finish in GPWG and SARMD or something else.
 replace survey_id = regexs(1)+"GMD" if regexm(survey_id , "(.*)(GPWG.*)$")
 
 generate datetime = string(date_modified, "%tc")
 
-tostring _all, replace force 
+tostring _all, replace force
 
 
 *----------1.1: Send to MATA
@@ -84,41 +84,41 @@ replace veralt  = substr(veralt, 2, .)
 replace vermast = substr(vermast, 2, .)
 drop if type == "PCN"
 
-* : list posof "country" in varlist 
+* : list posof "country" in varlist
 
 
 /*==================================================
-            2: Condition to filter data
+2: Condition to filter data
 ==================================================*/
 
-	
-	* Countries
-	if (lower("`countries'") != "all" ) {
-		local countrylist ""
-		local countries = upper("`countries'")
-		local countrylist: subinstr local countries " " "|", all
-		keep if regexm(country, "`countrylist'")
-	}
-	
-	** years
-	if ("`years'" != "") {
-		numlist "`years'"
-		local years  `r(numlist)'
-		local yearlist: subinstr local years " " "|", all
-		keep if regexm(year, "`yearlist'")
-	}
 
-	if ("`vermast'" != "") {
-		local vmlist: subinstr local vermast " " "|", all
-		keep if regexm(vermast, "`vmlist'")
-	}
+* Countries
+if (lower("`countries'") != "all" ) {
+	local countrylist ""
+	local countries = upper("`countries'")
+	local countrylist: subinstr local countries " " "|", all
+	keep if regexm(country, "`countrylist'")
+}
 
-	if ("`veralt'" != "") {
-		local valist: subinstr local veralt " " "|", all
-		keep if regexm(veralt, "`valist'")
-	}
-	
-	pause primus_query - before sending to mata
+** years
+if ("`years'" != "") {
+	numlist "`years'"
+	local years  `r(numlist)'
+	local yearlist: subinstr local years " " "|", all
+	keep if regexm(year, "`yearlist'")
+}
+
+if ("`vermast'" != "") {
+	local vmlist: subinstr local vermast " " "|", all
+	keep if regexm(vermast, "`vmlist'")
+}
+
+if ("`veralt'" != "") {
+	local valist: subinstr local veralt " " "|", all
+	keep if regexm(veralt, "`valist'")
+}
+
+pause primus_query - before sending to mata
 
 
 // ------------------------------------------------------------------------

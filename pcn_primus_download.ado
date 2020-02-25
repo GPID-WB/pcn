@@ -25,7 +25,7 @@ DIR(string)                         ///
 Status(string)						///
 DOWNload(string)						///
 TRANSfile(string)						///
-replace                             /// 
+replace                             ///
 clear                              ///
 pause                              ///
 ]
@@ -67,33 +67,33 @@ if !inlist("`download'", "transactions", "trans","estimates") {
 qui {
 	* working month
 	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
-	
+
 	*Working year
 	local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
-	
+
 	* Either Annual meeting (AM) or Spring meeting (SM)
-	
+
 	if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
 	if inrange(`cmonth', 5, 10) local meeting "AM"
-	
+
 	if inrange(`cmonth', 11, 12) {
 		local wkyr = `wkyr' + 1  // workign for the next year's meeting
 	}
-	
-	 return local wkyr = `wkyr'
-	 return local meeting = "`meeting'"
-	
+
+	return local wkyr = `wkyr'
+	return local meeting = "`meeting'"
+
 
 	//===========================================================
 	// Check transaction ID's
 	//===========================================================
 	if ("`transfile'" == ""){
-	noi pcn_primus_download_trans, countries(`countries') years(`years') status(`status') ///
-	wkyr(`wkyr') meeting(`meeting') dir(`dir') date_time(`date_time')
-	return local change = "`r(change)'"
+		noi pcn_primus_download_trans, countries(`countries') years(`years') status(`status') ///
+		wkyr(`wkyr') meeting(`meeting') dir(`dir') date_time(`date_time')
+		return local change = "`r(change)'"
 	}
 	else {
-	return local change = "User given"
+		return local change = "User given"
 	}
 
 	//===========================================================
@@ -109,13 +109,13 @@ qui {
 		}
 		else {
 			noi di as err "Only estimates or transactions are allowed to be loaded."
-			error	
+			error
 		}
 	}
 	else{
 		noi di as result "Not new estimates to download"
 	}
-	
+
 }
 end
 
