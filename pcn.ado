@@ -143,7 +143,7 @@ qui {
 	// Download wrk version data
 	//========================================================
 	if regexm("`subcmd'", "download[ ]+wrk") {
-		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 		noi pcn_download_wrk, countries(`countries') years(`years')  /*
 		*/ `pause'  `options' maindir("`maindir'")
 		return add
@@ -168,7 +168,7 @@ qui {
 	//======================================================== 
 	if regexm("`subcmd'", "load[ ]+wrk") { 
 	 
-		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending" 
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending" 
 		 
 		noi pcn_load_wrk, country(`countries') year(`years')  /* 
 		*/ maindir("`maindir'") vermast(`vermast')  /* 
@@ -182,7 +182,7 @@ qui {
 	//======================================================== 
 	if regexm("`subcmd'", "load[ ]+estimates") { 
 	 
-		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending" 
+		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending" 
 		 
 		noi pcn_load_estimates, maindir("`maindir'") /* 
 		*/ `pause' `clear' `options' 

@@ -45,8 +45,12 @@ local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 local datetimeHRF = trim("`datetimeHRF'")
 local user=c(username)
 
+/*
 if ("`status'" == "approved")	 local dir "p:\01.PovcalNet\03.QA\05.PRIMUS_approved"
 else	 						 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
+*/
+if ("`status'" == "approved")	 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS\approved"
+else	 						 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 
 // =============================
 // Preliminay checks
