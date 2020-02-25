@@ -153,43 +153,209 @@ qui {
 			replace data_coverage = "Urban" if countrycode == "HND" & year == 1986
 			replace data_coverage = "Urban" if countrycode == "COL" & inrange(year, 1980,1991)
 			replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
-		}
+			label var year "Year"
+			label var cpi "CPI"
+			}
 		
 		* if ("`shape'" == "long") rename year cpi_time
 	}
 	
 	
 	//========================================================
-	//
+	//PPP
 	//========================================================
-	
-	
-	
-	//========================================================
-	//
-	//========================================================
-	
-	
-	
-	//========================================================
-	//
-	//========================================================
-	
+	if (lower("`load'") == "ppp") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("PPP") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		
+		}
+
 	
 	
 	//========================================================
-	//
+	//POP
 	//========================================================
+	if (lower("`load'") == "pop" | lower("`load'") == "population")  {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("Population") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		local varlist="`r(varlist)'"
+		foreach v of local varlist {
+			local n: variable label `v'
+			cap confirm number `n'
+			if (_rc) continue
+			rename `v' y`n'
+			}
+	
+		if ("`shape'" == "long") {
+			reshape long y, i(countrycode coverage) j(year)
+			rename y population
+			drop if population == .
+			ren coverage coveragetype
+			label var year "Year"
+			label var population "Population"
+
+			}
+	
+		}
+
 	
 	
 	//========================================================
-	//
+	//GDP
 	//========================================================
+	if (lower("`load'") == "gdp") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("GDP") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		local varlist="`r(varlist)'"
+		foreach v of local varlist {
+			local n: variable label `v'
+			cap confirm number `n'
+			if (_rc) continue
+			rename `v' y`n'
+			}
+			
+		if ("`shape'" == "long") {
+			reshape long y, i(countrycode coverage) j(year)
+			rename y gdp
+			drop if gdp == .
+			label var year "Year"
+			label var gdp "GDP"
+			ren coverage coveragetype
+			}
+	
+	}
 	
 	
 	//========================================================
-	//
+	//PCE
 	//========================================================
+	if (lower("`load'") == "pce") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("PCE") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		local varlist = "`r(varlist)'"
+		foreach v of local varlist {
+			local n: variable label `v'
+			cap confirm number `n'
+			if (_rc) continue
+			rename `v' y`n'
+			}
+		
+		if ("`shape'" == "long") {
+			reshape long y, i(countrycode coverage) j(year)
+			rename y pce
+			drop if pce == .
+			label var year "Year"
+			label var pce "PCE"
+
+		}
+}
+
+	
+	//========================================================
+	//CURRENCY CONVERSION
+	//========================================================
+	if (lower("`load'") == "currencyconversion") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("CurrencyConversion") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+		local varlist = "`r(varlist)'"
+		foreach v of local varlist {
+			local n: variable label `v'
+			cap confirm number `n'
+			if (_rc) continue
+			rename `v' y`n'
+		}
+		
+		if ("`shape'" == "long") {
+			rename year baseyear
+			reshape long y, i(code coverage ratio oldunit newunit baseyear) j(year)
+			rename y currencyconv
+			drop if currencyconv == .
+			label var baseyear "Base Year"
+			label var year "Year"
+			label var currencyconv "Currency Conversion"
+			ren code countrycode
+			ren coverage coveragetype
+		}
+
+}			
+
+	
+	//========================================================
+	//REGION LOOKUP
+	//========================================================
+	if (lower("`load'") == "regionlookup") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("RegionLookup") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+
+		ds
+}
+	
+	//========================================================
+	//COUNTRY LIST
+	//========================================================
+	if (lower("`load'") == "countrylist") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("CountryList") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		
+		ds
+}
+	//========================================================
+	//SURVEY INFO
+	//========================================================
+	if (lower("`load'") == "surveyinfo") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("SurveyInfo") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		ren coverage coveragetype
+		ds
+}
+	//========================================================
+	//SURVEY MEAN
+	//========================================================
+	if (lower("`load'") == "surveymean") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("SurveyMean") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+		ren cpi_time year
+		ren coverage coveragetype
+		ds
+}
+
 	
 } // end qui 
 
