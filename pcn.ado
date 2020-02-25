@@ -1,12 +1,16 @@
 /*==================================================
-project:       Stata package to manage PovcalNet files and folders
-Author:        R.Andres Castaneda
-E-email:       acastanedaa@worldbank.org
-url:           https://github.com/randrescastaneda/pcn
-Dependencies:  The World Bank
+* project:       Stata package to manage PovcalNet files and folders
+* Author:        R.Andres Castaneda
+* E-email:       acastanedaa@worldbank.org
+               
+* Author:				 David Leonardo Vargas Mogollon
+* E-email:       dvargasm@worldbank.org
+
+* url:           https://github.com/randrescastaneda/pcn
+* Dependencies:  The World Bank
 ----------------------------------------------------
-Creation Date:    29 Jul 2019 - 09:18:01
-Modification Date:
+Creation Date:      29 Jul 2019 - 09:18:01
+Modification Date:  25 feb 2020 
 Do-file version:    01
 References:
 Output:
@@ -48,10 +52,12 @@ qui {
 		
 		foreach cmd of local cmds {
 			capture which `cmd'
+			
 			if (_rc != 0) {
 				ssc install `cmd'
 				noi disp in g "{cmd:`cmd'} " in w _col(15) "installed"
 			}
+			
 		}
 		adoupdate `cmds', ssconly
 		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update ssconly
