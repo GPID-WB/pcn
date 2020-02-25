@@ -126,6 +126,11 @@ qui {
 		noi pcn_primus_download, countries(`countries') years(`years')  /*
 		*/ status(approved) `pause' `options'
 		}
+		else if regexm("`options'", "load\(.*\)"){
+		noi pcn_primus_load, s(approved) `pause' `options'
+		}
+		else err
+		
 		return add
 		exit
 	}
@@ -135,6 +140,11 @@ qui {
 		noi pcn_primus_download, countries(`countries') years(`years')  /*
 		*/  status(pending) `pause' `options'
 		}
+		else if regexm("`options'", "load\(.*\)"){
+		noi pcn_primus_load, s(pending) `pause' `options'
+		}
+		else err
+		
 		return add
 		exit
 	}
