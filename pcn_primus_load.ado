@@ -153,7 +153,7 @@ qui {
 					}
 				}
 				noi disp _n "select file to load" _request(_a)
-				if ("`human'" == "Main file")	local filename = `fileroot'
+				if ("`a'" == "Main file")	local filename = "`fileroot'"
 				else{
 					*local version : di %13.0f cofd(`human')
 					local filename = "`fileroot'_`a'"
