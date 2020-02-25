@@ -58,8 +58,8 @@ qui {
 		local cpivin = max(`cpivins')
 	} // if no cpi vintage is selected
 	
-	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /* 
-	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta) 
+	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
+	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta)
 	
 	collapse (mean) cpi* icp* cur_adj, by(code countryname region year)
 	rename code countrycode
