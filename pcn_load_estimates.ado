@@ -90,7 +90,7 @@ if ("`version'" != ""){
               1: Load data in memory
 ==================================================*/ 
 
-/* reshpaed or regular */
+/* reshpaed or regular
 
  if ("`REshaped'" != "" ){
 	local fileroot "primus_estimates_reshaped"
@@ -98,7 +98,7 @@ if ("`version'" != ""){
  else{
 	local fileroot "primus_estimates"
  }
-
+*/
 
 /* filename according to version */
 local files: dir "`maindir'" files "*.dta", respectcase
