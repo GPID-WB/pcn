@@ -58,6 +58,7 @@ The available subcommands are the following:
 updates the master file with means.{p_end}
 {p2col:{opt download}}(Rarely used). Downloads the latest file(s) available. Should 
 be only used when major  updates are released.{p_end}
+{p2col:{opt primus}}Allow you to manage with ease both the pending and approved data on PRIMUS.{p_end}
 {space 4}{hline}
 {p 4 4 2}
 Further explanation of the {help pcn##subcommands:subcommands} is found {help pcn##subcommands:below}.{p_end}
@@ -108,6 +109,8 @@ Sections are presented under the following headings:
 		  - {it:{help pcn##subcreate:create}}
 		  - {it:{help pcn##subgd:groupdata}}
 		  - {it:{help pcn##subdownload:download}}
+		  - {it:{help pcn##subload:master}}
+		  - {it:{help pcn##subload:primus}}
                 {it:{help pcn##param:Parameters description}}
                 {it:{help pcn##options:Options description}}
                 {it:{help pcn##examples:Examples}}
@@ -132,7 +135,7 @@ PovcalNet is a tool that allows computing poverty and inequality indicators for 
 {marker subcommands}{...}
 {title:Subcommands}
 
-{center: {hline 3} {it:{help pcn##subload:load}} - {it:{help pcn##subcreate:create}}- {it:{help pcn##subgd:groupdata}}- {it:{help pcn##subdownload:download}} {hline 3}}
+{center: {hline 3} {it:{help pcn##subload:load}} - {it:{help pcn##subcreate:create}} - {it:{help pcn##subgd:groupdata}} - {it:{help pcn##subdownload:download}} - {it:{help pcn##subdownload:master}} - {it:{help pcn##subdownload:prime}} {hline 3}}
 
 {center:(Go up to {it:{help pcn##sections:Sections Menu}})}
 
@@ -154,27 +157,21 @@ Four different kinds of data can be loaded, accordingly to the chosen companion 
                 {hline 73}
                 Subcommand + Companion{col 45}Action
                 {hline 25}{col 45}{hline 45}
-                load [gpwg]	{col 45}loads the GPWG surveys.
+                load [gpwg]	{col 45}loads the GPWG surveys (approved).
                 load wrk		{col 45}loads the working data (Not yet approved).
-                load estimates{col 45}loads the estimates provided by primus.
                 laod cpi		{col 45}loads the CPI data (datalibweb's).
                 {hline 73}
 
-
-Options and overall structure changes according to the companion word, please keep in mind the following:
+{p 4 4 2}
+Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
 
     {hline 93}
     Companion{col 25}Basic recommended structure
     {hline 15}{col 25}{hline 73}
     gpwg		{col 20}pcn load, countr(3-letter code) year(####) [veralt(##) vermast(##)]
     wrk			{col 20}pcn laod wrk, countr(3-letter code) year(####) 
-    estimates		{col 20}pcn load estimates [, version( mm/dd/yyyy |	Stata date | "list")) ]
     cpi			{col 20}pcn load estimates [, version( date |"choose"|"pick")) ]
     {hline 93}
-
-{p 4 4 2}
-{bf:{ul:Examples}}
-
 
 {p 4 4 2}
 {bf:{ul:Examples}}
