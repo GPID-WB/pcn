@@ -344,10 +344,13 @@ Options:{p_end}
 {p 4 4 2}
 			- {it:load}{p_end}
 {p 4 4 2}
-This option specifies which spreadsheet of the master files is loaded into memory.
+This option can be used to load each spreadsheet of the most recent version of the master file into memory.
 Each spreadsheet is loaded in long format. The user can choose the spreadsheet 
 to load by specifying one of the following: cpi, ppp, gdp, population, pce, 
-currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, surveymean.{p_end}
+currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, surveymean. 
+The load option also accepts: pick, select, choose and sheetslist. Specifying one of these allows
+the users to pick each sheet manually. 
+The load option can be combined with the option version to choose among different versions of the master file. The user can indicate pick, select or choose within the version option.{p_end}
 
 {p 4 4 2}
 {bf:{ul:Examples}}{p_end}
@@ -355,6 +358,14 @@ currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, survey
 The following loads the spreadsheet of the master file containing the cpi data:{p_end}
 {phang2}
 {stata pcn master, load(cpi)}{p_end}
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data and allows the user to pick a version of the master file:{p_end}
+{phang2}
+{stata pcn master, load(cpi) version(pick)}{p_end}
+{p 4 4 2}
+The following allows the user to select a version of the master file and a sheet to use:{p_end}
+{phang2}
+{stata pcn master, load(pick) version(select)}{p_end}
 
 {center:(Go up to {it:{help pcn##subcommands:Subcommand top}})}
 {center:(Go up to {it:{help pcn##sections:Sections Menu}})}
