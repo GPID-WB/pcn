@@ -68,7 +68,7 @@ qui {
 	
 	* return local vcnumbers = "`vcnumbers'"
 	if (inlist("`version'" , "pick", "choose", "select")) {
-		noi disp in y "list of available vintage control dates for file " in g "povcalnet_cpi"
+		noi disp in y "list of available vintage control dates of" in g "Master file"
 		local i = 0
 		
 		foreach vc of local vcnumbers {
@@ -116,6 +116,35 @@ qui {
 	noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /*
   */ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'"
 	
+	
+	//========================================================
+	// Pick sheet
+	//========================================================
+	if inlist(lower("`load'"), "pick", "choose", "select", "sheetslist") {
+		
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", describe
+		
+		// store in local name of sheet
+		local nsheets = r(N_worksheet)
+		
+		noi disp in y "list of available sheets in the selected version of " /* 
+		   */ in g "Master file"
+		
+		noi disp as text _col(7) "N {c |} Sheet Name" 
+		noi disp as text "{hline 8}{c +}{hline 20}"
+
+		foreach i of numlist 1/`nsheets' {
+			
+			if (length("`i'") == 1 ) local j = "0`i'"
+			if (length("`i'") == 2 ) local j = "`i'"
+			
+			noi disp _col(6) `"`j' {c |} {stata `r(worksheet_`i')'}"'
+			
+		}
+		
+		noi disp _n "select Sheet to load into Stata" _request(_load)
+		exit 
+	}
 	
 	//========================================================
 	//  CPI
@@ -171,11 +200,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		
 	}
-	
-	
 	
 	//========================================================
 	//POP
@@ -360,6 +385,13 @@ qui {
 } // end qui
 
 end
+
+
+//========================================================
+//  Auxiliary programs
+//========================================================
+
+
 exit
 /* End of do-file */
 
