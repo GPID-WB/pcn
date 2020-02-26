@@ -123,7 +123,7 @@ qui foreach id of local ids {
 
 			if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 
-			local exfile: dir "`sydir'/`dir'/Data" files "*GMD-GROUP`cg'.dta", respect
+			local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cg'.dta", respect
 			if (`"`exfile'"' != "") continue
 			else local fe = "`dir'"  // file does not exists
 		}
@@ -151,7 +151,7 @@ qui foreach id of local ids {
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]     `fileid'-GROUP`cg'.dta
+		char _dta[filename]     `fileid'_GROUP-`cg'.dta
 		char _dta[id]           `fileid'
 		char _dta[datatype]     `dt'
 		char _dta[countrycode]  `cc'
@@ -164,9 +164,9 @@ qui foreach id of local ids {
 
 		cap mkdir "`sydir'/vintage"
 		save "`sydir'/vintage/`signature'_`datetime'.dta", replace
-		save "`verid'/Data/`fileid'-GROUP`cg'.dta", replace
+		save "`verid'/Data/`fileid'_GROUP-`cg'.dta", replace
 
-		export delimited using "`verid'/Data/`fileid'-GROUP`cg'.txt", ///
+		export delimited using "`verid'/Data/`fileid'_GROUP-`cg'.txt", ///
 		novarnames nolabel delimiter(tab) `replace'
 
 		export delimited using "`verid'/Data/`cc'`cov'`l2y'.T`ft'", ///
@@ -174,7 +174,7 @@ qui foreach id of local ids {
 
 	}
 	else {
-		noi disp in y "File " in w "`fileid'-GROUP`cg'.dta" in /*
+		noi disp in y "File " in w "`fileid'_GROUP-`cg'.dta" in /*
 		*/ y " is up to date."
 	}
 
@@ -214,7 +214,7 @@ qui foreach id of local ids {
 
 		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
 
-		local exfile: dir "`sydir'/`dir'/Data" files "*GMD-GROUP`cg'.dta", respect
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cg'.dta", respect
 		if (`"`exfile'"' != "") continue
 		else local fe = "`dir'"  // file does not exists
 	}
@@ -231,21 +231,21 @@ qui foreach id of local ids {
 		mata: VC = strtoreal(tokens(`"`vcs'"'));  /*
 		*/	  st_local("mvc", strofreal(max(VC), "%15.0f"))
 
-		copy "`sydir'/vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'-GROUP`cg'.dta"
+		copy "`sydir'/vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'_GROUP-`cg'.dta"
 
-		use "`sydir'/`fe'/Data/`fe'-GROUP`cg'.dta", clear
+		use "`sydir'/`fe'/Data/`fe'_GROUP-`cg'.dta", clear
 
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]     `fe'-GROUP`cg'.dta
+		char _dta[filename]     `fe'_GROUP-`cg'.dta
 		char _dta[id]           `fe'
 		char _dta[datetime]     `datetime'
 		char _dta[datetimeHRF]  `datetimeHRF'
 
 		save, replace
 
-		export delimited using "`sydir'/`fe'/Data/`fileid'-GROUP`cg'.txt", ///
+		export delimited using "`sydir'/`fe'/Data/`fileid'_GROUP-`cg'.txt", ///
 		novarnames nolabel delimiter(tab) `replace'
 
 		export delimited using "`sydir'/`fe'/Data/`cc'`cov'`l2y'.T`ft'", ///
