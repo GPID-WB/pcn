@@ -51,12 +51,14 @@ The available subcommands are the following:
 {p2colset 5 30 29 2}{...}
 {p2col:{opt load}}Loads into memory the file corresponding to the parameters given by
  the user.{p_end}
+{p2col:{opt master}}Loads or updates the master file sheets.{p_end}
 {p2col:{opt create}}Creates a dataset containing weights and welfare. 
 (Relevant for PovcalNet tools.){p_end}
 {p2col:{ul:{opt group}}{opt data}}Creates group data files from raw information and 
 updates the master file with means.{p_end}
 {p2col:{opt download}}(Rarely used). Downloads the latest file(s) available. Should 
 be only used when major  updates are released.{p_end}
+{p2col:{opt primus}}Allow you to manage with ease both the pending and approved data on PRIMUS.{p_end}
 {space 4}{hline}
 {p 4 4 2}
 Further explanation of the {help pcn##subcommands:subcommands} is found {help pcn##subcommands:below}.{p_end}
@@ -82,6 +84,8 @@ The {bf:pcn} command has the following main options available:
 {p2col:{opt clear:}}Replaces data in memory.{p_end}
 {p2col:{opt lis:}}Only LIS surveys will be taken into account.{p_end}
 {p2col:{opt module:}}It will search accordingly for those either "BIN" or "GPWG"\"GMD" surveys.{p_end}
+{p2col:{opt load:}}[Only for master subcommand] If selected the selected sheet will be load from the master.{p_end}
+{p2col:{opt upload:}}[Only for master subcommand] If selected the selected sheet will be modified in the master. [Use restricted for the time being.]{p_end}
 {space 4}{hline}
 {p 4 4 2}
 Further explanation of the {help pcn##options:Options} is found {help pcn##options:below}. {p_end}
@@ -105,6 +109,8 @@ Sections are presented under the following headings:
 		  - {it:{help pcn##subcreate:create}}
 		  - {it:{help pcn##subgd:groupdata}}
 		  - {it:{help pcn##subdownload:download}}
+		  - {it:{help pcn##subload:master}}
+		  - {it:{help pcn##subload:primus}}
                 {it:{help pcn##param:Parameters description}}
                 {it:{help pcn##options:Options description}}
                 {it:{help pcn##examples:Examples}}
@@ -129,7 +135,7 @@ PovcalNet is a tool that allows computing poverty and inequality indicators for 
 {marker subcommands}{...}
 {title:Subcommands}
 
-{center: {hline 3} {it:{help pcn##subload:load}} - {it:{help pcn##subcreate:create}}- {it:{help pcn##subgd:groupdata}}- {it:{help pcn##subdownload:download}} {hline 3}}
+{center: {hline 3} {it:{help pcn##subload:load}} - {it:{help pcn##subcreate:create}} - {it:{help pcn##subgd:groupdata}} - {it:{help pcn##subdownload:download}} - {it:{help pcn##subdownload:master}} - {it:{help pcn##subdownload:prime}} {hline 3}}
 
 {center:(Go up to {it:{help pcn##sections:Sections Menu}})}
 
@@ -139,11 +145,33 @@ PovcalNet is a tool that allows computing poverty and inequality indicators for 
 {p 4 4 2}
 This subcommand loads the PovcalNet data into memory (this requires access to the P drive).
 In overall terms, the command checks the conditions given by the user, chiefly 
-{opt countries} and {opt year}, nd load the existing data that satisfies the user request, 
+{opt countries} and {opt year}, and load the existing data that satisfies the user's request, 
 or deploys a list with the surveys in stock that meets the conditions. If additional 
 conditions, such as {type} or version options, are listed then the search is refined.
 {p_end}
 
+
+{p 4 4 2}
+Four different kinds of data can be loaded, accordingly to the chosen companion word:{p_end}
+
+                {hline 73}
+                Subcommand + Companion{col 45}Action
+                {hline 25}{col 45}{hline 45}
+                load [gpwg]	{col 45}loads the GPWG surveys (approved).
+                load wrk		{col 45}loads the working data (Not yet approved).
+                laod cpi		{col 45}loads the CPI data (datalibweb's).
+                {hline 73}
+
+{p 4 4 2}
+Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
+
+    {hline 93}
+    Companion{col 25}Basic recommended structure
+    {hline 15}{col 25}{hline 73}
+    gpwg		{col 20}pcn load, countr(3-letter code) year(####) [veralt(##) vermast(##)]
+    wrk			{col 20}pcn laod wrk, countr(3-letter code) year(####) 
+    cpi			{col 20}pcn load estimates [, version( date |"choose"|"pick")) ]
+    {hline 93}
 
 {p 4 4 2}
 {bf:{ul:Examples}}
@@ -303,6 +331,45 @@ If you intend to replace the exising file(s) for the newer version(s), you must
 
 {center:(Go up to {it:{help pcn##subcommands:Subcommand top}})}
 {center:(Go up to {it:{help pcn##sections:Sections Menu}})}
+
+
+{marker submaster}{...}
+{dlgtab:master}
+
+{p 4 4 2}
+This subcommand loads PovcalNet data from the most recent master file.
+
+{p 4 4 2}
+Options:{p_end}
+{p 4 4 2}
+			- {it:load}{p_end}
+{p 4 4 2}
+This option can be used to load each spreadsheet of the most recent version of the master file into memory.
+Each spreadsheet is loaded in long format. The user can choose the spreadsheet 
+to load by specifying one of the following: cpi, ppp, gdp, population, pce, 
+currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, surveymean. 
+The load option also accepts: pick, select, choose and sheetslist. Specifying one of these allows
+the users to pick each sheet manually. 
+The load option can be combined with the option version to choose among different versions of the master file. The user can indicate pick, select or choose within the version option.{p_end}
+
+{p 4 4 2}
+{bf:{ul:Examples}}{p_end}
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data:{p_end}
+{phang2}
+{stata pcn master, load(cpi)}{p_end}
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data and allows the user to pick a version of the master file:{p_end}
+{phang2}
+{stata pcn master, load(cpi) version(pick)}{p_end}
+{p 4 4 2}
+The following allows the user to select a version of the master file and a sheet to use:{p_end}
+{phang2}
+{stata pcn master, load(pick) version(select)}{p_end}
+
+{center:(Go up to {it:{help pcn##subcommands:Subcommand top}})}
+{center:(Go up to {it:{help pcn##sections:Sections Menu}})}
+
 
 {marker param}{...}
 {title:Parameters}
