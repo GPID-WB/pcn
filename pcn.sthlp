@@ -332,6 +332,34 @@ If you intend to replace the exising file(s) for the newer version(s), you must
 {center:(Go up to {it:{help pcn##subcommands:Subcommand top}})}
 {center:(Go up to {it:{help pcn##sections:Sections Menu}})}
 
+
+{marker submaster}{...}
+{dlgtab:master}
+
+{p 4 4 2}
+This subcommand loads PovcalNet data from the most recent master file.
+
+{p 4 4 2}
+Options:{p_end}
+{p 4 4 2}
+			- {it:load}{p_end}
+{p 4 4 2}
+This option specifies which spreadsheet of the master files is loaded into memory.
+Each spreadsheet is loaded in long format. The user can choose the spreadsheet 
+to load by specifying one of the following: cpi, ppp, gdp, population, pce, 
+currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, surveymean.{p_end}
+
+{p 4 4 2}
+{bf:{ul:Examples}}{p_end}
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data:{p_end}
+{phang2}
+{stata pcn master, load(cpi)}{p_end}
+
+{center:(Go up to {it:{help pcn##subcommands:Subcommand top}})}
+{center:(Go up to {it:{help pcn##sections:Sections Menu}})}
+
+
 {marker param}{...}
 {title:Parameters}
 
