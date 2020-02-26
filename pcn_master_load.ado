@@ -137,12 +137,11 @@ qui {
 			
 			if (length("`i'") == 1 ) local j = "0`i'"
 			if (length("`i'") == 2 ) local j = "`i'"
+			local pcn_code "pcn master, load(`r(worksheet_`i')') version(`vcnumber')"
 			
-			noi disp _col(6) `"`j' {c |} {stata `r(worksheet_`i')'}"'
+			noi disp _col(6) `"`j' {c |} {stata `pcn_code':`r(worksheet_`i')'}"'
 			
 		}
-		
-		noi disp _n "select Sheet to load into Stata" _request(_load)
 		exit 
 	}
 	
