@@ -106,33 +106,51 @@ qui foreach id of local ids {
 	keep if id == "`id'"
 	keep weight  welfare
 
-	local signature "`cc'_`yr'_`sy'_GMD_GROUP-`cg'"
-	cap datasignature confirm using /*
-	*/ "`sydir'/`signature'", strict // deberia ir a la misma carpeta de la data
-	local dsrc = _rc
-	if (`dsrc' == 601) {
+
+	local dirs: dir "`sydir'" dirs "*GMD", respect
+	
+	if (wordcount(`"`dirs'"') == 0) {
 		local fileid "`cc'_`yr'_`sy'_v01_M_v01_A_GMD"
 	}
-	if (`dsrc' == 9) {
-
-		local dirs: dir "`sydir'" dirs "*GMD", respect
-
+	else if (wordcount(`"`dirs'"') == 1) {
+		local fe = ""  // file exists
+		local va = ""
+		local dir `dirs'
+		local fileid `dir'
+		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cg'.dta", respect
+		if (`"`exfile'"' == "") local fe = "`dir'"  // file does not exists
+	}
+	else{
 		local fe = ""  // file exists
 		local va = ""
 		foreach dir of local dirs {
-
 			if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
-
 			local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cg'.dta", respect
 			if (`"`exfile'"' != "") continue
 			else local fe = "`dir'"  // file does not exists
 		}
-
+		
 		local va: subinstr local va " " ",", all
 		local va = "0" + "`va'"
 
-		if ("`fe'"  == "") local va = max(`va') + 1
-		else               local va = max(`va')
+		local va = max(`va')
+
+		if length("`va'") == 1 local va = "0"+"`va'"
+		local fileid "`cc'_`yr'_`sy'_v01_M_v`va'_A_GMD"
+	}
+	
+	local signature "`cc'_`yr'_`sy'_GMD_GROUP-`cg'"
+	
+	cap datasignature confirm using /*
+	*/ "`sydir'/`fileid'/Data/`signature'", strict
+	local dsrc = _rc
+	if (`dsrc' == 601) {
+		// nothing
+	}
+	if (`dsrc' == 9) {
+		if ("`fe'"  == "") local va = `va' + 1
+		else               local va = `va'
 
 		if length("`va'") == 1 local va = "0"+"`va'"
 		local fileid "`cc'_`yr'_`sy'_v01_M_v`va'_A_GMD"
@@ -143,7 +161,7 @@ qui foreach id of local ids {
 		cap mkdir "`verid'/Data"
 
 		noi datasignature set, reset /*
-		*/ saving("`sydir'/`signature'", replace)
+		*/ saving("`verid'/Data/`signature'", replace)
 
 
 		//------------Include Characteristics
