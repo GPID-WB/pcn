@@ -162,8 +162,8 @@ qui foreach id of local ids {
 		char _dta[datetime]     `datetime'
 		char _dta[datetimeHRF]  `datetimeHRF'
 
-		cap mkdir "`sydir'/vintage"
-		save "`sydir'/vintage/`signature'_`datetime'.dta", replace
+		cap mkdir "`sydir'/_vintage"
+		save "`sydir'/_vintage/`signature'_`datetime'.dta", replace
 		save "`verid'/Data/`fileid'_GROUP-`cg'.dta", replace
 
 		export delimited using "`verid'/Data/`fileid'_GROUP-`cg'.txt", ///
@@ -221,7 +221,7 @@ qui foreach id of local ids {
 
 	if ("`fe'" != "") {
 
-		local mfiles: dir "`sydir'/vintage" files "`signature'*.dta", respect
+		local mfiles: dir "`sydir'/_vintage" files "`signature'*.dta", respect
 		disp `"`mfiles'"'
 		local vcs: subinstr local mfiles "`signature'_" "", all
 		local vcs: subinstr local vcs ".dta" "", all
