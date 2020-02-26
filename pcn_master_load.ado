@@ -128,11 +128,11 @@ qui {
 		local nsheets = r(N_worksheet)
 		
 		noi disp in y "list of available sheets in the selected version of " /* 
-		   */ in g "Master file"
+		*/ in g "Master file"
 		
 		noi disp as text _col(7) "N {c |} Sheet Name" 
 		noi disp as text "{hline 8}{c +}{hline 20}"
-
+		
 		foreach i of numlist 1/`nsheets' {
 			
 			if (length("`i'") == 1 ) local j = "0`i'"
@@ -155,14 +155,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		local varlist = "`r(varlist)'"
-		foreach v of local varlist {
-			local n: variable label `v'
-			cap confirm number `n'
-			if (_rc) continue
-			rename `v' y`n'
-		}
+		_label2name
 		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverqge) j(year)
@@ -211,14 +204,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		local varlist="`r(varlist)'"
-		foreach v of local varlist {
-			local n: variable label `v'
-			cap confirm number `n'
-			if (_rc) continue
-			rename `v' y`n'
-		}
+		_label2name
 		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
@@ -244,14 +230,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		local varlist="`r(varlist)'"
-		foreach v of local varlist {
-			local n: variable label `v'
-			cap confirm number `n'
-			if (_rc) continue
-			rename `v' y`n'
-		}
+		_label2name
 		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
@@ -275,14 +254,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		local varlist = "`r(varlist)'"
-		foreach v of local varlist {
-			local n: variable label `v'
-			cap confirm number `n'
-			if (_rc) continue
-			rename `v' y`n'
-		}
+		_label2name
 		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
@@ -305,14 +277,7 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
-		local varlist = "`r(varlist)'"
-		foreach v of local varlist {
-			local n: variable label `v'
-			cap confirm number `n'
-			if (_rc) continue
-			rename `v' y`n'
-		}
+		_label2name
 		
 		if ("`shape'" == "long") {
 			rename year baseyear
@@ -339,7 +304,6 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		
-		ds
 	}
 	
 	//========================================================
@@ -351,9 +315,8 @@ qui {
 		
 		missings dropvars, force
 		missings dropobs, force
-		
-		ds
 	}
+	
 	//========================================================
 	//SURVEY INFO
 	//========================================================
@@ -364,7 +327,6 @@ qui {
 		missings dropvars, force
 		missings dropobs, force
 		ren coverage coveragetype
-		ds
 	}
 	//========================================================
 	//SURVEY MEAN
@@ -377,7 +339,6 @@ qui {
 		missings dropobs, force
 		ren cpi_time year
 		ren coverage coveragetype
-		ds
 	}
 	
 	
@@ -390,6 +351,17 @@ end
 //  Auxiliary programs
 //========================================================
 
+program define _label2name 
+ds
+local varlist = "`r(varlist)'"
+foreach v of local varlist {
+	local n: variable label `v'
+	cap confirm number `n'
+	if (_rc) continue
+	rename `v' y`n'
+}
+
+end 
 
 exit
 /* End of do-file */
