@@ -81,7 +81,7 @@ qui {
 			local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
 			local dispdate = trim("`dispdate'")
 			
-			noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'	
+			noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'
 			
 		}
 		
@@ -113,8 +113,8 @@ qui {
 	local svc = clock("`vcnumber'", "YMDhms")   // stata readable form
 	local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
 	
-	noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /* 
-  */ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'" 
+	noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /*
+  */ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'"
 	
 	
 	//========================================================
@@ -155,7 +155,7 @@ qui {
 			replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
 			label var year "Year"
 			label var cpi "CPI"
-			}
+		}
 		
 		* if ("`shape'" == "long") rename year cpi_time
 	}
@@ -173,8 +173,8 @@ qui {
 		
 		ds
 		
-		}
-
+	}
+	
 	
 	
 	//========================================================
@@ -194,8 +194,8 @@ qui {
 			cap confirm number `n'
 			if (_rc) continue
 			rename `v' y`n'
-			}
-	
+		}
+		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
 			rename y population
@@ -203,11 +203,11 @@ qui {
 			ren coverage coveragetype
 			label var year "Year"
 			label var population "Population"
-
-			}
-	
+			
 		}
-
+		
+	}
+	
 	
 	
 	//========================================================
@@ -227,8 +227,8 @@ qui {
 			cap confirm number `n'
 			if (_rc) continue
 			rename `v' y`n'
-			}
-			
+		}
+		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
 			rename y gdp
@@ -236,8 +236,8 @@ qui {
 			label var year "Year"
 			label var gdp "GDP"
 			ren coverage coveragetype
-			}
-	
+		}
+		
 	}
 	
 	
@@ -258,7 +258,7 @@ qui {
 			cap confirm number `n'
 			if (_rc) continue
 			rename `v' y`n'
-			}
+		}
 		
 		if ("`shape'" == "long") {
 			reshape long y, i(countrycode coverage) j(year)
@@ -266,10 +266,10 @@ qui {
 			drop if pce == .
 			label var year "Year"
 			label var pce "PCE"
-
+			
 		}
-}
-
+	}
+	
 	
 	//========================================================
 	//CURRENCY CONVERSION
@@ -301,9 +301,9 @@ qui {
 			ren code countrycode
 			ren coverage coveragetype
 		}
-
-}			
-
+		
+	}
+	
 	
 	//========================================================
 	//REGION LOOKUP
@@ -314,9 +314,9 @@ qui {
 		
 		missings dropvars, force
 		missings dropobs, force
-
+		
 		ds
-}
+	}
 	
 	//========================================================
 	//COUNTRY LIST
@@ -329,7 +329,7 @@ qui {
 		missings dropobs, force
 		
 		ds
-}
+	}
 	//========================================================
 	//SURVEY INFO
 	//========================================================
@@ -341,7 +341,7 @@ qui {
 		missings dropobs, force
 		ren coverage coveragetype
 		ds
-}
+	}
 	//========================================================
 	//SURVEY MEAN
 	//========================================================
@@ -354,10 +354,10 @@ qui {
 		ren cpi_time year
 		ren coverage coveragetype
 		ds
-}
-
+	}
 	
-} // end qui 
+	
+} // end qui
 
 end
 exit
