@@ -27,7 +27,7 @@ clear                               ///
 pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
-replace								///
+replace								              ///
 *                                   ///
 ]
 version 14
@@ -56,21 +56,9 @@ local dirsep    = c(dirsep)
 local vintage:  disp %tdD-m-CY date("`c(current_date)'", "DMY")
 
 
-
-*------------------ Initial Parameters  ------------------
-local mfiles: dir "../../00.Master/02.vintage/" files "Master_*.xlsx", respect
-local vcnumbers: subinstr local mfiles "Master_" "", all
-local vcnumbers: subinstr local vcnumbers ".xlsx" "", all
-local vcnumbers: list sort vcnumbers
-
-mata: VC = strtoreal(tokens(`"`vcnumbers'"')); /*
-*/ st_local("maxvc", strofreal(max(VC), "%15.0f"))
-
-* exDate = Format(Now(), "yyyymmddHhNnSs") // VBA name
-
-
 //------------load data
-import excel "raw_GroupData.xlsx", sheet("raw_GroupData") firstrow clear
+import excel "04.formatted/`country'/`country'_raw_GroupData.xlsx", /* 
+ */ sheet("raw_GroupData") firstrow clear
 tostring survey, replace  // in case survey is unknown
 
 gen id = countrycode + " " + strofreal(year)  + " " + /*
@@ -169,16 +157,16 @@ qui foreach id of local ids {
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]     `fileid'_GROUP-`cov'.dta
-		char _dta[id]           `fileid'
-		char _dta[datatype]     `dt'
-		char _dta[countrycode]  `cc'
-		char _dta[year]         `yr'
-		char _dta[coverage]     `cov'
-		char _dta[groupdata]     1
-		char _dta[formattype]   `ft'
-		char _dta[datetime]     `datetime'
-		char _dta[datetimeHRF]  `datetimeHRF'
+		char _dta[filename]        `fileid'_GROUP-`cov'.dta
+		char _dta[id]              `fileid'
+		char _dta[datatype]        `dt'
+		char _dta[countrycode]     `cc'
+		char _dta[year]            `yr'
+		char _dta[survey_coverage] `cov'
+		char _dta[groupdata]        1
+		char _dta[formattype]      `ft'
+		char _dta[datetime]        `datetime'
+		char _dta[datetimeHRF]     `datetimeHRF'
 
 		cap mkdir "`sydir'/_vintage"
 		save "`sydir'/_vintage/`signature'_`datetime'.dta", replace
