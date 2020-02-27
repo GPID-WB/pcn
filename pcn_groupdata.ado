@@ -18,8 +18,8 @@ Output:
 ==================================================*/
 program define pcn_groupdata, rclass
 syntax [anything(name=subcmd id="subcommand")],  ///
-[                                         ///
-COUNtries(string)                   ///
+COUNtry(string)                      ///
+[                                    ///
 Years(numlist)                      ///
 maindir(string)                     ///
 type(string)                        ///
@@ -36,6 +36,11 @@ version 14
 if ("`pause'" == "pause") pause on
 else                      pause off
 
+
+if (wordcount("`country'") != 1) {
+	noi disp in red "{it: country()} must have only one countrycode"
+	error
+} 
 
 //------------set up
 if ("`maindir'" == "") cd "p:\01.PovcalNet\03.QA\01.GroupData"
