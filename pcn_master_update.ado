@@ -111,6 +111,14 @@ qui {
     
     merge 1:1 CountryCode Coverqge CountryName survname year using `cdata', nogen
     sort CountryCode year survname
+    
+    //------------Manual fix for India
+    sort CountryCode Coverqge survname year
+    replace y = y[_n-1] if (CountryCode == "IND" & year == 2012)
+    replace y = 1 if (CountryCode == "IND" & year == 2011)
+    
+    //------------Re format to export
+    
     reshape wide y, i(CountryCode CountryName Coverqge survname) j(year)
 
     collapse (mean) y*, by(CountryCode CountryName Coverqge)  // fix if cpi per survey change
@@ -597,7 +605,8 @@ qui {
 
     putexcel save
 
-    noi disp in y "sheet(`msheet') in Master data has been update."
+    noi disp in y "sheet(`msheet') in Master data has been update." _n /* 
+     */ "{stata pcn master, load(`msheet'):Load data}"
   } // end of success
 } // end of qui
 
