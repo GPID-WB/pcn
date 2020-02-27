@@ -23,7 +23,7 @@ pause                           ///
 shape(string)                   ///
 ]
 
-version 15 // this is really important
+version 14 
 
 *---------- conditions
 if ("`pause'" == "pause") pause on
