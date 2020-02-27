@@ -605,7 +605,8 @@ qui {
 
     putexcel save
 
-    noi disp in y "sheet(`msheet') in Master data has been update."
+    noi disp in y "sheet(`msheet') in Master data has been update." _n /* 
+     */ "{stata pcn master, load(`msheet'):Load data}"
   } // end of success
 } // end of qui
 
