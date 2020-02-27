@@ -89,7 +89,7 @@ qui {
 			noi disp as text "Options available to download"
 			
 			local i = 0
-			noi disp _n "select survey to load" _request(_survey)
+			noi disp _n "select survey to load"
 			foreach db of local dldb {
 				local ++i
 				noi disp `"   `i' {c |} {stata `db'}"'
@@ -227,7 +227,7 @@ qui {
 	
 	if inlist(lower("`subcmd'"), "group", "groupdata", "gd", "groupd") {
 		
-		noi pcn_groupdata, countries(`countries') years(`years') type(`type')  /*
+		noi pcn_groupdata, country(`countries') years(`years') type(`type')  /*
 		*/  vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause'  `options'
 		return add
