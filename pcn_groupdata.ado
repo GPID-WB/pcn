@@ -69,25 +69,20 @@ import excel "raw_GroupData.xlsx", sheet("raw_GroupData") firstrow clear
 tostring survey, replace  // in case survey is unknown
 
 gen id = countrycode + " " + strofreal(year)  + " " + /*
-*/ strofreal(coverage)  + " " + datatype  + " 0" + /*
-*/ strofreal(formattype) + " " + survey
+*/       coverage  + " " + datatype  + " 0" + /*
+*/       strofreal(formattype) + " " + survey
 
 
 //------------saving data vintages
 levelsof id, local(ids)
 
 qui foreach id of local ids {
-	local cc:  word 1 of `id'
-	local yr:  word 2 of `id'
-	local cg:  word 3 of `id'
-	local dt:  word 4 of `id'
-	local ft:  word 5 of `id'
-	local sy:  word 6 of `id'
-
-	if      (`cg' == 1) local cov = "R"
-	else if (`cg' == 2) local cov = "U"
-	else if (`cg' == 3) local cov = "N"
-	else                local cov = "A"
+	local cc:   word 1 of `id'
+	local yr:   word 2 of `id'
+	local cov:  word 3 of `id'
+	local dt:   word 4 of `id'
+	local ft:   word 5 of `id'
+	local sy:   word 6 of `id'
 
 	local l2y = substr("`yr'", 3,.)
 
@@ -198,24 +193,19 @@ qui foreach id of local ids {
 
 	*get the mean
 	sum welfare [w = welfare], meanonly
-	local `cc'`yr'`cg'm = r(mean)
+	local `cc'`yr'`cov'm = r(mean)
 
 	restore
 }
 
 //------------ Check both files are in the most recent folder
 qui foreach id of local ids {
-	local cc:  word 1 of `id'
-	local yr:  word 2 of `id'
-	local cg:  word 3 of `id'
-	local dt:  word 4 of `id'
-	local ft:  word 5 of `id'
-	local sy:  word 6 of `id'
-
-	if      (`cg' == 1) local cov = "R"
-	else if (`cg' == 2) local cov = "U"
-	else if (`cg' == 3) local cov = "N"
-	else                local cov = "A"
+	local cc:   word 1 of `id'
+	local yr:   word 2 of `id'
+	local cov:  word 3 of `id'
+	local dt:   word 4 of `id'
+	local ft:   word 5 of `id'
+	local sy:   word 6 of `id'
 
 	local l2y = substr("`yr'", 3,.)
 
