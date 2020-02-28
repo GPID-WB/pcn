@@ -268,6 +268,7 @@ qui {
     //---- Espen's code ----- End
     missings dropobs, force
     
+    //------------ Save metadata
     local msheet = upper("`update'")
     cap datasignature confirm using "`masterdir'/03.metadata/`msheet'"
     if (_rc == 0 & "`force'" == "") {
@@ -278,7 +279,8 @@ qui {
     datasignature set, reset saving("`masterdir'/03.metadata/`msheet'", replace)
     save "`masterdir'/03.metadata/_vintage/`msheet'_`date_time'.dta", replace
     save "`masterdir'/03.metadata/`msheet'.dta", replace
-        
+    
+    //------------ arrange code. 
     keep countrycode coverage year new_gdp
     preserve
     datalibweb_inventory, clear
