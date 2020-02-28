@@ -33,11 +33,47 @@ The {cmd:pcn} command,command, through a set of subcommands, allows Stata users 
  the user will be able to, load data into stata, get the main aggregates,
  and keep up with updates.{p_end}
 
-{p 4 4 2}
-A more extensive {it:{help pcn_full##description:description}} is available {help pcn_full##description:below}.{p_end}
+{hline}
+
+{marker sections}{...}
+{title:Sections}
+
+{pstd}
+Sections are presented under the following headings:
+
+                {it:{help pcn_full##description:Command description}}
+                {it:{help pcn_full##syntax:Command overall syntax}}
+                {it:{help pcn_full##subcommands:Subcommands description}}
+		  - {it:{help pcn_full##subload:load}}
+		  - {it:{help pcn_full##subcreate:create}}
+		  - {it:{help pcn_full##subgd:groupdata}}
+		  - {it:{help pcn_full##subdownload:download}}
+		  - {it:{help pcn_full##submaster:master}}
+		  - {it:{help pcn_full##subprimus:primus}}
+                {it:{help pcn_full##param:Parameters description}}
+                {it:{help pcn_full##options:Options description}}
+                {it:{help pcn_full##examples:Examples}}
+                {it:{help pcn_full##disclaimer:Disclaimer}}
+                {it:{help pcn_full##termsofuse:Terms of use}}
+                {it:{help pcn_full##howtocite:How to cite}}
+
+{marker description}{...}
+{title:Description}
+
+{pstd}
+PovcalNet is a tool that allows computing poverty and inequality indicators for more than
+ 160 countries and regions, inside the World Bank's database of household surveys
+ (check {help povcalnet:povcalnet} command). The {cmd:pcn} command(s) 
+ allows Stata users to easly navigate the PovcalNet files and folders. In other words, 
+ the {cmd:pcn} command allows working directly with the underlining data used by the PovcalNet 
+ tool. Therefore, giving quick and easy access to, up to date, data for more than 160 
+ countries' household surveys and aggregate data. {p_end}
+
+{center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
+{center:({help pcn:Go back to Intro page})}
 
 {marker syntax}{...}
-{title:Syntax}
+{title:Overall Syntax}
 
 {p 8 17 2}
 {cmdab:pcn:} [{it:{help pcn_full##subcommands:subcommand}}] [{cmd:,} {it:{help pcn_full##subcommands:Parameters}} {it:{help pcn_full##options:Options}}]
@@ -96,40 +132,7 @@ Further explanation of the {help pcn_full##options:Options} is found {help pcn_f
 and {help primus:primus}. [Notice: {help datalibweb:datalibweb} and {help primus:primus} 
 may require World Bank internal resources]
 
-{hline}
 
-{marker sections}{...}
-{title:Sections}
-
-{pstd}
-Sections are presented under the following headings:
-
-                {it:{help pcn_full##description:Command description}}
-                {it:{help pcn_full##subcommands:Subcommands description}}
-		  - {it:{help pcn_full##subload:load}}
-		  - {it:{help pcn_full##subcreate:create}}
-		  - {it:{help pcn_full##subgd:groupdata}}
-		  - {it:{help pcn_full##subdownload:download}}
-		  - {it:{help pcn_full##submaster:master}}
-		  - {it:{help pcn_full##subprimus:primus}}
-                {it:{help pcn_full##param:Parameters description}}
-                {it:{help pcn_full##options:Options description}}
-                {it:{help pcn_full##examples:Examples}}
-                {it:{help pcn_full##disclaimer:Disclaimer}}
-                {it:{help pcn_full##termsofuse:Terms of use}}
-                {it:{help pcn_full##howtocite:How to cite}}
-
-{marker description}{...}
-{title:Description}
-
-{pstd}
-PovcalNet is a tool that allows computing poverty and inequality indicators for more than
- 160 countries and regions, inside the World Bank's database of household surveys
- (check {help povcalnet:povcalnet} command). The {cmd:pcn} command(s) 
- allows Stata users to easly navigate the PovcalNet files and folders. In other words, 
- the {cmd:pcn} command allows working directly with the underlining data used by the PovcalNet 
- tool. Therefore, giving quick and easy access to, up to date, data for more than 160 
- countries' household surveys and aggregate data. {p_end}
 
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:({help pcn:Go back to Intro page})}
@@ -169,13 +172,13 @@ Four different kinds of data can be loaded, accordingly to the chosen companion 
 {p 4 4 2}
 Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
 
-    {hline 93}
+    {hline 87}
     Companion{col 25}Basic recommended structure
-    {hline 15}{col 25}{hline 73}
+    {hline 15}{col 25}{hline 67}
     gpwg		{col 20}pcn load, countr(3-letter code) year(####) [veralt(##) vermast(##)]
     wrk			{col 20}pcn laod wrk, countr(3-letter code) year(####) 
-    cpi			{col 20}pcn load estimates [, version( date |"choose"|"pick")) ]
-    {hline 93}
+    cpi			{col 20}pcn load cpi [, version( date |"choose"|"pick")) ]
+    {hline 87}
 
 {p 4 4 2}
 {bf:{ul:Examples}}
@@ -343,12 +346,42 @@ If you intend to replace the exising file(s) for the newer version(s), you must
 {marker submaster}{...}
 {dlgtab:master}
 
+{p 4 4 2}
+This subcommand allows to work with the master file. Allows you to load the different
+ sheets form the master file into memory or modify the master file using the current data on
+ memory.
+ 
+{p 4 4 2}
+The basic structure is as follows:
+ 
+ {p 8 17 2}
+{cmdab:pcn:} master, {bf:action}(sheet) shape(long) version(pick\choose\select) options  
+
+{p 4 4 2}
+Two actions are possible:{p_end}
+                {hline 73}
+                action{col 33}Description
+                {hline 25}{col 30}{hline 45}
+                load(sheet)	{col 30}loads the GPWG surveys (approved).
+                upload(sheet)	{col 30}loads the working data (Not yet approved).
+                {hline 73}
+
+{p 4 4 2}
+Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
+
+
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
-{center:({help pcn:Go back to Intro page})}
+
 
 {marker subprimus}{...}
 {dlgtab:primus}
+
+{p 4 4 2}
+This subcommand will allow you to manage with ease both the pending and approved data on PRIMUS. 
+
+{p 4 4 2}
+{bf:{ul:Examples}}
 
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
