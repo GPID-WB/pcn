@@ -218,9 +218,10 @@ qui {
     merge 1:1 countrycode coverage year using `sna', replace update
     rename gdp sp_=
 
-    gen special= inlist(_merge, 3, 4, 5)
+    gen special= inlist(_merge, 2, 3, 4, 5)
     drop _merge
 
+    keep if inrange(year,1960, `maxyear')
     //========================================================
     // Espen's code
     //========================================================
@@ -266,7 +267,6 @@ qui {
     //---- Espen's code ----- End
 
 
-    keep if inrange(year,1960, `maxyear')
     missings dropobs, force
     keep countrycode coverage year new_gdp
     preserve
