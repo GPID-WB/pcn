@@ -31,6 +31,7 @@ MODule(string)                ///
 clear                         ///
 pause                         ///
 status(string)                ///
+gpwg                          ///
 ]
 
 version 14
@@ -46,6 +47,21 @@ else                      pause off
 
 if ("`status'" == "") local status "approved"
 primus query, overalls(`status')
+
+if ("`gpwg'" != "") {
+	preserve
+	primus query, overalls(pending)
+	local pr = `" "PENDING", "REJECTED", "-" "'
+	keep if !inlist(regional, `pr') & !inlist(decdg, `pr') & !inlist(povcalnet, `pr')
+	local nobs = _N
+	tempfile pendingf
+	save `pendingf', emptyok
+	restore
+	if (`nobs' != 0) {
+		append using `pendingf'
+	}
+}
+
 
 * replace those that finish in GPWG and SARMD or something else.
 replace survey_id = regexs(1)+"GMD" if regexm(survey_id , "(.*)(GPWG.*)$")

@@ -159,7 +159,8 @@ qui foreach id of local ids {
 
 		char _dta[filename]        `fileid'_GROUP-`cov'.dta
 		char _dta[id]              `fileid'
-		char _dta[datatype]        `dt'
+		char _dta[welfaretype]     `dt'
+		char _dta[weighttype]      "PW"
 		char _dta[countrycode]     `cc'
 		char _dta[year]            `yr'
 		char _dta[survey_coverage] `cov'

@@ -47,7 +47,9 @@ local user=c(username)
 ==================================================*/
 qui {
 	pcn_primus_query, countries(`countries') years(`years') ///
-	`pause'
+	`pause' gpwg
+	
+	pause after primus query
 
 	local varlist = "`r(varlist)'"
 	local n = _N
