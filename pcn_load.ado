@@ -33,6 +33,7 @@ pause                         ///
 lis                           ///
 cpi                           ///
 noLOAD                        ///
+lyear						 ///
 ]
 
 version 14
@@ -71,7 +72,7 @@ qui {
 	pcn load, countr(EST) year(2004) clear module(GPWG) // does not work
 	pcn load, countr(EST) year(2004) clear module(BIN)  // does not work
 	pcn load, countr(EST) year(2004) clear lis          // works
-	
+
 	*/
 	
 	
@@ -123,6 +124,15 @@ qui {
 		local year = max(0, `years')
 		
 	}
+
+    return local years = "`years'"
+
+    ** if list years
+    if ("`lyear'"!= ""){
+	    noi di "years: `years'"
+	    exit
+    }
+    
 	
 	*----------1.2: check for valid data given the module
 	
