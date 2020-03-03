@@ -71,7 +71,6 @@ if (_rc) {  // if file does not exist
     local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
     cap `dlwcall' module(`mod')
     if (_rc & "`survey'" == "EU-SILC") {
-      local dlwcall"datalibweb, country(DEU) year(1991) surveyid(GSOEP-LIS) type(GMD) module(GPWG) vermast(01) veralt(03) clear"
       
       local dlwcall = regexr("`dlwcall'", "(veralt\([a-zA-Z0-9]+\))", "")
       local dlwcall = regexr("`dlwcall'", "(vermast\([a-zA-Z0-9]+\))", "")
