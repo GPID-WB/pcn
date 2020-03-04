@@ -31,6 +31,7 @@ pause                               ///
 vermast(string)                     ///
 veralt(string)                      ///
 *                                   ///
+qui                                 ///
 ]
 version 14
 
@@ -80,6 +81,12 @@ qui {
 	
 	if ("`maindir'" == "") local maindir "`drive':/`root'"
 	
+	if ("`qui'" == "") {
+		local nq  "noi"
+	} 
+	else {
+		local nq  "qui"
+	}
 	
 	//------------ Download functions
 	
@@ -117,7 +124,7 @@ qui {
 	
 	if regexm("`subcmd'", "download[ ]+gpwg") {
 		
-		noi pcn_download_gpwg, countries(`countries') years(`years') /*
+		`nq' pcn_download_gpwg, countries(`countries') years(`years') /*
 		*/ maindir("`maindir'")  `pause' `options'
 		return add
 		exit
@@ -129,11 +136,11 @@ qui {
 	
 	if regexm("`subcmd'", "primus[ ]+approved") {
 		if regexm("`options'", "down\(.*\)") {
-			noi pcn_primus_download, countries(`countries') years(`years')  /*
+			`nq' pcn_primus_download, countries(`countries') years(`years')  /*
 			*/ status(approved) `pause' `options'
 		}
 		else if regexm("`options'", "load\(.*\)"){
-			noi pcn_primus_load, s(approved) `pause' `options'
+			`nq' pcn_primus_load, s(approved) `pause' `options'
 		}
 		else err
 		
@@ -143,11 +150,11 @@ qui {
 	
 	if regexm("`subcmd'", "primus[ ]+pending") {
 		if regexm("`options'", "down\(.*\)") {
-			noi pcn_primus_download, countries(`countries') years(`years')  /*
+			`nq' pcn_primus_download, countries(`countries') years(`years')  /*
 			*/  status(pending) `pause' `options'
 		}
 		else if regexm("`options'", "load\(.*\)"){
-			noi pcn_primus_load, s(pending) `pause' `options'
+			`nq' pcn_primus_load, s(pending) `pause' `options'
 		}
 		else err
 		
@@ -160,7 +167,7 @@ qui {
 	//========================================================
 	if regexm("`subcmd'", "download[ ]+wrk") {
 		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
-		noi pcn_download_wrk, countries(`countries') years(`years')  /*
+		`nq' pcn_download_wrk, countries(`countries') years(`years')  /*
 		*/ `pause'  `options' maindir("`maindir'")
 		return add
 		exit
@@ -172,7 +179,7 @@ qui {
 	
 	if ("`subcmd'" == "load" | "`subcmd'" == "load[ ]+gpwg") {
 		
-		noi pcn_load, country(`countries') year(`years') type(`type')  /*
+		`nq' pcn_load, country(`countries') year(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause'  `options'
 		return add
@@ -186,7 +193,7 @@ qui {
 		
 		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 		
-		noi pcn_load_wrk, country(`countries') year(`years')  /*
+		`nq' pcn_load_wrk, country(`countries') year(`years')  /*
 		*/ maindir("`maindir'") vermast(`vermast')  /*
 		*/ `pause' `clear' `options'
 		return add
@@ -200,7 +207,7 @@ qui {
 		
 		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 		
-		noi pcn_load_estimates, maindir("`maindir'") /*
+		`nq' pcn_load_estimates, maindir("`maindir'") /*
 		*/ `pause' `clear' `options'
 		return add
 		exit
@@ -213,7 +220,7 @@ qui {
 	
 	if ("`subcmd'" == "create") {
 		
-		noi pcn_create, countries(`countries') years(`years') type(`type')  /*
+		`nq' pcn_create, countries(`countries') years(`years') type(`type')  /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause'  `options'
 		return add
@@ -227,7 +234,7 @@ qui {
 	
 	if inlist(lower("`subcmd'"), "group", "groupdata", "gd", "groupd") {
 		
-		noi pcn_groupdata, country(`countries') years(`years') type(`type')  /*
+		`nq' pcn_groupdata, country(`countries') years(`years') type(`type')  /*
 		*/  vermast(`vermast') veralt(`veralt')  /*
 		*/ `pause'  `options'
 		return add
@@ -243,7 +250,7 @@ qui {
 			error
 		}
 		
-		noi pcn_update_cpi,  `pause' `options'
+		`nq' pcn_update_cpi,  `pause' `options'
 		return add
 		exit
 	}
@@ -253,7 +260,7 @@ qui {
 	//========================================================
 	
 	if regexm("`subcmd'", "load[ ]+cpi") {
-		noi pcn_load_cpi,  `pause' `options'
+		`nq' pcn_load_cpi,  `pause' `options'
 		return add
 		exit
 	}
@@ -269,11 +276,11 @@ qui {
 				error
 			}
 			
-			noi pcn_master_update,  `pause' `options'
+			`nq' pcn_master_update,  `pause' `options'
 			return add
 		}
 		if regexm("`options'", "load\(.*\)") {
-			noi pcn_master_load,  `pause' `options'
+			`nq' pcn_master_load,  `pause' `options' `qui'
 			return add
 		}
 		exit
@@ -286,7 +293,7 @@ qui {
 	
 	if ("`subcmd'" == "test") {
 		
-		noi pcn_test
+		`nq' pcn_test
 		exit
 	}
 	

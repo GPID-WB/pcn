@@ -159,21 +159,20 @@ qui  {
 
 			restore
 
-			/*
-			
+						
 			// Loading PPPs, population data and CPI data
 			preserve
 
 				// PPPs
-				pcn master, load(ppp)
-				keep if countrycode=="`country'" & coveragetype!="National"
-				gen urban = coveragetype=="Urban"
+				pcn master, load(ppp) qui
+				keep if countrycode == "`country'" & coveragetype != "National"
+				gen urban = coveragetype == "Urban"
 				keep urban ppp2011
 				tempfile ppp
 				save    `ppp'
 
 				// Population
-				pcn master, load(population)
+				pcn master, load(population) qui
 				keep if countrycode=="`country'" & coveragetype!="National" & year==`year'
 				gen urban = coveragetype=="Urban"
 				keep urban population
@@ -181,7 +180,7 @@ qui  {
 				save    `pop'
 
 				// CPI
-				pcn master, load(cpi)
+				pcn master, load(cpi) qui
 				keep if countrycode=="`country'" & coveragetype!="National" & year==`year'
 				gen urban = coveragetype=="urban"
 				keep urban cpi
@@ -199,11 +198,10 @@ qui  {
 			gen welf_daily2011ppp = welfare*12/365/cpi/ppp
 
 			// Rescaling weights
-			forvalues i=0/1 {
-				qui sum weight if urban==`i'
-				replace weight = weight*pop/`r(sum)'*10^6 if urban==`i'
+			forvalues x = 0/1 {
+				sum weight if urban==`x'
+				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
 			}
-			*/
 			
 			char _dta[cov]  "N"
 			tempfile wfile
@@ -211,7 +209,7 @@ qui  {
 
 
 			local cfiles "`rfile' `ufile' `wfile'"
-		}
+		} // end of special cases
 		else {
 			tempfile wfile
 			char _dta[cov]  ""
