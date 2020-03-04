@@ -56,7 +56,7 @@ local user=c(username)
 qui  {
 
 	pcn_primus_query, countries(`countries') years(`years') ///
-	`pause' vermast("`vermast'") veralt("`veralt'")
+	`pause' vermast("`vermast'") veralt("`veralt'") gpwg
 
 	local varlist = "`r(varlist)'"
 	local n = _N
@@ -140,60 +140,109 @@ qui  {
 		* monthly data
 		replace welfare=welfare/12
 
-		* keep weight and welfare
-		keep weight welfare
-		sort welfare
+		keep weight welfare urban
 
-		* drop missing values
-		drop if welfare < 0 | welfare == .
-		drop if weight <= 0 | weight == .
+		* special treatment for IDN and IND 
+		if inlist("`country'", "IND", "IDN") {
+			preserve
+			keep if urban==0
+			tempfile rfile
+			char _dta[cov]  "R"
+			save `rfile'
 
-		order weight welfare
+			restore, preserve
 
-		//========================================================
-		// Check if data is the same as the previous one and save.
-		//========================================================
+			keep if urban==1
+			char _dta[cov]  "U"
+			tempfile ufile
+			save `ufile'
+			
+			restore 
+			
+			// This part is going to change for reweighted file
+			char _dta[cov]  "N"
+			tempfile wfile
+			save `wfile'
+			
 
-		cap datasignature confirm using  "`surdir'/`survid'/Data/`survid'_PCN"
-		local dsrc = _rc
-		if (`dsrc' == 9) {
-			cap mkdir "`surdir'/`survid'/Data/_vintage"
-			preserve   // I cannot use  copy because I need the pcn_datetime char
-
-			use "`surdir'/`survid'/Data/`survid'_PCN.dta", clear
-			save "`surdir'/`survid'/Data/_vintage/`survid'_PCN_`:char _dta[creationdate]'", replace
-
-			restore
-		}
-		if (`dsrc' != 0) {
-			cap datasignature set, reset /*
-			*/ saving("`surdir'/`survid'/Data/`survid'_PCN", replace)
-
-			char _dta[filename]      = "`filename'"
-			char _dta[survin]        = "`survin'"
-			char _dta[survid]        = "`survid'"
-			char _dta[surdir]        = "`surdir'"
-			char _dta[creationdate]   = "`date_time'"
-
-			//------------Uncollapsed data
-			save "`surdir'/`survid'/Data/`survid'_PCN.dta", `replace'
-			export delimited using "`surdir'/`survid'/Data/`survid'_PCN.txt", ///
-			novarnames nolabel delimiter(tab) `replace'
-
-
-			//------------ collapse data
-			collapse (sum) weight, by(welfare)
-
-			save "`surdir'/`survid'/Data/`survid'_PCNc.dta", `replace'
-
-			export delimited using "`surdir'/`survid'/Data/`survid'_PCNc.txt", ///
-			novarnames nolabel delimiter(tab) `replace'
-			noi _dots `i' 0
+			local cfiles "`rfile' `ufile' `wfile'"
 		}
 		else {
-			noi _dots `i' -1
-			continue
+			tempfile wfile
+			char _dta[cov]  ""
+			save `wfile'
+			local cfiles "`wfile'"
 		}
+
+		foreach file of local cfiles {
+
+			use `file', clear
+			local cc: char _dta[cov]  // country coverage
+			if ("`cc'" == "") {
+				local cc "N"
+				local cov ""
+			}
+			else {
+				local cov "-`cc'"
+			}
+
+			* keep weight and welfare
+			keep weight welfare
+			sort welfare
+
+			* drop missing values
+			drop if welfare < 0 | welfare == .
+			drop if weight <= 0 | weight == .
+
+			order weight welfare
+
+			//========================================================
+			// Check if data is the same as the previous one and save.
+			//========================================================
+
+			cap datasignature confirm using  "`surdir'/`survid'/Data/`survid'_PCN`cov'"
+			local dsrc = _rc
+			if (`dsrc' == 9) {
+				cap mkdir "`surdir'/`survid'/Data/_vintage"
+				preserve   // I cannot use  copy because I need the pcn_datetime char
+
+				use "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta", clear
+				save "`surdir'/`survid'/Data/_vintage/`survid'_PCN`cov'_`:char _dta[creationdate]'", replace
+
+				restore
+			}
+			if (`dsrc' != 0) {
+				cap datasignature set, reset /*
+				*/ saving("`surdir'/`survid'/Data/`survid'_PCN`cov'", replace)
+
+				char _dta[filename]         "`filename'"
+				char _dta[survin]           "`survin'"
+				char _dta[survid]           "`survid'"
+				char _dta[surdir]           "`surdir'"
+				char _dta[creationdate]     "`date_time'"
+				char _dta[survey_coverage]  "`cc'"
+
+
+				//------------Uncollapsed data
+				save "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta", `replace'
+				export delimited using "`surdir'/`survid'/Data/`survid'_PCN`cov'.txt", ///
+				novarnames nolabel delimiter(tab) `replace'
+
+
+				//------------ collapse data
+				collapse (sum) weight, by(welfare)
+
+				save "`surdir'/`survid'/Data/`survid'_PCNc`cov'.dta", `replace'
+
+				export delimited using "`surdir'/`survid'/Data/`survid'_PCNc`cov'.txt", ///
+				novarnames nolabel delimiter(tab) `replace'
+				noi _dots `i' 0
+			}
+			else {
+				noi _dots `i' -1
+				continue
+			}
+		} // end of files loop
 
 		* mata: P = pcn_info(P)
 
