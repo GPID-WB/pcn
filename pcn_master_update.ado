@@ -22,6 +22,7 @@ update(string)             ///
 cpivin(string)             ///
 MAXYear(integer 2018)     ///
 FORCE                     ///
+pause                     ///
 ]
 
 version 15 // this is really important
@@ -175,7 +176,7 @@ qui {
     ren ny_gdp_pcap_kd wdi_gdp
     keep countrycode year wdi_gdp
 
-    gen sourcegdp="WDI 2019"
+    gen sourcegdp="WDI 2020-02"
 
     local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
     merge 1:1 countrycode year using "`madison'", nogen
@@ -567,6 +568,8 @@ qui {
     label var coverage     "Coverage"
     label var country_name "Country Name"
     label var country      "Country Code"
+    
+    pause after reshape to wide
     //------------Matrix with population values
     tempname D
     mkmat pop*, matrix(`D')
