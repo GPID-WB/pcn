@@ -142,7 +142,7 @@ qui  {
 
 		keep weight welfare urban
 
-		* special treatment for IDN and IND 
+		* special treatment for IDN and IND
 		if inlist("`country'", "IND", "IDN") {
 			preserve
 			keep if urban==0
@@ -156,14 +156,14 @@ qui  {
 			char _dta[cov]  "U"
 			tempfile ufile
 			save `ufile'
-			
-			restore 
-			
+
+			restore
+
 			// This part is going to change for reweighted file
 			char _dta[cov]  "N"
 			tempfile wfile
 			save `wfile'
-			
+
 
 			local cfiles "`rfile' `ufile' `wfile'"
 		}
@@ -211,7 +211,7 @@ qui  {
 
 				restore
 			}
-			if (`dsrc' != 0) {
+			if (`dsrc' != 0 | "`replace'" != "") {
 				cap datasignature set, reset /*
 				*/ saving("`surdir'/`survid'/Data/`survid'_PCN`cov'", replace)
 
@@ -221,6 +221,12 @@ qui  {
 				char _dta[surdir]           "`surdir'"
 				char _dta[creationdate]     "`date_time'"
 				char _dta[survey_coverage]  "`cc'"
+
+				// Special case for IDN 2018 (should be deleted later)
+				if ("`country'" == "IDN") {
+					char _dta[welfaretype]  "CONS"
+  				char _dta[weighttype]   "aw"
+				}
 
 
 				//------------Uncollapsed data
