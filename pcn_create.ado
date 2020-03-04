@@ -195,13 +195,16 @@ qui  {
 			merge m:1 urban using `cpi', nogen
 			
 			// Create welfare in daily PPP terms
-			gen welf_daily2011ppp = welfare*12/365/cpi/ppp
+			replace welfare = welfare*12/365/cpi/ppp
 
 			// Rescaling weights
 			forvalues x = 0/1 {
 				sum weight if urban==`x'
 				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
 			}
+			
+			label var welfare "Welfare in 2011 USD PPP per day"
+			keep welfare weight urban
 			
 			char _dta[cov]  "N"
 			tempfile wfile
