@@ -82,11 +82,13 @@ qui {
 			local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
 			local dispdate = trim("`dispdate'")
 			
-			noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'
+			local scode  "pcn master, load(`load') version(`vc')"
+			noi disp `"   `i' {c |} {stata `scode':`dispdate'}"'
 			
 		}
 		
-		noi disp _n "select vintage control date from the list above" _request(_vcnumber)
+		noi disp _n "select vintage control date from the list above"
+		exit 
 	}
 	else if inlist(lower("`version'"), "maxvc", "max", "") {
 		local vcnumber = `maxvc'
