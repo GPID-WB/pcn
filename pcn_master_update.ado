@@ -552,6 +552,8 @@ qui {
     drop series_name col series
     drop if year > `maxyear'
     sort country year
+    
+    drop if year < 1977
 
     //------------Matrix with years available
     sum year, meanonly
