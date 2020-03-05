@@ -165,24 +165,24 @@ qui  {
 
 				// PPPs
 				pcn master, load(ppp) qui
-				keep if countrycode == "`country'" & coveragetype != "National"
-				gen urban = coveragetype == "Urban"
+				keep if countrycode == "`country'" & lower(coveragetype) != "national"
+				gen urban = lower(coveragetype) == "urban"
 				keep urban ppp2011
 				tempfile ppp
 				save    `ppp'
 
 				// Population
 				pcn master, load(population) qui
-				keep if countrycode=="`country'" & coveragetype!="National" & year==`year'
-				gen urban = coveragetype=="Urban"
+				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+				gen urban = lower(coveragetype) == "urban"
 				keep urban population
 				tempfile pop
 				save    `pop'
 
 				// CPI
 				pcn master, load(cpi) qui
-				keep if countrycode=="`country'" & coveragetype!="National" & year==`year'
-				gen urban = coveragetype=="urban"
+				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+				gen urban = lower(coveragetype) == "urban"
 				keep urban cpi
 				tempfile cpi
 				save    `cpi'
@@ -204,7 +204,6 @@ qui  {
 			}
 			
 			label var welfare "Welfare in 2011 USD PPP per day"
-			keep welfare weight urban
 			
 			char _dta[cov]  "N"
 			tempfile wfile
