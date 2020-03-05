@@ -20,7 +20,9 @@ syntax [anything],         ///
 update(string)             ///
 [                          ///
 cpivin(string)             ///
-MAXYear(integer 2018)   ///
+MAXYear(integer 2018)     ///
+FORCE                     ///
+pause                     ///
 ]
 
 version 15 // this is really important
@@ -85,9 +87,12 @@ qui {
 
     replace cpi2011_unadj = cpi2011 if inlist(code, "IDN", "IND", "CHN")
 
-
     //------------ vector of available years
-    sum year, meanonly
+
+    gen yr = year
+    replace yr = floor(ref_year) if ref_year <. // starting year of the survey
+    
+    sum yr, meanonly
     local ymin = r(min)
     local ymax = r(max)
     tempname C
@@ -96,30 +101,32 @@ qui {
 
     //------------Rename to match Master file especifications
     rename (cpi2011_unadj code levelnote countryname) (y CountryCode Coverqge CountryName)
-    keep y CountryCode Coverqge CountryName survname year
+    keep y CountryCode Coverqge CountryName survname yr
     
+    duplicates drop // to adress the case of ETH
+
     preserve
-        contract CountryCode Coverqge CountryName survname
-        drop _freq
-        local csize = `ymax'- `ymin' 
-        expand `csize'
-        bysort CountryCode Coverqge CountryName survname: egen year = seq() 
-        replace year = year - 1 + `ymin'
-        tempfile cdata
-        save `cdata'
-    restore 
-    
-    merge 1:1 CountryCode Coverqge CountryName survname year using `cdata', nogen
-    sort CountryCode year survname
-    
+    contract CountryCode Coverqge CountryName survname
+    drop _freq
+    local csize = `ymax'- `ymin'
+    expand `csize'
+    bysort CountryCode Coverqge CountryName survname: egen yr = seq()
+    replace yr = yr - 1 + `ymin'
+    tempfile cdata
+    save `cdata'
+    restore
+
+    merge 1:1 CountryCode Coverqge CountryName survname yr using `cdata', nogen
+    sort CountryCode yr survname
+
     //------------Manual fix for India
-    sort CountryCode Coverqge survname year
-    replace y = y[_n-1] if (CountryCode == "IND" & year == 2012)
-    replace y = 1 if (CountryCode == "IND" & year == 2011)
-    
+    sort CountryCode Coverqge survname yr
+    replace y = y[_n-1] if (CountryCode == "IND" & yr == 2012)
+    replace y = 1 if (CountryCode == "IND" & yr == 2011)
+
     //------------Re format to export
-    
-    reshape wide y, i(CountryCode CountryName Coverqge survname) j(year)
+
+    reshape wide y, i(CountryCode CountryName Coverqge survname) j(yr)
 
     collapse (mean) y*, by(CountryCode CountryName Coverqge)  // fix if cpi per survey change
     tempname D
@@ -169,7 +176,7 @@ qui {
     ren ny_gdp_pcap_kd wdi_gdp
     keep countrycode year wdi_gdp
 
-    gen sourcegdp="WDI 2019"
+    gen sourcegdp="WDI 2020-02"
 
     local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
     merge 1:1 countrycode year using "`madison'", nogen
@@ -218,9 +225,10 @@ qui {
     merge 1:1 countrycode coverage year using `sna', replace update
     rename gdp sp_=
 
-    gen special= inlist(_merge, 3, 4, 5)
+    gen special= inlist(_merge, 2, 3, 4, 5)
     drop _merge
 
+    keep if inrange(year,1960, `maxyear')
     //========================================================
     // Espen's code
     //========================================================
@@ -264,10 +272,21 @@ qui {
     replace sourcegdp = "NONE"    if new_gdp==.
 
     //---- Espen's code ----- End
-
-
-    keep if inrange(year,1960, `maxyear')
     missings dropobs, force
+
+    //------------ Save metadata
+    local msheet = upper("`update'")
+    cap datasignature confirm using "`masterdir'/03.metadata/`msheet'"
+    if (_rc == 0 & "`force'" == "") {
+      noi disp in g "Sheet `msheet' has not changed since last time. No update will be made."
+      exit
+    }
+
+    datasignature set, reset saving("`masterdir'/03.metadata/`msheet'", replace)
+    save "`masterdir'/03.metadata/_vintage/`msheet'_`date_time'.dta", replace
+    save "`masterdir'/03.metadata/`msheet'.dta", replace
+
+    //------------ arrange code.
     keep countrycode coverage year new_gdp
     preserve
     datalibweb_inventory, clear
@@ -533,6 +552,8 @@ qui {
     drop series_name col series
     drop if year > `maxyear'
     sort country year
+    
+    drop if year < 1977
 
     //------------Matrix with years available
     sum year, meanonly
@@ -549,6 +570,8 @@ qui {
     label var coverage     "Coverage"
     label var country_name "Country Name"
     label var country      "Country Code"
+    
+    pause after reshape to wide
     //------------Matrix with population values
     tempname D
     mkmat pop*, matrix(`D')
@@ -573,7 +596,7 @@ qui {
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
 
     local success = 1
-    }
+  }
 
   /*==================================================
   PPP
@@ -605,8 +628,8 @@ qui {
 
     putexcel save
 
-    noi disp in y "sheet(`msheet') in Master data has been update." _n /* 
-     */ "{stata pcn master, load(`msheet'):Load data}"
+    noi disp in y "sheet(`msheet') in Master data has been update." _n /*
+    */ "{stata pcn master, load(`msheet'):Load data}"
   } // end of success
 } // end of qui
 

@@ -21,6 +21,7 @@ syntax [anything], load(string) ///
 version(string)                 ///
 pause                           ///
 shape(string)                   ///
+qui                             ///
 ]
 
 version 14 
@@ -81,11 +82,13 @@ qui {
 			local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
 			local dispdate = trim("`dispdate'")
 			
-			noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'
+			local scode  "pcn master, load(`load') version(`vc')"
+			noi disp `"   `i' {c |} {stata `scode':`dispdate'}"'
 			
 		}
 		
-		noi disp _n "select vintage control date from the list above" _request(_vcnumber)
+		noi disp _n "select vintage control date from the list above"
+		exit 
 	}
 	else if inlist(lower("`version'"), "maxvc", "max", "") {
 		local vcnumber = `maxvc'
@@ -113,9 +116,10 @@ qui {
 	local svc = clock("`vcnumber'", "YMDhms")   // stata readable form
 	local dispdate: disp %tcDDmonCCYY_HH:MM:SS `svc'
 	
-	noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /*
-  */ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'"
-	
+	if ("`qui'" == "") {
+		noi disp in y "File:"  _col(8) "{stata br:Master_`vcnumber'.xlsx} " /*
+		*/ in y "will be loaded. " _n "Date: " _col(8) in w  "`dispdate'"
+	}
 	
 	//========================================================
 	// Pick sheet
@@ -149,36 +153,36 @@ qui {
 	//  CPI
 	//========================================================
 	if (lower("`load'") == "cpi") {
-		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
-		*/ sheet("CPI") clear firstrow case(lower)
+	import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+	*/ sheet("CPI") clear firstrow case(lower)
+	
+	missings dropvars, force
+	missings dropobs, force
+	
+	_label2name
+	
+	if ("`shape'" == "long") {
+		reshape long y, i(countrycode coverqge) j(year)
+		rename y cpi
+		drop if cpi == .
 		
-		missings dropvars, force
-		missings dropobs, force
+		* fix mismatches between the two dataset
+		rename coverqge coveragetype
+		clonevar data_coverage = coveragetype
 		
-		_label2name
-		
-		if ("`shape'" == "long") {
-			reshape long y, i(countrycode coverqge) j(year)
-			rename y cpi
-			drop if cpi == .
-			
-			* fix mismatches between the two dataset
-			rename coverqge coveragetype
-			clonevar data_coverage = coveragetype
-			
-			replace data_coverage = "Urban" if countrycode == "ARG"
-			replace data_coverage = "Rural" if countrycode == "ETH" & year == 1981
-			replace data_coverage = "Urban" if countrycode == "BOL" & year == 1992
-			replace data_coverage = "Urban" if countrycode == "ECU" & year == 1995
-			replace data_coverage = "Urban" if countrycode == "FSM" & year == 2000
-			replace data_coverage = "Urban" if countrycode == "HND" & year == 1986
-			replace data_coverage = "Urban" if countrycode == "COL" & inrange(year, 1980,1991)
-			replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
-			label var year "Year"
-			label var cpi "CPI"
-		}
-		
-		* if ("`shape'" == "long") rename year cpi_time
+		replace data_coverage = "Urban" if countrycode == "ARG"
+		replace data_coverage = "Rural" if countrycode == "ETH" & year == 1981
+		replace data_coverage = "Urban" if countrycode == "BOL" & year == 1992
+		replace data_coverage = "Urban" if countrycode == "ECU" & year == 1995
+		replace data_coverage = "Urban" if countrycode == "FSM" & year == 2000
+		replace data_coverage = "Urban" if countrycode == "HND" & year == 1986
+		replace data_coverage = "Urban" if countrycode == "COL" & inrange(year, 1980,1991)
+		replace data_coverage = "Urban" if countrycode == "URY" & inrange(year, 1990,2005)
+		label var year "Year"
+		label var cpi "CPI"
+	}
+	
+	* if ("`shape'" == "long") rename year cpi_time
 	}
 	
 	
