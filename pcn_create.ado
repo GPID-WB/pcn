@@ -193,9 +193,6 @@ qui  {
 			merge m:1 urban using `ppp', nogen
 			merge m:1 urban using `pop', nogen
 			merge m:1 urban using `cpi', nogen
-			
-			// Create welfare in daily PPP terms
-			replace welfare = welfare*12/365/cpi/ppp
 
 			// Rescaling weights
 			forvalues x = 0/1 {
