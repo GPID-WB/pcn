@@ -61,14 +61,21 @@ qui {
 	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
 	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta)
 	
-	collapse (mean) cpi* icp* cur_adj, by(code countryname region year ref_year)
+	replace levelnote = lower(levelnote)
+	
+	collapse (mean) cpi* icp* cur_adj, by(code countryname region year ref_year levelnote)
 	rename code countrycode
 	gen ccf = 1/cur_adj // Currency Conversion Factor
 	label var ccf  "Currency conversion factor"
 	note ccf: 1/cur_adj
 	
-	order region countrycode countryname year ref_year cpi2011 icp2011  ccf cur_adj
+	order region countrycode countryname levelnote year ref_year cpi2011 icp2011  ccf cur_adj
 	
+	gen coverage = cond(levelnote == "urban", 1, /* 
+	            */ cond(levelnote == "rural", 0 , 2))
+	
+	label define coverage 0 "Rural" 1 "Urban" 2 "National"
+	label values coverage coverage 
 	
 	//------------Characteristics
 	
