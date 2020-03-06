@@ -93,6 +93,7 @@ qui foreach id of local ids {
 	preserve
 	keep if id == "`id'"
 	keep weight  welfare
+	replace welfare = welfare/12
 
 
 	local dirs: dir "`sydir'" dirs "*GMD", respect
