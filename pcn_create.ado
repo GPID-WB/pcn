@@ -204,7 +204,7 @@ qui  {
 			}
 			
 			label var welfare "Welfare in 2011 USD PPP per day"
-			
+			local urban "urban"
 			char _dta[cov]  "N"
 			tempfile wfile
 			save `wfile'
@@ -213,6 +213,7 @@ qui  {
 			local cfiles "`rfile' `ufile' `wfile'"
 		} // end of special cases
 		else {
+			local urban ""
 			tempfile wfile
 			char _dta[cov]  ""
 			save `wfile'
@@ -232,7 +233,7 @@ qui  {
 			}
 
 			* keep weight and welfare
-			keep weight welfare
+			keep weight welfare `urban'
 			sort welfare
 
 			* drop missing values
