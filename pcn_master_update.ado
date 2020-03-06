@@ -59,17 +59,22 @@ if wordcount("`update'") != 1 {
 }
 
 qui {
-
+  
+  cap pcn master, load(CountryList) `pause'
+  keep countryname countrycode
+  tempfile countrylist
+  save `countrylist'
+  
   /*==================================================
   1: CPI
   ==================================================*/
   if (lower("`update'") == "cpi") {
-
+    
     *----------Find most recent version of CPI data in datalibweb
     if ("`cpivin'" == "") {
       local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
       local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
-
+      
       local cpivins "0"
       foreach cpidir of local cpidirs {
         if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
@@ -77,18 +82,18 @@ qui {
       }
       local cpivin = max(`cpivins')
     } // if no cpi vintage is selected
-
+    
     cap datalibweb, country(Support) year(2005) type(GMDRAW)   /*
     */ fileserver surveyid(Support_2005_CPI_v0`cpivin'_M) /*
     */ filename(Final_CPI_PPP_to_be_used.dta)
-
+    
     *Special cases
     *replace cpi2011_unadj = cpi2011 if code=="IDN"|code=="IND"|code=="CHN"
-
+    
     replace cpi2011_unadj = cpi2011 if inlist(code, "IDN", "IND", "CHN")
-
+    
     //------------ vector of available years
-
+    
     gen yr = year
     replace yr = floor(ref_year) if ref_year <. // starting year of the survey
     
@@ -98,13 +103,13 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-
+    
     //------------Rename to match Master file especifications
     rename (cpi2011_unadj code levelnote countryname) (y CountryCode Coverqge CountryName)
     keep y CountryCode Coverqge CountryName survname yr
     
     duplicates drop // to adress the case of ETH
-
+    
     preserve
     contract CountryCode Coverqge CountryName survname
     drop _freq
@@ -115,77 +120,77 @@ qui {
     tempfile cdata
     save `cdata'
     restore
-
+    
     merge 1:1 CountryCode Coverqge CountryName survname yr using `cdata', nogen
     sort CountryCode yr survname
-
+    
     //------------Manual fix for India
     sort CountryCode Coverqge survname yr
     replace y = y[_n-1] if (CountryCode == "IND" & yr == 2012)
     replace y = 1 if (CountryCode == "IND" & yr == 2011)
-
+    
     //------------Re format to export
-
+    
     reshape wide y, i(CountryCode CountryName Coverqge survname) j(yr)
-
+    
     collapse (mean) y*, by(CountryCode CountryName Coverqge)  // fix if cpi per survey change
     tempname D
     mkmat y*, matrix(`D')
-
+    
     //------------ Find most recent version of master file
     _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
     local newfile = "`r(newfile)'"
-
+    
     //------------ modify country name and coverage
     local msheet "CPI"
     export excel CountryName Coverqge CountryCode         /*
     */ using "`mastervin'/`newfile'.xlsx", /*
     */ sheet("`msheet'") sheetreplace firstrow(variables)
-
-
+    
+    
     //------------ Add cpi values
     putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
     putexcel D1 = matrix(`C')
     putexcel D2 = matrix(`D')
     putexcel save
-
+    
     //------------Update current version
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
-
+    
     local success = 1
-
+    
   } // end of CPI update
-
-
+  
+  
   /*=================================================
   GDP
   ==================================================*/
   if (inlist(lower("`update'"),"gdp")) {
-
-
+    
+    
     //========================================================
     // gets data from WDI API
     //========================================================
-
+    
     /* Note: This section is based on Espen's do-files available in
     p:\02.personal\_handover\Espen\NAS process\*/
-
+    
     *##s
     set checksum off
     wbopendata, indicator(NY.GDP.PCAP.KD) long clear
     ren ny_gdp_pcap_kd wdi_gdp
     keep countrycode year wdi_gdp
-
+    
     gen sourcegdp="WDI 2020-02"
-
+    
     local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
     merge 1:1 countrycode year using "`madison'", nogen
     rename rgdpnapc mdp_gdp
-
+    
     replace sourcegdp ="Maddison 2018" if sourcegdp == ""
-
+    
     replace mdp_gdp = . if year>1999 // do not use madison for recent spells
-
+    
     //========================================================
     // Special cases
     //========================================================
@@ -194,10 +199,10 @@ qui {
     tostring coverage, replace
     replace coverage =cond(coverage == "1", "National", /*
     */                cond(coverage == "2", "Urban", "Rural"))
-
+    
     tempfile fna
     save `fna'
-
+    
     //------------Find most recent version
     local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
     local files: dir "`popdir'" files "NAS special*xlsx"
@@ -210,91 +215,96 @@ qui {
     local maxdate = max(`vers')
     local fver: disp %tdCCYY-NN-DD `maxdate' // file version
     local fver = trim("`fver'")
-
+    
     import excel using "`popdir'/NAS special_`fver'.xlsx", describe
-
+    
     import excel using "`popdir'/NAS special_`fver'.xlsx", /*
     */  clear sheet("`sheet'") firstrow case(lower)
-
+    
     tempfile sna
     save `sna'
-
+    
     * Merge with special cases and downloaded data
     use `fna', clear
-
+    
     merge 1:1 countrycode coverage year using `sna', replace update
     rename gdp sp_=
-
+    
     gen special= inlist(_merge, 2, 3, 4, 5)
     drop _merge
-
+    
     keep if inrange(year,1960, `maxyear')
     //========================================================
     // Espen's code
     //========================================================
     //---- ----- Start
-
+    
     gen     new_gdp=wdi_gdp               // default
     replace new_gdp=sp_gdp   if special   // default
-
-
+    
+    
     local s "mdp_gdp"
-
+    
     bys countrycode coverage (year): gen lfbck_`s'= /*
     */ (new_gdp!=. & new_gdp[_n-1]==. & _n!=1)*new_gdp/`s'
-
+    
     bys countrycode coverage (year): egen lfbck_`s'i=max(lfbck_`s')
-
+    
     // Linking factors, forward
     bys countrycode coverage (year): gen lffwd_`s'= /*
     */  (new_gdp!=. & new_gdp[_n+1]==. & _n!=_N)*new_gdp/`s'
-
+    
     bys countrycode coverage (year): egen lffwd_`s'i=max(lffwd_`s')
-
+    
     // Assess where to apply (forward==1 or backward==1)
     bys countrycode coverage (year): gen gap_`s'=1 if new_gdp==. & new_gdp[_n-1]!=.
     bys countrycode coverage (year): replace gap_`s'=1 if _n==1
     bys countrycode coverage (year): gen gapsum_`s'=sum(gap_`s')
-
+    
     // Apply: create linked value
     gen lvfwd_`s'=`s'*lffwd_`s'i
     gen lvbck_`s'=`s'*lfbck_`s'i
-
+    
     // Replace where missing and indicate source
-
+    
     // fwd
     replace new_gdp= lvfwd_`s' if new_gdp==. & gapsum_`s'==2
     replace sourcegdp="`s'" if new_gdp==. & gapsum_`s'==2 & lvfwd_`s'!=.
-
+    
     // bck
     replace new_gdp   = lvbck_`s' if new_gdp==. & gapsum_`s'==1
     replace sourcegdp = "`s'"     if new_gdp==. & gapsum_`s'==1 & lvbck_`s'!=.
     replace sourcegdp = "NONE"    if new_gdp==.
-
+    
     //---- Espen's code ----- End
     missings dropobs, force
-
+    
     //------------ Save metadata
+    merge m:1 countrycode using `countrylist', keep(2 3 4 5) update replace 
+    levelsof _merge, local(mms) sep(,)
+    if inlist(2, `mms') {
+      noi disp "The following countries are not available"
+      noi list countrycode if _merge == 2
+    }
+    drop if _merge == 2
+    drop _merge
+    
+    pause after merge with country list
+    
     local msheet = upper("`update'")
     cap datasignature confirm using "`masterdir'/03.metadata/`msheet'"
     if (_rc == 0 & "`force'" == "") {
-      noi disp in g "Sheet `msheet' has not changed since last time. No update will be made."
+      noi disp in y "Sheet `msheet' has not changed since last time. No update will be made."
       exit
     }
-
+    
     datasignature set, reset saving("`masterdir'/03.metadata/`msheet'", replace)
     save "`masterdir'/03.metadata/_vintage/`msheet'_`date_time'.dta", replace
     save "`masterdir'/03.metadata/`msheet'.dta", replace
-
+    
     //------------ arrange code.
-    keep countrycode coverage year new_gdp
-    preserve
-    datalibweb_inventory, clear
-    tempfile dlw
-    save `dlw'
-    restore
-    merge m:1 countrycode  using `dlw', keep(match) nogen
-
+    keep countryname countrycode coverage year new_gdp
+    
     //--vector of available years
     sum year, meanonly
     local ymin = r(min)
@@ -302,71 +312,67 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-
+    
     *##e
     rename new_gdp y
     reshape wide y, i(countryname countrycode coverage) j(year)
-
-
-    // cleaning
-    drop if inlist(region, "NAC", "OTHERS")
-    drop region
+    
     missings dropvars, force
-
+    
     gen note = ""
     local idvars "countryname coverage countrycode note"
     order `idvars'
     sort  `idvars'
-
+    
     //------------ modify master file
-
+    
     tempname D
     mkmat y*, matrix(`D')
-
+    
     //------------ Find most recent version of master file
     _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
     local newfile = "`r(newfile)'"
-
+    
     //------------ modify country name and coverage
     local msheet "GDP"
     export excel `idvars' using "`mastervin'/`newfile'.xlsx", /*
     */ sheet("`msheet'") sheetreplace firstrow(varlabels)
-
+    
     //------------ Add cpi values
     putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
     putexcel E1 = matrix(`C')
     putexcel E2 = matrix(`D')
     putexcel save
-
+    
     //------------Update current version
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
-
+    
     local success = 1
-
+    
   }
-
-
+  
+  
   //=================================================
   // PCE
   //=================================================
   if (inlist(lower("`update'"),"pce", "hfce")) {
-
-
+    
+    
     //========================================================
     // gets data from WDI API
     //========================================================
-
+    
     /* Note: This section is based on Espen's do-files available in
     p:\02.personal\_handover\Espen\NAS process\*/
-
-
+    
+    
     set checksum off
     wbopendata, indicator(NE.CON.PRVT.PC.KD) long clear
     ren ne_con_prvt_pc_kd wdi_pce
     keep countrycode year wdi_pce
-
+    
 		gen sourcepce="WDI 2019"
-
+    
     //========================================================
     // Special cases
     //========================================================
@@ -375,10 +381,10 @@ qui {
     tostring coverage, replace
     replace coverage =cond(coverage == "1", "National", /*
     */                cond(coverage == "2", "Urban", "Rural"))
-
+    
     tempfile fna
     save `fna'
-
+    
     //------------Find most recent version
     local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
     local files: dir "`popdir'" files "NAS special*xlsx"
@@ -391,46 +397,67 @@ qui {
     local maxdate = max(`vers')
     local fver: disp %tdCCYY-NN-DD `maxdate' // file version
     local fver = trim("`fver'")
-
+    
     import excel using "`popdir'/NAS special_`fver'.xlsx", describe
-
+    
     import excel using "`popdir'/NAS special_`fver'.xlsx", /*
     */  clear sheet("`sheet'") firstrow case(lower)
-
+    
     tempfile sna
     save `sna'
-
+    
     * Merge with special cases and downloaded data
     use `fna', clear
-
+    
     merge 1:1 countrycode coverage year using `sna', replace update
     rename pce sp_=
-
+    
     gen special= inlist(_merge, 3, 4, 5)
     drop _merge
-
+    
     //========================================================
     // Espen's code
     //========================================================
     //---- ----- Start
-
-    gen     new_pce=wdi_pce               // default
-    replace new_pce=sp_pce   if special   // default
-    replace sourcepce = "NONE"    if new_pce==.
-
+    
+    gen     new_pce=wdi_pce                 // default
+    replace new_pce=sp_pce     if special   // default
+    replace sourcepce = "NONE" if new_pce==.
+    
     //---- Espen's code ----- End
-
-
+    
+    
     keep if inrange(year,1960, `maxyear')
     missings dropobs, force
-    keep countrycode coverage year new_pce
-    preserve
-    datalibweb_inventory, clear
-    tempfile dlw
-    save `dlw'
-    restore
-    merge m:1 countrycode  using `dlw', keep(match) nogen
-
+    
+    //------------ Save metadata
+    pause PCE: after merge with country list
+    merge m:1 countrycode using `countrylist', keep(2 3 4 5) update replace
+    
+    levelsof _merge, local(mms) sep(,)
+    if inlist(2, `mms') {
+      noi disp "The following countries are not available"
+      noi list countrycode if _merge == 2
+    }
+    pause PCE: after merge with country list
+    drop if _merge == 2
+    drop _merge
+    
+    
+    local msheet = upper("`update'")
+    cap datasignature confirm using "`masterdir'/03.metadata/`msheet'"
+    if (_rc == 0 & "`force'" == "") {
+      noi disp in y "Sheet `msheet' has not changed since last time. No update will be made."
+      exit
+    }
+    
+    datasignature set, reset saving("`masterdir'/03.metadata/`msheet'", replace)
+    save "`masterdir'/03.metadata/_vintage/`msheet'_`date_time'.dta", replace
+    save "`masterdir'/03.metadata/`msheet'.dta", replace
+    
+    //------------ arrange code.
+    keep countryname countrycode coverage year new_pce
+    
     //--vector of available years
     sum year, meanonly
     local ymin = r(min)
@@ -438,62 +465,61 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-
+    
     rename new_pce y
     reshape wide y, i(countryname countrycode coverage) j(year)
-
+    
+    pause before drop obs
     // cleaning
-    drop if inlist(region, "NAC", "OTHERS")
-    drop region
     missings dropvars, force
-
+    
     gen note = ""
     local idvars "countryname coverage countrycode note"
     order `idvars'
     sort  `idvars'
-
+    
     //------------ modify master file
-
+    
     tempname D
     mkmat y*, matrix(`D')
-
+    
     //------------ Find most recent version of master file
     _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
     local newfile = "`r(newfile)'"
-
+    
     //------------ modify country name and coverage
     local msheet "PCE"
     export excel `idvars' using "`mastervin'/`newfile'.xlsx", /*
     */ sheet("`msheet'") sheetreplace firstrow(varlabels)
-
+    
     //------------ Add cpi values
     putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
     putexcel E1 = matrix(`C')
     putexcel E2 = matrix(`D')
     putexcel save
-
+    
     //------------Update current version
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
-
+    
     local success = 1
-
+    
   }
-
-
-
+  
+  
+  
   /*==================================================
   Population
   ==================================================*/
-
+  
   if (inlist(lower("`update'"),"pop", "popu", "population")) {
     /* Note: there is no way to know the starting point of the data. So,
     the we have to hardcode the limits.
     There are two different procedures: WDI or data sent by Emi Suzuki
     */
-
+    
     //------------If data comes from Emi Suzuki
-
-
+    
+    
     //------------Find most recent version
     local popdir "p:\01.PovcalNet\03.QA\03.Population\data"
     local files: dir "`popdir'" files "population_country*xlsx"
@@ -506,11 +532,11 @@ qui {
     local maxdate = max(`vers')
     local fver: disp %tdCCYY-NN-DD `maxdate' // file version
     local fver = trim("`fver'")
-
+    
     import excel using "`popdir'/population_country_`fver'.xlsx", describe
     if regexm("`r(range_1)'", ":([A-Z]+)[0-9]+$") local lc = regexs(1)
     local sheet = "`r(worksheet_1)'"
-
+    
     //------------ Find years available
     import excel using "`popdir'/population_country_`fver'.xlsx", /*
     */ cellrange(F1:`lc'1) clear sheet("`sheet'")
@@ -522,18 +548,18 @@ qui {
     replace col = upper(col)
     sort year
     drop n
-
+    
     tempfile fyear
     save `fyear'
-
+    
     //------------Data available
     import excel using "`popdir'/population_country_`fver'.xlsx", /*
     */ cellrange(A3) clear sheet("`sheet'") firstrow
     cap drop scale
-
+    
     ds, has(type string)
     local idvars = "`r(varlist)'"
-
+    
     ds, has(type numeric)
     disp "`r(varlist)'"
     local vars = "`r(varlist)'"
@@ -541,20 +567,47 @@ qui {
     reshape long pop, i(`idvars') j(col) string
     replace col = upper(col)
     replace pop = pop/1e6   // divide by million
-
+    
     //------------Merge data and clean
     merge m:1 col using `fyear', keep(match) nogen
     rename *, lower
     gen coverage = cond(series == "SP.POP.TOTL", "National", /*
     */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
-
+    
     drop if series == "SP.URB.TOTL.IN.ZS"
     drop series_name col series
     drop if year > `maxyear'
     sort country year
     
     drop if year < 1977
-
+    
+    pause POP: after merge with country list
+    rename country countrycode 
+    merge m:1 countrycode using `countrylist', keep(2 3 4 5) update replace
+    
+    levelsof _merge, local(mms) sep(,)
+    if inlist(2, `mms') {
+      noi disp "The following countries are not available"
+      noi list countrycode if _merge == 2
+    }
+    pause POP: after merge with country list
+    drop if _merge == 2
+    drop _merge
+    
+    
+    local msheet = upper("`update'")
+    cap datasignature confirm using "`masterdir'/03.metadata/`msheet'"
+    if (_rc == 0 & "`force'" == "") {
+      noi disp in y "Sheet `msheet' has not changed since last time. No update will be made."
+      exit
+    }
+    
+    datasignature set, reset saving("`masterdir'/03.metadata/`msheet'", replace)
+    save "`masterdir'/03.metadata/_vintage/`msheet'_`date_time'.dta", replace
+    save "`masterdir'/03.metadata/`msheet'.dta", replace
+    
+    
+    
     //------------Matrix with years available
     sum year, meanonly
     local ymin = r(min)
@@ -562,72 +615,72 @@ qui {
     tempname C
     mata: C = `ymin'..`ymax'; /*
     */  st_matrix("`C'", C)
-
-    local idvars "country_name coverage country"
+    
+    local idvars "countryname coverage countrycode"
     reshape wide pop, i(`idvars') j(year)
     order `idvars'
     sort `idvars'
     label var coverage     "Coverage"
-    label var country_name "Country Name"
-    label var country      "Country Code"
+    label var countryname  "Country Name"
+    label var countrycode  "Country Code"
     
     pause after reshape to wide
     //------------Matrix with population values
     tempname D
     mkmat pop*, matrix(`D')
-
+    
     //------------Find most recent master file
     _pcn_max_master, mastervin("`mastervin'") newfile("`newfile'")
     local newfile = "`r(newfile)'"
-
+    
     //------------ modify country name and coverage
     local msheet "Population"
     export excel `idvars' using "`mastervin'/`newfile'.xlsx",   /*
     */ sheet("`msheet'") sheetreplace firstrow(varlabels)
-
-
+    
+    
     //------------ Add cpi values
     putexcel set "`mastervin'/`newfile'.xlsx", modify sheet("`msheet'")
     putexcel D1 = matrix(`C')
     putexcel D2 = matrix(`D')
     putexcel save
-
+    
     //------------Update current version
     copy "`mastervin'/`newfile'.xlsx" "`masterdir'/01.current/Master.xlsx", replace
-
+    
     local success = 1
   }
-
+  
   /*==================================================
   PPP
   ==================================================*/
-
-
+  
+  
   /*==================================================
   CCF
   ==================================================*/
-
-
-
+  
+  
+  
   /*==================================================
   modify vintage control
   ==================================================*/
-
+  
   if (`success' == 1) {
-
+    
     import excel "`masterdir'/_vintage_control.xlsx", describe
     if regexm("`r(range_1)'", "([0-9]+$)") {
       local lr = real(regexs(1))+1 // last row
     }
-
+    
     putexcel set "`masterdir'/_vintage_control.xlsx", modify sheet("_vintage")
     putexcel A`lr' = "`newfile'"
     putexcel B`lr' = "`user'"
     putexcel C`lr' = "`msheet'"
     putexcel D`lr' = "Update `update' using datalibweb cpi version `cpivin'. Stata: pcn master, update(`update')"
-
+    
     putexcel save
-
+    
     noi disp in y "sheet(`msheet') in Master data has been update." _n /*
     */ "{stata pcn master, load(`msheet'):Load data}"
   } // end of success
