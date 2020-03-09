@@ -88,8 +88,6 @@ qui {
     */ filename(Final_CPI_PPP_to_be_used.dta)
     
     *Special cases
-    *replace cpi2011_unadj = cpi2011 if code=="IDN"|code=="IND"|code=="CHN"
-    
     replace cpi2011_unadj = cpi2011 if inlist(code, "IDN", "IND", "CHN")
     
     //------------ vector of available years
@@ -107,6 +105,8 @@ qui {
     //------------Rename to match Master file especifications
     rename (cpi2011_unadj code levelnote countryname) (y CountryCode Coverqge CountryName)
     keep y CountryCode Coverqge CountryName survname yr
+    
+    replace Coverqge = lower(Coverqge)
     
     duplicates drop // to adress the case of ETH
     

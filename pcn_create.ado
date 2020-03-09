@@ -222,7 +222,7 @@ qui  {
 			use `file', clear
 			local cc: char _dta[cov]  // country coverage
 			if ("`cc'" == "") {
-				local cc "N"
+				local cc "A"
 				local cov ""
 			}
 			else {
