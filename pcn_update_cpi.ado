@@ -28,7 +28,7 @@ if ("`pause'" == "pause") pause on
 else                      pause off
 
 qui {
-	
+
 	*##s
 	* ---- Initial parameters
 	local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
@@ -37,19 +37,19 @@ qui {
 	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 	local datetimeHRF = trim("`datetimeHRF'")
 	local user=c(username)
-	
+
 	// Output directory
 	local outdir "p:/01.PovcalNet/01.Vintage_control/_aux/cpi"
-	
-	
+
+
 	//========================================================
 	// Load latest data on datalibweb
 	//========================================================
-	
+
 	if ("`cpivin'" == "") {
 		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
 		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
-		
+
 		local cpivins "0"
 		foreach cpidir of local cpidirs {
 			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
@@ -57,46 +57,46 @@ qui {
 		}
 		local cpivin = max(`cpivins')
 	} // if no cpi vintage is selected
-	
+
 	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
 	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta)
-	
+
 	replace levelnote = lower(levelnote)
-	
-	collapse (mean) cpi* icp* cur_adj, by(code countryname region year ref_year levelnote)
+
+	* collapse (mean) cpi* icp* cur_adj, by(code countryname region year ref_year levelnote survname)
 	rename code countrycode
 	gen ccf = 1/cur_adj // Currency Conversion Factor
 	label var ccf  "Currency conversion factor"
 	note ccf: 1/cur_adj
-	
+
 	order region countrycode countryname levelnote year ref_year cpi2011 icp2011  ccf cur_adj
-	
-	gen coverage = cond(levelnote == "urban", 1, /* 
+
+	gen coverage = cond(levelnote == "urban", 1, /*
 	            */ cond(levelnote == "rural", 0 , 2))
-	
+
 	label define coverage 0 "Rural" 1 "Urban" 2 "National"
-	label values coverage coverage 
-	
+	label values coverage coverage
+
 	//------------Characteristics
-	
+
 	char _dta[dlwversion]         "`cpivin'"
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
 	char _dta[pcn_datetime]       "`date_time'"
 	char _dta[pcn_user]           "`user'"
-	
+
 	//========================================================
 	// Save
 	//========================================================
-	
+
 	cap mkdir "`outdir'/vintage"
-	
+
 	cap noi datasignature confirm using "`outdir'/povcalnet_cpi"
 	if (_rc | "`replace'" != "") {
 		datasignature set, reset saving("`outdir'/povcalnet_cpi", replace)
 		save "`outdir'/vintage/povcalnet_cpi_`date_time'.dta"
 		noi save "`outdir'/povcalnet_cpi.dta", replace
 	}
-	
+
 } // end of qui
 
 
