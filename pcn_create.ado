@@ -236,7 +236,7 @@ qui  {
 			keep weight welfare 
 			local urban ""
 			tempfile wfile
-			char _dta[cov]  "N"
+			char _dta[cov]  ""
 			save `wfile'
 			local cfiles "`wfile'"
 		}
