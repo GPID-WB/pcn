@@ -77,27 +77,27 @@ if (_rc) {  // if file does not exist
   }
   
   cap `dlwcall'
-  local rc1 = _rc
-  if (`rc1' != 0 & "`try'" != "") {
+  local rc = _rc
+  if (`rc' != 0 & "`try'" != "") {
   
     pause savedata: first try `dlwcall'
     local mod = upper("`try'")
     local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
     
     cap `dlwcall' module(`mod')
-    local rc2 = _rc
+    local rc = _rc
     
-    if (`rc2' != 0 & "`survey'" == "EU-SILC") {
+    if (`rc' != 0 & "`survey'" == "EU-SILC") {
       
       pause savedata: second try `dlwcall' module(`mod')
       local dlwcall = regexr("`dlwcall'", "(veralt\([a-zA-Z0-9]+\))", "")
       local dlwcall = regexr("`dlwcall'", "(vermast\([a-zA-Z0-9]+\))", "")
       cap `dlwcall'
-      local rc2 = _rc
+      local rc = _rc
       
     }
   }
-  if (`rc2' != 0) {
+  if (`rc' != 0) {
     
     pause savedata: third try `dlwcall' 
     local dlwnote "Error on datalibweb. File does NOT exist in P drive"
@@ -125,28 +125,28 @@ else {  // If file exists, check data signature
   
   if ("`replace'" != "") {
     cap `dlwcall'
-    local rc1 = _rc
-    if (`rc1' != 0 & "`try'" != "") {
+    local rc = _rc
+    if (`rc' != 0 & "`try'" != "") {
     
       pause savedata: first try `dlwcall'
       local mod = upper("`try'")
       local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
       
       cap `dlwcall' module(`mod')
-      local rc2 = _rc
+      local rc = _rc
       
-      if (`rc2' != 0 & "`survey'" == "EU-SILC") {
+      if (`rc' != 0 & "`survey'" == "EU-SILC") {
       
         pause savedata: second try `dlwcall' module(`mod')
         local dlwcall = regexr("`dlwcall'", "(veralt\([a-zA-Z0-9]+\))", "")
         local dlwcall = regexr("`dlwcall'", "(vermast\([a-zA-Z0-9]+\))", "")
         cap `dlwcall'
-        local rc2 = _rc
+        local rc = _rc
         
       }
       
     }
-    if (`rc2' != 0) {
+    if (`rc' != 0) {
     
       pause savedata: third try `dlwcall' 
       local dlwnote "Error on datalibweb. File does NOT exist in P drive"
