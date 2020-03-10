@@ -90,7 +90,7 @@ qui  {
 		*/ survey("`survey'") `pause' `clear' `options' noload
 		if (_rc) {
 			
-			local status "loading error"
+			local status "error. loading"
 			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options' noload"
 			mata: P = pcn_info(P)
 			
@@ -119,11 +119,16 @@ qui  {
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ survey("`survey'") `pause' `clear' `options'
 		if (_rc) {
-			local status "error. loading"
-			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options'"
-			mata: P = pcn_info(P)
-			noi _dots `i' 2
-			continue
+			cap pcn_load, country(`country') year(`year') type(`type') /*
+			*/ maindir("`maindir'") survey("`survey'") /*
+			*/ `pause' `clear' `options'
+			if (_rc) {	
+				local status "error. loading"
+				local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options'"
+				mata: P = pcn_info(P)
+				noi _dots `i' 2
+				continue
+			}
 		}
 		
 		/*==================================================
@@ -312,7 +317,7 @@ qui  {
 				noi _dots `i' -1
 				continue
 			}
-		
+			
 			mata: P = pcn_info(P)
 		} // end of files loop
 		
