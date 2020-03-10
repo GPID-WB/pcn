@@ -23,8 +23,9 @@ Years(numlist)                      ///
 REGions(string)                     ///
 maindir(string)                     ///
 replace                             ///
-clear                              ///
-pause                              ///
+clear                               ///
+pause                               ///
+force                               ///
 ]
 
 version 14
@@ -47,7 +48,7 @@ local user=c(username)
 ==================================================*/
 qui {
 	pcn_primus_query, countries(`countries') years(`years') ///
-	`pause' gpwg
+	`pause' gpwg 
 	
 	pause after primus query
 
@@ -94,7 +95,7 @@ qui {
 
 		cap pcn_savedata , country(`country') survey(`survey')  year(`year') /*
 		*/                 survey_id(`survey_id') maindir(`maindir')        /*
-		*/                 dlwcall("`dlwcall'") try(`try')
+		*/                 dlwcall("`dlwcall'") try(`try') `pause' `replace' `force'
 
 		if (_rc) {
 			local status "saving error"
