@@ -74,7 +74,7 @@ qui {
 	noi _dots 0, title(Downloading GPWG data) reps(`n')
 	while (`i' < `n') {
 		local ++i
-		local status     ""
+		local status   ""
 		local dlwnote  ""
 
 
