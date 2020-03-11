@@ -55,10 +55,53 @@ local user=c(username)
 ==================================================*/
 qui  {
 	
+	/*
 	pcn_primus_query, countries(`countries') years(`years') ///
-	`pause' vermast("`vermast'") veralt("`veralt'") gpwg
+	`pause' gpwg
+	pause after primus query
+	*/
 	
+	pcn load price, clear
+	rename countrycode country
+	tostring _all, replace
+	
+	/*==================================================
+	2: Condition to filter data
+	==================================================*/
+	
+	
+	* Countries
+	if (lower("`countries'") != "all" ) {
+		local countrylist ""
+		local countries = upper("`countries'")
+		local countrylist: subinstr local countries " " "|", all
+		keep if regexm(country, "`countrylist'")
+	}
+	
+	** years
+	if ("`years'" != "") {
+		numlist "`years'"
+		local years  `r(numlist)'
+		local yearlist: subinstr local years " " "|", all
+		keep if regexm(year, "`yearlist'")
+	}
+	
+	if ("`vermast'" != "") {
+		local vmlist: subinstr local vermast " " "|", all
+		keep if regexm(vermast, "`vmlist'")
+	}
+	
+	if ("`veralt'" != "") {
+		local valist: subinstr local veralt " " "|", all
+		keep if regexm(veralt, "`valist'")
+	}
+	
+	
+	
+	qui ds
 	local varlist = "`r(varlist)'"
+	
+	mata: R = st_sdata(.,tokens(st_local("varlist")))
 	local n = _N
 	
 	/*==================================================
@@ -67,7 +110,7 @@ qui  {
 	noi disp as txt ". " in y "= saved successfully"
 	noi disp as txt "s " in y "= skipped - already exists"
 	noi disp as err "e " in y "= error reading"
-	noi disp as err "x " in y "= error in datalibweb"
+	noi disp as err "x " in y "= error in process"
 	
 	
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
@@ -85,23 +128,32 @@ qui  {
 		else local previous "`country'-`year'" */
 		
 		//------------ get metadata
-		cap pcn_load, country(`country') year(`year') type(`type') /*
-		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ survey("`survey'") `pause' `clear' `options' noload
+		
+		local mod "GPWG"
+		cap pcn_load, country(`country') year(`year') type(GMD) /*
+		*/ maindir("`maindir'")  module(`mod')  survey("`survey'") /*
+		*/ `pause' `clear' `options' noload
+		
 		if (_rc) {
-			
-			local status "error. loading"
-			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options' noload"
-			mata: P = pcn_info(P)
-			
-			noi _dots `i' 2
-			continue
+			local mod "BIN"
+			cap pcn_load, country(`country') year(`year') type(GMD) /*
+			*/ maindir("`maindir'")  module(`mod')  survey("`survey'") /*
+			*/ `pause' `clear' `options' noload
+			if (_rc) {
+				local status "error. loading"
+				local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'")  survey("`survey'")  module(`mod') `pause' `clear' `options' noload"
+				mata: P = pcn_info(P)
+				
+				noi _dots `i' 2
+				continue
+			}
 		}
 		
-		local filename = "`r(filename)'"
-		local survin   = "`r(survin)'"
-		local survid   = "`r(survid)'"
-		local surdir   = "`r(surdir)'"
+		local filename  = "`r(filename)'"
+		local survin    = "`r(survin)'"
+		local survid    = "`r(survid)'"
+		local survey_id = "`survid'"
+		local surdir    = "`r(surdir)'"
 		return add
 		
 		cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
@@ -115,20 +167,18 @@ qui  {
 			continue // there is not need to load data and check datasignature
 		}
 		*--------------------2.2: Load data
-		cap pcn_load, country(`country') year(`year') type(`type') /*
-		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ survey("`survey'") `pause' `clear' `options'
+		cap pcn_load, country(`country') year(`year') type(GMD) /*
+		*/ maindir("`maindir'")  module(`mod') survey("`survey'")  /*
+		*/ `pause' `clear' `options'
+		
 		if (_rc) {
-			cap pcn_load, country(`country') year(`year') type(`type') /*
-			*/ maindir("`maindir'") survey("`survey'") /*
-			*/ `pause' `clear' `options'
-			if (_rc) {	
-				local status "error. loading"
-				local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options'"
-				mata: P = pcn_info(P)
-				noi _dots `i' 2
-				continue
-			}
+			
+			local status "error. loading"
+			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'")  survey("`survey'")  module(`mod') `pause' `clear' `options'"
+			mata: P = pcn_info(P)
+			noi _dots `i' 2
+			continue
+			
 		}
 		
 		/*==================================================
@@ -146,7 +196,7 @@ qui  {
 				else {
 					noi disp in red "no weight variable found for country(`country') year(`year') veralt(`veralt') "
 					local status "error. cleaning"
-					local dlwnote "no weight variable found for country(`country') year(`year') veralt(`veralt')"
+					local dlwnote "no weight variable found for country(`country') year(`year') "
 					mata: P = pcn_info(P)
 					noi _dots `i' 1
 					continue
