@@ -57,6 +57,40 @@ qui {
 	pcn load price, clear
 	rename countrycode country
 	tostring _all, replace
+	
+	/*==================================================
+	2: Condition to filter data
+	==================================================*/
+	
+	
+	* Countries
+	if (lower("`countries'") != "all" ) {
+		local countrylist ""
+		local countries = upper("`countries'")
+		local countrylist: subinstr local countries " " "|", all
+		keep if regexm(country, "`countrylist'")
+	}
+	
+	** years
+	if ("`years'" != "") {
+		numlist "`years'"
+		local years  `r(numlist)'
+		local yearlist: subinstr local years " " "|", all
+		keep if regexm(year, "`yearlist'")
+	}
+	
+	if ("`vermast'" != "") {
+		local vmlist: subinstr local vermast " " "|", all
+		keep if regexm(vermast, "`vmlist'")
+	}
+	
+	if ("`veralt'" != "") {
+		local valist: subinstr local veralt " " "|", all
+		keep if regexm(veralt, "`valist'")
+	}
+	
+		
+	
 	qui ds
 	local varlist = "`r(varlist)'"
 	
@@ -178,25 +212,4 @@ Notes:
 
 Version Control:
 
-
-
-mata
-T = ("a", "b")
-A = asarray_create()
-
-for (f=1; f<=cols(T); f++) {
-	
-	asarray(A, T[1,f], st_local(T[1,f]))
-	
-}
-
-
-for (loc=asarray_first(A); loc!=NULL; loc=asarray_next(A, loc)) {
-	
-	asarray_contents(A, loc)
-	
-}
-
-asarray(A, T[1,f])
-
-end
+pcn download gpwg, countr(AUT) year(2018) 
