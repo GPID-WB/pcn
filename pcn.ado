@@ -265,6 +265,28 @@ qui {
 		exit
 	}
 	
+	//========================================================
+	// Price framework
+	//========================================================
+	//------------update
+		if regexm("`subcmd'", "update[ ]+(price|framework|pf)") {
+		if !inlist("`c(username)'", "wb384996") {
+			noi disp in r "You're not authorized to execute this command"
+			error
+		}
+		
+		`nq' pcn_update_price,  `pause' `options'
+		return add
+		exit
+	}
+	
+	
+	//------------Load
+	if regexm("`subcmd'", "load[ ]+(price|framework|pf)") {
+		`nq' pcn_load_price,  `pause' `options'
+		return add
+		exit
+	}
 	
 	//========================================================
 	// Master File

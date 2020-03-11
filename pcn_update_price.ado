@@ -60,7 +60,28 @@ qui {
 	
 	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
 	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Survey_price_framework.dta)
+	
+	keep region code year survname ref_year survey_coverage datatype rep_year comparability
+	rename (code  survname  survey_coverage ) (countrycode  survey    coverage)
+	
+	//------------Characteristics
+	char _dta[dlwversion]         "`cpivin'"
+	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
+	char _dta[pcn_datetime]       "`date_time'"
+	char _dta[pcn_user]           "`user'"
 
+	//========================================================
+	// Save
+	//========================================================
+
+	cap mkdir "`outdir'/vintage"
+
+	cap noi datasignature confirm using "`outdir'/price_framework"
+	if (_rc | "`replace'" != "") {
+		datasignature set, reset saving("`outdir'/price_framework", replace)
+		save "`outdir'/vintage/price_framework_`date_time'.dta"
+		noi save "`outdir'/price_framework.dta", replace
+	}
 
 }
 
