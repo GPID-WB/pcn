@@ -68,6 +68,9 @@ qui {
 	gen ccf = 1/cur_adj // Currency Conversion Factor
 	label var ccf  "Currency conversion factor"
 	note ccf: 1/cur_adj
+	
+	replace cur_adj = 1 if cur_adj == .
+	replace ccf = 1 if ccf == .
 
 	order region countrycode countryname levelnote year ref_year cpi2011 icp2011  ccf cur_adj
 
@@ -76,6 +79,10 @@ qui {
 
 	label define coverage 0 "Rural" 1 "Urban" 2 "National"
 	label values coverage coverage
+	
+	replace datalevel = 1 if countrycode == "ARG"
+	replace datalevel = 1 if countrycode == "URY" & inrange(year, 1992, 2005)
+	
 
 	//------------Characteristics
 

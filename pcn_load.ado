@@ -261,6 +261,12 @@ qui {
 				local datalevel = 2
 			}
 			gen datalevel = `datalevel'
+			if ("`country'" == "ARG") {
+				replace datalevel = 1
+			}
+			if ("`country'" == "URY" & inrange(`year', 1992, 2005)) {
+				replace datalevel = 1
+			}
 			gen countrycode = "`country'"
 			
 			preserve
