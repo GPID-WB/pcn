@@ -252,32 +252,36 @@ qui {
 		
 		if ("`cpi'" == "cpi") {
 			if regexm("`module'", "\-U$") {
-				gen datalevel = 1
+				local datalevel = 1
 			} 
 			else if regexm("`module'", "\-R$") {
-				gen datalevel = 0
+				local datalevel = 0
 			}
 			else {
-				gen datalevel = 2
+				local datalevel = 2
 			}
+			gen datalevel = `datalevel'
 			gen countrycode = "`country'"
 			
 			preserve
 			pcn load pf, clear
-			keep if countrycode == "`country'" & year == `year' & survname == "`survey'"
+			keep if countrycode == "`country'" & year == `year' /* 
+			*/      & survname == "`survey'" & datalevel == `datalevel'
 			drop coverage 
 			tempfile pf
 			save `pf'
 			
 			pcn load cpi, clear
-			merge m:1 countrycode ref_year survname using pf, ///
-			keep( 3 4 5) nogen update replace
-			
+			if inlist("`country'", "IND", "IDN", "CHN") {
+				merge m:1 countrycode year survname datalevel using `pf', ///
+				keep( 3 4 5) nogen update replace
+			}
+			else {
+				merge m:1 countrycode ref_year survname datalevel using `pf', ///
+				keep( 3 4 5) nogen update replace
+			}
 			
 			keep if countrycode == "`country'" & year == `year' & survname == "`survey'"
-			/* tempname cpi
-			mkmat year ref_year cpi2011 icp2011 ccf cur_adj  datalevel, matrix(`cpi')
-			return matrix cpi = `cpi' */
 			tempfile cpipf
 			save `cpipf'
 			
@@ -310,7 +314,7 @@ Notes:
 3.
 
 
-Version Control:
-
-
+		Version Control:
+		
+		
 				

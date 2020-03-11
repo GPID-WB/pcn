@@ -64,6 +64,9 @@ qui {
 	keep region code year survname ref_year survey_coverage datatype rep_year comparability
 	rename (code  survey_coverage ) (countrycode coverage)
 	
+	gen datalevel = cond(coverage == "R", 0, /* 
+  */	            cond(coverage == "U", 1, 2)) 
+	
 	//------------Characteristics
 	char _dta[dlwversion]         "`cpivin'"
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
@@ -76,7 +79,7 @@ qui {
 
 	cap mkdir "`outdir'/vintage"
 
-	cap noi datasignature confirm using "`outdir'/price_framework"
+	cap noi datasignature confirm using "`outdir'/price_framework", strict
 	if (_rc | "`replace'" != "") {
 		datasignature set, reset saving("`outdir'/price_framework", replace)
 		save "`outdir'/vintage/price_framework_`date_time'.dta"
