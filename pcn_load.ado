@@ -56,38 +56,39 @@ local user=c(username)
 // conditions
 //========================================================
 
-* ----- Initial conditions
-
-local country = upper("`country'")
-local lis = upper("`lis'")
-
-/* The `lis` option is an inelegant solution because it is too specific and does not
-allow the code to be generalized. Yet, it works fine for now. Also, we should add
-a condition that automates the identification of module. Right now it is hardcoded.
-See for instance the following cases:
-
-pcn load, countr(EST) year(2004) clear              // works
-pcn load, countr(EST) year(2004) clear module(GPWG) // does not work
-pcn load, countr(EST) year(2004) clear module(BIN)  // does not work
-pcn load, countr(EST) year(2004) clear lis          // works
-
-*/
-
-
-*---------- conditions
-if ("`type'" == "") local type "GMD"
-if ("`lis'" == "LIS") local module "BIN"
-
-
-if (inlist("`type'", "GMD", "GPWG")) {
-	local collection "GMD"
-}
-else {
-	noi disp as error "type: `type' is not valid"
-	error
-}
-
-
+qui {
+	* ----- Initial conditions
+	
+	local country = upper("`country'")
+	local lis = upper("`lis'")
+	
+	/* The `lis` option is an inelegant solution because it is too specific and does not
+	allow the code to be generalized. Yet, it works fine for now. Also, we should add
+	a condition that automates the identification of module. Right now it is hardcoded.
+	See for instance the following cases:
+	
+	pcn load, countr(EST) year(2004) clear              // works
+	pcn load, countr(EST) year(2004) clear module(GPWG) // does not work
+	pcn load, countr(EST) year(2004) clear module(BIN)  // does not work
+	pcn load, countr(EST) year(2004) clear lis          // works
+	
+	*/
+	
+	
+	*---------- conditions
+	if ("`type'" == "") local type "GMD"
+	if ("`lis'" == "LIS") local module "BIN"
+	
+	
+	if (inlist("`type'", "GMD", "GPWG")) {
+		local collection "GMD"
+	}
+	else {
+		noi disp as error "type: `type' is not valid"
+		error
+	}
+	
+	
 
 /*==================================================
 1: Find path
@@ -111,39 +112,39 @@ if (`direxists' != 1) { // if folder does not exist
 
 if ("`year'" == "") {
 	local dirs: dir "`maindir'/`country'" dirs "`country'*", respectcase
-
+	
 	foreach dir of local dirs {
 		if regexm(`"`dir'"', "(.+)_([0-9]+)_(.+)") local a = regexs(2)
 		local years = "`years' `a'"
 	}
 	local years = trim("`years'")
 	local years: subinstr local years " " ", ", all
-
+	
 	local year = max(0, `years')
-
+	
 }
 
 *----------1.2: Path
 
 if ("`survey'" == "") {
-
+	
 	//------------very inefficient solution to pick surveys
 	/*
 	This section is part of the inefficiencies mentioned above. It is hardcoded and
 	inelegant. We need to find a better solution.
 	*/
-
+	
 	if ("`module'" == "BIN") local lis "LIS"
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
-
+	
 	if ("`module'" == "GPWG") {
 		local dirs1: dir "`maindir'/`country'" dirs "`country'_`year'*LIS", respectcase
 		local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
 		local dirs: list dirs2 - dirs1
 	}
 	//------------------------------------------
-
-
+	
+	
 	if (wordcount(`"`dirs'"') == 0) {
 		noi disp in r "no survey in `country'-`year'"
 		error
@@ -156,9 +157,9 @@ if ("`survey'" == "") {
 			if regexm(`"`dir'"', "([0-9]+)_(.+)") local a = regexs(2)
 			local surveys = "`surveys' `a'"
 		}
-
+		
 		noi disp as text "list of available surveys for `country'- `year'"
-
+		
 		local i = 0
 		foreach survey of local surveys {
 			local ++i
@@ -183,22 +184,22 @@ local surdir "`maindir'/`country'/`country'_`year'_`survey'"
 
 if ("`vermast'" == "") {
 	local dirs: dir "`surdir'" dirs "*`type'", respectcase
-
+	
 	if (`"`dirs'"' == "") {
 		noi disp as err "no GMD collection for the following combination: " ///
 		as text "`country'_`year'_`survey'"
 		error
 	}
-
+	
 	foreach dir of local dirs {
 		if regexm(`"`dir'"', "_[Vv]([0-9]+)_[Mm]_") local a = regexs(1)
 		local vms = "`vms' `a'"
 	}
-
+	
 	local vms = trim("`vms'")
 	local vms: subinstr local vms " " ", ", all
 	local vm = max(0, `vms')
-
+	
 	if (length("`vm'") == 1) local vermast = "0`vm'"
 	else                     local vermast = "`vm'"
 }
@@ -214,11 +215,11 @@ if ("`veralt'" == "") {
 		if regexm(`"`dir'"', "_[Vv]([0-9]+)_[Aa]_") local a = regexs(1)
 		local vas = "`vas' `a'"
 	}
-
+	
 	local vas = trim("`vas'")
 	local vas: subinstr local vas " " ", ", all
 	local va = max(0, `vas')
-
+	
 	if (length("`va'") == 1) local veralt = "0`va'"
 	else                     local veralt = "`va'"
 }
@@ -247,21 +248,25 @@ return local filename = "`filename'"
 if ("`load'" == "") {
 	use "`surdir'/`survid'/Data/`filename'.dta", clear
 	noi disp as text "`filename'.dta" as res " successfully loaded"
-
+	
 	if ("`cpi'" == "cpi") {
 		preserve
 		pcn load cpi, clear
-		keep if countrycode == "`country'" & year == `year'
-		if (_N == 1) {
-			local ccf  = cur_adj[1]
-			local ppp  = icp2011[1]
-			local cpi  = cpi2011[1]
-		}
+		// Eusilc countries
+		
+		if regexm(`survid', "([0-9]+)_([^_]+)_[Vv][0-9]+_") local survey = regexs(2) 
+		replace year = year +1  if survname == "EU-SILC"
+		
+		keep if countrycode == "`country'" & year == `year' & survname == "`survey'"
+		tempname cpi
+		mkmat year ref_year cpi2011  icp2011  ccf cur_adj  datalevel, matrix(`cpi')
+		return matrix cpi = `cpi'
+		
 		restore
 	}
 }
 
-
+}
 /*==================================================
 3:
 ==================================================*/

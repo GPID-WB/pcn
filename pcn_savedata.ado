@@ -25,8 +25,16 @@ survey_id(string)          ///
 maindir(string)            ///
 dlwcall(string)            ///
 try(string)                ///
+pause                      ///
+replace                    ///
+force                      ///
 ]
-version 16
+
+version 14
+
+*---------- conditions
+if ("`pause'" == "pause") pause on
+else                      pause off
 
 
 //========================================================
@@ -53,84 +61,124 @@ local dirname "`dirname'/`survey_id'/Data"
 
 * Confirm file exists
 cap confirm file "`dirname'/`filename'.dta"
+if (_rc) {
+  cap confirm file "`dirname'/`survey_id'_`try'.dta"
+}
 
 if (_rc) {  // if file does not exist
-
+  
   mata: st_local("direxists", strofreal(direxists("`dirname'")))
-
+  
   if (`direxists' != 1) { // if folder does not exist
     cap mkdir "`maindir'/`country'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'"
     cap mkdir "`maindir'/`country'/`country'_`year'_`survey'/`survey_id'/Data"
   }
-
+  
   cap `dlwcall'
-  if (_rc != 0 & "`try'" != "") {
+  local rc = _rc
+  if (`rc' != 0 & "`try'" != "") {
+  
+    pause savedata: first try `dlwcall'
     local mod = upper("`try'")
     local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
+    
     cap `dlwcall' module(`mod')
-    if (_rc & "`survey'" == "EU-SILC") {
+    local rc = _rc
+    
+    if (`rc' != 0 & "`survey'" == "EU-SILC") {
       
+      pause savedata: second try `dlwcall' module(`mod')
       local dlwcall = regexr("`dlwcall'", "(veralt\([a-zA-Z0-9]+\))", "")
       local dlwcall = regexr("`dlwcall'", "(vermast\([a-zA-Z0-9]+\))", "")
       cap `dlwcall'
+      local rc = _rc
+      
     }
   }
-  if (_rc) {
+  if (`rc' != 0) {
+    
+    pause savedata: third try `dlwcall' 
     local dlwnote "Error on datalibweb. File does NOT exist in P drive"
     local status "datalibweb error"
     local st 1
+    
   }
   else {
+    
     local filename "`survey_id'_`mod'"
     char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
     char _dta[pcn_datetime]       "`date_time'"
     char _dta[pcn_user]           "`user'"
-
+    
     datasignature set, reset saving("`dirname'/`filename'", replace)
     save "`dirname'/`filename'.dta"
     local dlwnote "Saved successfully. New file"
     local status "Saved successfully"
     local st 0
+    
   }
 }
 
 else {  // If file exists, check data signature
-
+  
   if ("`replace'" != "") {
     cap `dlwcall'
-    if (_rc != 0 & "`try'" != "") {
+    local rc = _rc
+    if (`rc' != 0 & "`try'" != "") {
+    
+      pause savedata: first try `dlwcall'
       local mod = upper("`try'")
-      local dlwcall = regexr("`dlwcall'", "(module\(.*\))", "")
+      local dlwcall = regexr("`dlwcall'", "(module\([a-zA-Z0-9]+\))", "")
+      
       cap `dlwcall' module(`mod')
+      local rc = _rc
+      
+      if (`rc' != 0 & "`survey'" == "EU-SILC") {
+      
+        pause savedata: second try `dlwcall' module(`mod')
+        local dlwcall = regexr("`dlwcall'", "(veralt\([a-zA-Z0-9]+\))", "")
+        local dlwcall = regexr("`dlwcall'", "(vermast\([a-zA-Z0-9]+\))", "")
+        cap `dlwcall'
+        local rc = _rc
+        
+      }
+      
     }
-    if (_rc) {
-      local dlwnote "Error on datalibweb. File already exists in P drive"
+    if (`rc' != 0) {
+    
+      pause savedata: third try `dlwcall' 
+      local dlwnote "Error on datalibweb. File does NOT exist in P drive"
       local status "datalibweb error"
       local st 1
+    
     }
     else {
-      local filename "`survey_id'_`mod'"
+      
+      local filename                "`survey_id'_`mod'"
       char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
       char _dta[pcn_datetime]       "`date_time'"
       char _dta[pcn_user]           "`user'"
       cap datasignature confirm using "`dirname'/`filename'"
+      local rcds = _rc
+      
     }
-    if (_rc) { // if data do not match
-
+    if (`rcds' != 0 | "`force'" != "") { // if data do not match or force option applied
+      
       cap mkdir "`dirname'/_vintage"
       preserve   // I cannot use  copy because I need the pcn_datetime char
-
+      
       use "`dirname'/`filename'.dta", clear
       save "`dirname'/_vintage/`filename'_`:char _dta[pcn_datetime]'", replace
-
+      
       restore
-
+      
       save "`dirname'/`filename'.dta", replace
       local dlwnote "Saved and replaced successfully"
       local status "Saved successfully"
       local st 0
+      datasignature set, reset saving("`dirname'/`filename'", replace)
     }
     else { // if replace option not selected
       local dlwnote "File are identical. Skiped"

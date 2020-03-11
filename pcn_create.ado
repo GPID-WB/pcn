@@ -54,13 +54,13 @@ local user=c(username)
 1: primus query
 ==================================================*/
 qui  {
-
+	
 	pcn_primus_query, countries(`countries') years(`years') ///
 	`pause' vermast("`vermast'") veralt("`veralt'") gpwg
-
+	
 	local varlist = "`r(varlist)'"
 	local n = _N
-
+	
 	/*==================================================
 	2:  Loop over surveys
 	==================================================*/
@@ -68,37 +68,49 @@ qui  {
 	noi disp as txt "s " in y "= skipped - already exists"
 	noi disp as err "e " in y "= error reading"
 	noi disp as err "x " in y "= error in datalibweb"
-
-
+	
+	
 	mata: P  = J(0,0, .z)   // matrix with information about each survey
 	local i = 0
 	local previous ""
 	noi _dots 0, title(Creating PCN files) reps(`n')
 	while (`i' < `n') {
 		local ++i
-
+		local status   ""
+		local dlwnote  ""
+		
 		mata: pcn_ind(R)
-
+		
 		/* if ("`previous'" == "`country'-`year'") continue
 		else local previous "`country'-`year'" */
-
+		
 		//------------ get metadata
 		cap pcn_load, country(`country') year(`year') type(`type') /*
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ survey("`survey'") `pause' `clear' `options' noload
 		if (_rc) {
+			
+			local status "error. loading"
+			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options' noload"
+			mata: P = pcn_info(P)
+			
 			noi _dots `i' 2
 			continue
 		}
-
+		
 		local filename = "`r(filename)'"
 		local survin   = "`r(survin)'"
 		local survid   = "`r(survid)'"
 		local surdir   = "`r(surdir)'"
 		return add
-
+		
 		cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
 		if (_rc & "`replace'" == "") {  //  File exists
+			
+			local status "skipped"
+			local dlwnote "File exists. Not replaced"
+			mata: P = pcn_info(P)
+			
 			noi _dots `i' -1
 			continue // there is not need to load data and check datasignature
 		}
@@ -107,15 +119,23 @@ qui  {
 		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
 		*/ survey("`survey'") `pause' `clear' `options'
 		if (_rc) {
-			noi _dots `i' 2
-			continue
+			cap pcn_load, country(`country') year(`year') type(`type') /*
+			*/ maindir("`maindir'") survey("`survey'") /*
+			*/ `pause' `clear' `options'
+			if (_rc) {	
+				local status "error. loading"
+				local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'") vermast(`vermast') veralt(`veralt') survey("`survey'") `pause' `clear' `options'"
+				mata: P = pcn_info(P)
+				noi _dots `i' 2
+				continue
+			}
 		}
-
+		
 		/*==================================================
 		3:  Clear and save data
 		==================================================*/
 		*----------1.1: clean weight variable
-
+		
 		cap confirm var weight, exact
 		if (_rc) {
 			cap confirm var weight_p, exact
@@ -125,75 +145,78 @@ qui  {
 				if (_rc == 0) rename weight_h weight
 				else {
 					noi disp in red "no weight variable found for country(`country') year(`year') veralt(`veralt') "
+					local status "error. cleaning"
+					local dlwnote "no weight variable found for country(`country') year(`year') veralt(`veralt')"
+					mata: P = pcn_info(P)
 					noi _dots `i' 1
 					continue
 				}
 			}
 		}
-
-
+		
+		
 		* make sure no information is lost
 		svyset, clear
 		recast double welfare
 		recast double weight
-
+		
 		* monthly data
 		replace welfare=welfare/12
-
-		keep weight welfare urban
-
+		
+		
 		* special treatment for IDN and IND
 		if inlist("`country'", "IND", "IDN") {
+			keep weight welfare urban
 			preserve
 			keep if urban==0
 			tempfile rfile
 			char _dta[cov]  "R"
 			save `rfile'
-
+			
 			restore, preserve
-
+			
 			keep if urban==1
 			char _dta[cov]  "U"
 			tempfile ufile
 			save `ufile'
-
+			
 			restore
-
-						
+			
+			
 			// Loading PPPs, population data and CPI data
 			preserve
-
-				// PPPs
-				pcn master, load(ppp) qui
-				keep if countrycode == "`country'" & lower(coveragetype) != "national"
-				gen urban = lower(coveragetype) == "urban"
-				keep urban ppp2011
-				tempfile ppp
-				save    `ppp'
-
-				// Population
-				pcn master, load(population) qui
-				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-				gen urban = lower(coveragetype) == "urban"
-				keep urban population
-				tempfile pop
-				save    `pop'
-
-				// CPI
-				pcn master, load(cpi) qui
-				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-				gen urban = lower(coveragetype) == "urban"
-				keep urban cpi
-				tempfile cpi
-				save    `cpi'
-
+			
+			// PPPs
+			pcn master, load(ppp) qui
+			keep if countrycode == "`country'" & lower(coveragetype) != "national"
+			gen urban = lower(coveragetype) == "urban"
+			keep urban ppp2011
+			tempfile ppp
+			save    `ppp'
+			
+			// Population
+			pcn master, load(population) qui
+			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+			gen urban = lower(coveragetype) == "urban"
+			keep urban population
+			tempfile pop
+			save    `pop'
+			
+			// CPI
+			pcn master, load(cpi) qui
+			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+			gen urban = lower(coveragetype) == "urban"
+			keep urban cpi
+			tempfile cpi
+			save    `cpi'
+			
 			restore
-
+			
 			// Merge with raw data
 			merge m:1 urban using `ppp', nogen
 			merge m:1 urban using `pop', nogen
 			merge m:1 urban using `cpi', nogen
-
+			
 			// Rescaling weights
 			forvalues x = 0/1 {
 				sum weight if urban==`x'
@@ -202,101 +225,131 @@ qui  {
 			
 			label var welfare "Welfare in 2011 USD PPP per day"
 			local urban "urban"
-			char _dta[cov]  "N"
+			char _dta[cov]  "A"
 			tempfile wfile
 			save `wfile'
-
-
+			
+			
 			local cfiles "`rfile' `ufile' `wfile'"
 		} // end of special cases
 		else {
+			keep weight welfare 
 			local urban ""
 			tempfile wfile
 			char _dta[cov]  ""
 			save `wfile'
 			local cfiles "`wfile'"
 		}
-
+		
 		foreach file of local cfiles {
-
+			
 			use `file', clear
 			local cc: char _dta[cov]  // country coverage
-			if ("`cc'" == "") {
+			if ("`cc'" != "") {
+				local cov "-`cc'"
+			}
+			else {
 				local cc "N"
 				local cov ""
 			}
-			else {
-				local cov "-`cc'"
-			}
-
+			
 			* keep weight and welfare
 			keep weight welfare `urban'
 			sort welfare
-
+			
 			* drop missing values
 			drop if welfare < 0 | welfare == .
 			drop if weight <= 0 | weight == .
-
+			
 			order weight welfare
-
+			
 			//========================================================
 			// Check if data is the same as the previous one and save.
 			//========================================================
-
+			
 			cap datasignature confirm using  "`surdir'/`survid'/Data/`survid'_PCN`cov'"
 			local dsrc = _rc
-			if (`dsrc' == 9) {
+			if (`dsrc' == 9) {  // if signature does not exist
 				cap mkdir "`surdir'/`survid'/Data/_vintage"
 				preserve   // I cannot use  copy because I need the pcn_datetime char
-
+				
 				use "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta", clear
-				save "`surdir'/`survid'/Data/_vintage/`survid'_PCN`cov'_`:char _dta[creationdate]'", replace
-
+				cap save "`surdir'/`survid'/Data/_vintage/`survid'_PCN`cov'_`:char _dta[creationdate]'", replace
+				if (_rc) {
+					save "`surdir'/`survid'/Data/_vintage/`survid'_PCN`cov'_`date_time'", replace
+				}
+				
 				restore
 			}
-			if (`dsrc' != 0 | "`replace'" != "") {
+			if (`dsrc' != 0 | "`replace'" != "") { // if different signature or replace
 				cap datasignature set, reset /*
 				*/ saving("`surdir'/`survid'/Data/`survid'_PCN`cov'", replace)
-
+				
 				char _dta[filename]         "`filename'"
 				char _dta[survin]           "`survin'"
 				char _dta[survid]           "`survid'"
 				char _dta[surdir]           "`surdir'"
 				char _dta[creationdate]     "`date_time'"
 				char _dta[survey_coverage]  "`cc'"
-
+				
 				// Special case for IDN 2018 (should be deleted later)
 				if ("`country'" == "IDN") {
 					char _dta[welfaretype]  "CONS"
   				char _dta[weighttype]   "aw"
 				}
-
-
+				
+				
 				//------------Uncollapsed data
 				save "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta", `replace'
-				export delimited using "`surdir'/`survid'/Data/`survid'_PCN`cov'.txt", ///
-				novarnames nolabel delimiter(tab) `replace'
-
-
+				local status "saved"
+				local dlwnote "OK. country(`country') year(`year') veralt(`veralt') cov `cc'"
+				noi _dots `i' 0
+				
 				//------------ collapse data
 				collapse (sum) weight, by(welfare)
-
+				
 				save "`surdir'/`survid'/Data/`survid'_PCNc`cov'.dta", `replace'
-
-				export delimited using "`surdir'/`survid'/Data/`survid'_PCNc`cov'.txt", ///
-				novarnames nolabel delimiter(tab) `replace'
-				noi _dots `i' 0
+				
 			}
-			else {
+			else { // Skipped data has not change. 
+				local status "skipped. data has not changed"
+				local dlwnote "skipped. country(`country') year(`year') veralt(`veralt') cov `cc'"
 				noi _dots `i' -1
 				continue
 			}
+			
+			mata: P = pcn_info(P)
 		} // end of files loop
-
-		* mata: P = pcn_info(P)
-
+		
 	} // end of while
-
+	
+	
+	/*==================================================
+	3: import results file
+	==================================================*/
+	
+	*----------3.1:
+	drop _all
+	getmata (surveyid status dlwnote) = P
+	
+	* Add chars
+	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
+	char _dta[pcn_datetime]       "`date_time'"
+	char _dta[pcn_user]           "`user'"
+	
+	
+	*----------3.2:
+	noi disp _n ""
+	cap noi datasignature confirm using "`maindir'/_aux/pcn_create/pcn_create"
+	if (_rc) {
+		
+		datasignature set, reset saving("`maindir'/_aux/pcn_create/pcn_create", replace)
+		save "`maindir'/_aux/pcn_create/_vintage/pcn_create_`date_time'.dta"
+		save "`maindir'/_aux/pcn_create/pcn_create.dta", replace
+		
+	}
+	noi disp as result "Click {stata br:here} to see results"
+	
 } // end of qui
 noi disp _n(2) ""
 
