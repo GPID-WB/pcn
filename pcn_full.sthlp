@@ -150,11 +150,11 @@ may require World Bank internal resources]
 {dlgtab:load}
 
 {p 4 4 2}
-This subcommand loads the PovcalNet data into memory (this requires access to the P drive).
+The {cmd:load} subcommand loads the PovcalNet data into memory (this requires access to the P drive).
 In overall terms, the command checks the conditions given by the user, chiefly 
-{opt countries} and {opt year}, and load the existing data that satisfies the user's request, 
+{opt countries} and {opt year}, and loads the existing data that satisfies the user's request, 
 or deploys a list with the surveys in stock that meets the conditions. If additional 
-conditions, such as {type} or version options, are listed then the search is refined.
+conditions, such as {opt type} or {opt version} options, are listed then the search is refined.
 {p_end}
 
 
@@ -175,13 +175,36 @@ Options and overall structure changes according to the companion word, please ke
     {hline 87}
     Companion{col 25}Basic recommended structure
     {hline 15}{col 25}{hline 67}
-    gpwg		{col 20}pcn load, countr(3-letter code) year(####) [veralt(##) vermast(##)]
-    wrk			{col 20}pcn laod wrk, countr(3-letter code) year(####) 
-    cpi			{col 20}pcn load cpi [, version( date |"choose"|"pick")) ]
+    gpwg		{col 20}{cmd:pcn load [gpwg]}, {opt countr(3-letter code)} {opt year(####)} [{opt veralt(##)} {opt vermast(##)}]
+    wrk			{col 20}{cmd:pcn laod wrk}, {opt countr(3-letter code)} {opt year(####)}
+    cpi			{col 20}{cmd:pcn load cpi} [, {opt version( date |"choose"|"pick")} ]
     {hline 87}
+		
+{p 4 4 2} 
+The different options and parameters may be described:
 
+{col 5}Option{col 30}Description
+{space 4}{hline}
+	{p2col:{opt country:}(3-letter code)}List of country codes (accepts multiples) [{it:all} is not accepted]{p_end}
+	{p2col:{opt years:}(numlist|string)}Four-digit year [all is not accepted] {p_end}
+	{p2col:{opt version:}}If set a particular version of the file will be used on basis
+	of the date given by the user. If unsure of the date, by writing "choose" or "pick", a list of the versions available will be lunch and the user may select the one to use
+	trought a clickcable menu. If not set the latest version is used.{p_end}
+	{p2col:{opt clear:}}Replaces data in memory.{p_end}
+	{p2col:{opt lis:}}Only LIS surveys will be taken into account.{p_end}
+	{p2col:{opt module:}}It will search accordingly for those either "BIN" or "GPWG"\"GMD" surveys.{p_end}
+	{p2col:{opt veralt(##)}}If given it will use surveys with the given alternative version.{p_end}
+	{p2col:{opt vermast(##)}}If given it will use surveys with the given master version.{p_end}
+
+{space 4}{hline}
 {p 4 4 2}
-{bf:{ul:Examples}}
+	
+{center:{hline 16}}
+{center:{bf:Examples}}
+{center:{hline 16}}
+
+{p 7 4 2} {bf:load gpwg}{p_end}
+{space 4}{hline 15}
 
 {p 4 4 2}
 One of the most simple queries possible is only setting the country and a year:{p_end}
@@ -228,7 +251,7 @@ You may also specify the survey needed:{p_end}
 
 {p 4 4 2}
 Finally, it is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
- always set. Nonetheless, only setting the year is possible, in such case the lastest 
+ always set. Nonetheless, only setting the country is possible, in such case the lastest 
  survey year is set as default.{p_end}
  
 {phang2}
@@ -237,6 +260,43 @@ Finally, it is strongly recommended that, both main parameters, {opt year} and {
 {p 4 4 2}
 The same is not true is the missing parameter is {opt countries}. This parameter is 
 compulsory.{p_end}
+
+{p 7 4 2} {bf:load wrk}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+One of the most simple queries possible is only setting the country and a year:{p_end}
+
+{phang2}
+{stata pcn load wrk, countries(ury) year(2011) clear}
+
+{p 4 4 2}
+It is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
+ always set. Nonetheless, only setting the year is possible, in such case the lastest 
+ survey year is set as default.{p_end}
+ 
+{phang2}
+{stata pcn load wrk, countries(ury) clear}
+
+{p 4 4 2}
+The same is not true is the missing parameter is {opt countries}. This parameter is 
+compulsory.{p_end}
+
+{p 7 4 2} {bf:load cpi}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+The cpi structure is quite simple. Just run:{p_end}
+
+{phang2}
+{stata pcn load cpi, clear}
+
+{p 4 4 2}
+if you need to use a different version, insted of the latest one, use the option {opt version}. If you write pick, a clickcable list will be deployed:{p_end}
+
+{phang2}
+{stata pcn load cpi, version(pick) clear}
+
 
 {center:(Go up to {it:{help pcn_full##subcommands:Subcommand top}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
@@ -315,7 +375,47 @@ parameters) and downloads GPWG data from datalibweb. The file(s) is load in memo
 and save in the specified folder.{p_end}
 
 {p 4 4 2}
-{bf:{ul:Examples}}
+Four different kinds of data can be downloaded, accordingly to the chosen companion word:{p_end}
+
+                {hline 73}
+                Subcommand + Companion{col 45}Action
+                {hline 25}{col 45}{hline 45}
+                download [gpwg]	{col 45}Downloads the GPWG surveys (approved).
+                download wrk		{col 45}Downloads the working data (Not yet approved).
+                {hline 73}
+
+{p 4 4 2}
+Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
+
+    {hline 87}
+    Companion{col 25}Basic recommended structure
+    {hline 15}{col 25}{hline 67}
+    gpwg		{col 20}{cmd:pcn download [gpwg]} [, {opt countr(3-letter code)} {opt year(####)} {opt veralt(##)} {opt vermast(##)}]
+    wrk			{col 20}{cmd:pcn downlaod wrk} [, {opt countr(3-letter code)} {opt year(####)}]
+    {hline 87}
+		
+{p 4 4 2} 
+The different options and parameters may be described:
+
+{col 5}Option{col 30}Description
+{space 4}{hline}
+	{p2col:{opt country:}(3-letter code)}List of country codes (accepts multiples) [{it:all} is not accepted]{p_end}
+	{p2col:{opt years:}(numlist|string)}Four-digit year [all is not accepted] {p_end}
+	{p2col:{opt replace:}}Replaces data the existing file(s).{p_end}
+	{p2col:{opt veralt(##)}}If given it will use surveys with the given alternative version.{p_end}
+	{p2col:{opt vermast(##)}}If given it will use surveys with the given master version.{p_end}
+
+{space 4}{hline}
+{p 4 4 2}
+	
+	
+
+{center:{hline 16}}
+{center:{bf:Examples}}
+{center:{hline 16}}
+
+{p 5 4 2} {bf:Download gpwg}{p_end}
+{space 4}{hline 15}
 
 {p 4 4 2}
 One of the most simple queries possible is only setting the country and a year:{p_end}
@@ -339,6 +439,15 @@ If you intend to replace the exising file(s) for the newer version(s), you must
 {phang2}
 {stata pcn download, countries(chl) year(2013), replace} 
 
+{p 6 4 2} {bf:Download wrk}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+One of the most simple queries possible is only setting the country and a year:{p_end}
+
+{phang2}
+{stata pcn download wrk, countries(ury) year(2011)}
+
 {center:(Go up to {it:{help pcn_full##subcommands:Subcommand top}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:({help pcn:Go back to Intro page})}
@@ -347,9 +456,8 @@ If you intend to replace the exising file(s) for the newer version(s), you must
 {dlgtab:master}
 
 {p 4 4 2}
-This subcommand allows to work with the master file. Allows you to load the different
- sheets form the master file into memory or modify the master file using the current data on
- memory.
+This subcommand allows to work with the master file. You may load the different
+ sheets from the master file into memory or modify the master file using the current data on memory.
  
 {p 4 4 2}
 The basic structure is as follows:
@@ -362,13 +470,75 @@ Two actions are possible:{p_end}
                 {hline 73}
                 action{col 33}Description
                 {hline 25}{col 30}{hline 45}
-                load(sheet)	{col 30}loads the GPWG surveys (approved).
-                upload(sheet)	{col 30}loads the working data (Not yet approved).
+                load(sheet)	{col 30}loads the selected sheet.
+                upload(sheet)	{col 30}Modifies selected sheet (This is restricted).
                 {hline 73}
 
 {p 4 4 2}
-Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
+{bf:load}{p_end}
+{p 4 4 2}
+This option can be used to load each spreadsheet of the most recent version of the master file into memory.
+Each spreadsheet is loaded in long format. The user can choose the spreadsheet 
+to load by specifying one of the following: cpi, ppp, gdp, population, pce, 
+currencyconversion, regionlookup, countrylist, countrylookup, surveyinfo, surveymean. 
+The load option also accepts: pick, select, choose and sheetslist. Specifying one of these allows
+the users to pick each sheet manually. 
+The load option can be combined with the option version to choose among different versions of the master file. The user can indicate pick, select or choose within the version option.{p_end}
 
+{p 4 4 2}
+{bf:sheets}{p_end}
+{p 4 4 2}
+The following sheets are available:{p_end}
+                {hline 73}
+                Sheet{col 40}description
+                {hline 25}{col 30}{hline 45}
+                cpi	{col 40}cpi sheet.
+                ppp	{col 40}ppp sheet.
+                gdp	{col 40}gdp sheet.
+                population {col 40}population sheet.
+                pce	{col 40}pce sheet.
+                currencyconversion	{col 35}currrency ratios sheet.
+                regionlookup	{col 40}region lookup sheet.
+                countrylist	{col 40}country list sheet.
+                countrylookup	{col 40}countries lookup sheet.
+                surveyinfo	{col 40}Survey info sheet.
+                surveymean	{col 40}Survey mean sheet.
+                {hline 73}
+{space 4}{hline}
+{p 4 4 2}
+
+{p 4 4 2} {ul:{title:Options}}
+The {bf:pcn} command has the following main options available:
+
+{col 5}Option{col 30}Description
+{space 4}{hline}
+{p2col:{opt shape:(long|wide)}}Replaces data in memory.{p_end}
+{p2col:{opt version:}} If set a particular version of the file will be used on basis of the date given by the user. If unsure of the date, by writing "choose" or "pick", a list of the versions available will be lunch and the user may select the one to use trought a clickcable menu. If not set the latest version is used.
+{p_end}
+{space 4}{hline}
+
+{center:{hline 16}}
+{center:{bf:Examples}}
+{center:{hline 16}}
+
+
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data:{p_end}
+
+{phang2}
+{stata pcn master, load(cpi)}{p_end}
+
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data and allows the user to pick a version of the master file:{p_end}
+
+{phang2}
+{stata pcn master, load(cpi) version(pick)}{p_end}
+
+{p 4 4 2}
+The following allows the user to select a version of the master file and a sheet to use:{p_end}
+
+{phang2}
+{stata pcn master, load(pick) version(select)}{p_end}
 
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
@@ -378,10 +548,89 @@ Options and overall structure changes according to the companion word, please ke
 {dlgtab:primus}
 
 {p 4 4 2}
-This subcommand will allow you to manage with ease both the pending and approved data on PRIMUS. 
+The {cmd:load} subcommand allows to manage with ease both the pending and approved data on PRIMUS. 
+{p_end}
+
 
 {p 4 4 2}
-{bf:{ul:Examples}}
+Two different kinds of data be used, accordingly to the chosen companion word:{p_end}
+
+                {hline 73}
+                Subcommand + Companion{col 45}Action
+                {hline 25}{col 45}{hline 45}
+                primus approved	{col 45}Works with approved data on primus
+                primus pending	{col 45}Works with the pending (not yet approved) data.
+                {hline 73}
+
+{p 4 4 2}
+Options and overall structure is similar independent of the companion word, please keep in mind the following:{p_end}
+
+{p 8 17 2}
+{cmdab:pcn:} primus [approved | pending], [ down(estimates|transactions) | load(estimates|transactions) ] {it:{help pcn_full##options:Options}}
+
+		
+{p 4 4 2} 
+Either {opt load} or {opt down} is required.
+
+{col 5}Option{col 30}Description
+{space 4}{hline}
+	{p2col:{opt load:(estimates|trans)}}If selected the either the primus estimates or transactions IDs will be loaded into memory.{p_end}
+	{p2col:{opt down:(estimates|trans)}}If selected the either the primus estimates or transactions IDs will be downloaded or updated.{p_end}
+	{p2col:{opt version:}}If set a particular version of the estimates or transacions will be load on basis
+	of the date given by the user. If unsure of the date, by writing "choose" or "pick", a list of the versions available will be lunch and the user may select the one to use
+	trought a clickcable menu. If not set the latest version is used.{p_end}
+{space 4}{hline}
+{p 4 4 2}
+
+{center:{hline 16}}
+{center:{bf:Examples}}
+{center:{hline 16}}
+
+{space 4}{hline 15}
+
+{p 4 4 2}
+Getting the latest approved estimates:{p_end}
+
+{phang2}
+{stata pcn primus approved, load(estimates)}
+
+{p 4 4 2}
+Getting the latest approved transactions:{p_end}
+
+{phang2}
+{stata pcn primus approved, load(transactions)}
+
+{p 5 4 2}
+which is the same as:
+
+{phang2}
+{stata pcn primus approved, load(trans)}
+
+{p 4 4 2}
+If you need pending data the same holds:{p_end}
+
+{phang2}
+{stata pcn primus pending, load(estimates)}
+
+{phang2}
+{stata pcn primus pending, load(trans)}
+
+{p 4 4 2}
+If you need to load a particular version, keep in mind the {opt version} option:
+
+{phang2}
+{stata pcn primus pending, load(trans) version(list)}
+
+{p 4 4 2}
+If you need to update the information just use the {opt down} option:
+
+{phang2}
+{stata pcn primus pending, down(estimates)}
+
+
+{phang2}
+{stata pcn primus approved, down(trans)}
+
 
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
@@ -453,6 +702,9 @@ BUT MAY BE USEFULL WHEN THE UPDATE KICKS IN){p_end}
 
 {dlgtab:load}
 
+{p 7 4 2} {bf:load gpwg}{p_end}
+{space 4}{hline 15}
+
 {p 4 4 2}
 One of the most simple queries possible is only setting the country and a year:{p_end}
 
@@ -460,13 +712,13 @@ One of the most simple queries possible is only setting the country and a year:{
 {stata pcn load, countries(col) year(2016) clear}
 
 {p 4 4 2}
-In this example as there are more than one survey that full fills the conditions a list
-is deployed, and the user must choose among the options.{p_end}
+ In this example, as there is more than one survey that fulfils the conditions, a list 
+ with available options is displayed, and the user must choose among the options.{p_end}
 
 {p 4 4 2}
 Even if sometimes useful, the list is not always ideal. The user may be more specific
-in order to get the specifc file that she/he has in mind. For example if the desired
-file is the LIS collection the user shall use the following command lines:{p_end}
+ in order to get the specific file that she/he has in mind. For example, if the 
+ desired file is the LIS collection the user shall use the following command line:{p_end}
 
 {phang2}
 {stata pcn load, countries(col) year(2016) lis clear}
@@ -478,22 +730,27 @@ The same result is obtained with:{p_end}
 {stata pcn load, countries(col) year(2016) module(BIN) clear}
 
 {p 4 4 2}
-Notice the following, the use of the option {lis} implies {opt module(BIN)}. Under any
-circumstance combine {opt lis} and {opt module(GPWG)}.{p_end}
+The use of the option {opt lis} implies {opt module(BIN)}. If options {opt lis} 
+and {opt module(GPWG)}, {opt lis} would take predominance.{p_end}
 
 {p 4 4 2}
-Notice that the latest master version is the one loaded in the previous examples.
-Nontheless, it may be the case that a different master version or an alternative version 
-is the one needed. This is mainly the case for replication exercises. The options {opt vermast}
-and {opt veralt} allows to retrive this particular set of infomation, as follows:{p_end}
+ Notice that the latest master version is the one loaded in the previous examples. 
+ Nonetheless, it may be the case that a different master or an alternative version
+ is the one needed. This is mainly the case for replication exercises.
+ The options {opt vermast} and {opt veralt} allows to retrive this particular set(s) of infomation, as follows:{p_end}
 
 {phang2}
 {stata pcn load, countries(chl) year(2000) vermast(01) veralt(04) module(GPWG)}
 
+{p 4 4 2}
+You may also specify the survey needed:{p_end}
+
+{phang2}
+{stata pcn load, countries(nor) year(2010) survey(His-lis)}
 
 {p 4 4 2}
-Is strongly recommended that, both main parameters, {opt year} and {opt countries} are
- always set. Nontheless only setting the year is possible, in such case the lastest 
+Finally, it is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
+ always set. Nonetheless, only setting the country is possible, in such case the lastest 
  survey year is set as default.{p_end}
  
 {phang2}
@@ -502,6 +759,42 @@ Is strongly recommended that, both main parameters, {opt year} and {opt countrie
 {p 4 4 2}
 The same is not true is the missing parameter is {opt countries}. This parameter is 
 compulsory.{p_end}
+
+{p 7 4 2} {bf:load wrk}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+One of the most simple queries possible is only setting the country and a year:{p_end}
+
+{phang2}
+{stata pcn load wrk, countries(ury) year(2011) clear}
+
+{p 4 4 2}
+It is strongly recommended that, both main parameters, {opt year} and {opt countries}, are
+ always set. Nonetheless, only setting the year is possible, in such case the lastest 
+ survey year is set as default.{p_end}
+ 
+{phang2}
+{stata pcn load wrk, countries(ury) clear}
+
+{p 4 4 2}
+The same is not true is the missing parameter is {opt countries}. This parameter is 
+compulsory.{p_end}
+
+{p 7 4 2} {bf:load cpi}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+The cpi structure is quite simple. Just run:{p_end}
+
+{phang2}
+{stata pcn load cpi, clear}
+
+{p 4 4 2}
+if you need to use a different version, insted of the latest one, use the option {opt version}. If you write pick, a clickcable list will be deployed:{p_end}
+
+{phang2}
+{stata pcn load cpi, version(pick) clear}
 
 {dlgtab:create}
 
@@ -544,6 +837,9 @@ of the posible abbreviations to call the subcommand.{p_end}
 
 {dlgtab:download}
 
+{p 5 4 2} {bf:Download gpwg}{p_end}
+{space 4}{hline 15}
+
 {p 4 4 2}
 One of the most simple queries possible is only setting the country and a year:{p_end}
 
@@ -560,14 +856,98 @@ Request for different versions of the surveys is posible as well:{p_end}
 {stata pcn download, countries(ben) year(2015) veralt(01)}
 
 {p 4 4 2}
-If you intend to replace the exising file(s) for the newer version(s) you must
+If you intend to replace the exising file(s) for the newer version(s), you must
  declare the option {opt replace}{p_end}
 
 {phang2}
 {stata pcn download, countries(chl) year(2013), replace} 
 
+{p 6 4 2} {bf:Download wrk}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+One of the most simple queries possible is only setting the country and a year:{p_end}
+
+{phang2}
+{stata pcn download wrk, countries(ury) year(2011)}
+
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:({help pcn:Go back to Intro page})}
+
+{dlgtab:master}
+
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data:{p_end}
+
+{phang2}
+{stata pcn master, load(cpi)}{p_end}
+
+{p 4 4 2}
+The following loads the spreadsheet of the master file containing the cpi data and allows the user to pick a version of the master file:{p_end}
+
+{phang2}
+{stata pcn master, load(cpi) version(pick)}{p_end}
+
+{p 4 4 2}
+The following allows the user to select a version of the master file and a sheet to use:{p_end}
+
+{phang2}
+{stata pcn master, load(pick) version(select)}{p_end}
+
+
+{center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
+{center:({help pcn:Go back to Intro page})}
+
+
+{dlgtab:primus}
+
+{p 4 4 2}
+Getting the latest approved estimates:{p_end}
+
+{phang2}
+{stata pcn primus approved, load(estimates)}
+
+{p 4 4 2}
+Getting the latest approved transactions:{p_end}
+
+{phang2}
+{stata pcn primus approved, load(transactions)}
+
+{p 5 4 2}
+which is the same as:
+
+{phang2}
+{stata pcn primus approved, load(trans)}
+
+{p 4 4 2}
+If you need pending data the same holds:{p_end}
+
+{phang2}
+{stata pcn primus pending, load(estimates)}
+
+{phang2}
+{stata pcn primus pending, load(trans)}
+
+{p 4 4 2}
+If you need to load a particular version, keep in mind the {opt version} option:
+
+{phang2}
+{stata pcn primus pending, load(trans) version(list)}
+
+{p 4 4 2}
+If you need to update the information just use the {opt down} option:
+
+{phang2}
+{stata pcn primus pending, down(estimates)}
+
+
+{phang2}
+{stata pcn primus approved, down(trans)}
+
+
+{center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
+{center:({help pcn:Go back to Intro page})}
+
 
 {marker disclaimer}{...}
 {title:Disclaimer}

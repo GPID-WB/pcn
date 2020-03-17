@@ -54,7 +54,7 @@
     {c |}    6.  To update the povcalnet files, see{col 68}{c |}
     {c |}        {bf:{help pcn_download:[PCN] pcn download}}{col 68}{c |}
     {c |}{col 68}{c |}
-    {c |} Or check out the {bf:{help pcn full:pcn_full help file}}{col 68}{c |}
+    {c |} Or check out the {bf:{help pcn_full:pcn full help file}}{col 68}{c |}
     {c |}{col 68}{c |}
     {c BLC}{hline 62}{c BRC}
 	
@@ -63,13 +63,6 @@
 and {help primus:primus}. [Notice: {help datalibweb:datalibweb} and {help primus:primus} 
 may require World Bank internal resources]
 
-	
-
-{hline}
-{center: {title:Cheat Sheat}}
-{hline}
-
-	
 
 {hline}
 {center: {title:Cheat Sheat}}
@@ -101,7 +94,7 @@ be only used when major  updates are released.{p_end}
 {p2col:{opt primus}}Allow you to manage with ease both the pending and approved data on PRIMUS.{p_end}
 {space 4}{hline}
 {p 4 4 2}
-See the {help pcn_full:pcn full help file} for further explanation of the {help pcn##subcommands:subcommands}.{p_end}
+See the {help pcn_full:pcn full help file} for further explanation of the {help pcn_full##subcommands:subcommands}.{p_end}
 
 
 {p 4 4 2} {ul:{title:Parameters}}
@@ -114,7 +107,7 @@ The {bf:pcn} command requires the following parameters:
 {p2col:{opt type:}(string)}Type of collection requested, only GMD request are accepted.{p_end}
 {space 4}{hline}
 {p 4 4 2}
-See the {help pcn_full:pcn full help file} for further explanation of the {help pcn##param:parameters}.{p_end}
+See the {help pcn_full:pcn full help file} for further explanation of the {help pcn_full##param:parameters}.{p_end}
 
 {p 4 4 2} {ul:{title:Options}}
 The {bf:pcn} command has the following main options available:
@@ -128,7 +121,7 @@ The {bf:pcn} command has the following main options available:
 {p2col:{opt upload:}}[Only for master subcommand] If selected the selected sheet will be modified in the master. [Use restricted for the time being.]{p_end}
 {space 4}{hline}
 {p 4 4 2}
-See the {help pcn_full:pcn full help file} for further explanation of the {help pcn##options:Options}.{p_end}
+See the {help pcn_full:pcn full help file} for further explanation of the {help pcn_full##options:Options}.{p_end}
 
 {hline}
 

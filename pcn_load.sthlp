@@ -31,7 +31,7 @@
 {p 4 4 2}
 The {cmd:load} subcommand loads the PovcalNet data into memory (this requires access to the P drive).
 In overall terms, the command checks the conditions given by the user, chiefly 
-{opt countries} and {opt year}, and load the existing data that satisfies the user's request, 
+{opt countries} and {opt year}, and loads the existing data that satisfies the user's request, 
 or deploys a list with the surveys in stock that meets the conditions. If additional 
 conditions, such as {opt type} or {opt version} options, are listed then the search is refined.
 {p_end}
@@ -180,11 +180,10 @@ The cpi structure is quite simple. Just run:{p_end}
 {stata pcn load cpi, clear}
 
 {p 4 4 2}
-if you need to use a different version, insted of the latest one, use the {opt version}. If you write pick, a clickcable list will be deployed:{p_end}
+if you need to use a different version, insted of the latest one, use the option {opt version}. If you write pick, a clickcable list will be deployed:{p_end}
 
 {phang2}
 {stata pcn load cpi, version(pick) clear}
-
 
 
 {center:({help pcn_load:Go back to top})}
