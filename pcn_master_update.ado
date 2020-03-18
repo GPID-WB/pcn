@@ -20,7 +20,7 @@ syntax [anything],         ///
 update(string)             ///
 [                          ///
 cpivin(string)             ///
-MAXYear(integer 2018)     ///
+MAXYear(integer 2019)     ///
 FORCE                     ///
 pause                     ///
 ]
@@ -89,6 +89,8 @@ qui {
     
     *Special cases
     replace cpi2011_unadj = cpi2011 if inlist(code, "IDN", "IND", "CHN")
+    
+    keep if !(code == "BRA" & year >= 2012 & survname == "PNAD")
     
     //------------ vector of available years
     

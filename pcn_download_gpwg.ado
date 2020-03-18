@@ -27,6 +27,9 @@ clear                               ///
 pause                               ///
 force                               ///
 fileserver                          ///
+survey(string)                      ///
+vermast(string)                     ///
+veralt(string)                      ///
 ]
 
 version 14
