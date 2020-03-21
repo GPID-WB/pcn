@@ -45,7 +45,8 @@ Four different kinds of data can be loaded, accordingly to the chosen companion 
                 {hline 25}{col 45}{hline 45}
                 load [gpwg]	{col 45}loads the GPWG surveys (approved).
                 load wrk		{col 45}loads the working data (Not yet approved).
-                laod cpi		{col 45}loads the CPI data (datalibweb's).
+                load cpi		{col 45}loads the CPI data (datalibweb's).
+                load [pf|rice]	{col 45}loads the price framework data (datalibweb's).
                 {hline 73}
 
 {p 4 4 2}
@@ -184,6 +185,21 @@ if you need to use a different version, insted of the latest one, use the option
 
 {phang2}
 {stata pcn load cpi, version(pick) clear}
+
+{p 7 4 2} {bf:load pf}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+Price framework structure:{p_end}
+
+{phang2}
+{stata pcn load pf, clear}
+
+{p 4 4 2}
+if you need to use a different version, insted of the latest one, use the option {opt version}. If you write pick, a clickcable list will be deployed:{p_end}
+
+{phang2}
+{stata pcn load pf, version(pick) clear}
 
 
 {center:({help pcn_load:Go back to top})}
