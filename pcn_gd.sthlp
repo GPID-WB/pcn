@@ -29,8 +29,8 @@
 
 {p2colset 5 30 29 2}{...}
 {p 4 4 2}
-This subcommand check for existing group data information and updates (or generates) 
-the information. {p_end}
+This subcommand check for existing group data information, updates (or generates) 
+the corresponding GROUP file, and saves it into the vintage control folder. {p_end}
 
 {center:{hline 16}}
 {center:{bf:Examples}}
@@ -40,17 +40,14 @@ the information. {p_end}
 To check for exiting data or to update just run:{p_end}
 
 {phang2}
-{stata pcn groupdata, clear}
+.pcn groupdata, country(CHN) clear
 
 {phang2}
-{stata pcn gd, clear}
+.pcn gd, country(ARE) clear
 
 {phang2}
-{stata pcn group, clear}
+.pcn group, country(CHN) clear
 
-{p 4 4 2}
-Please notice that the lines above are all the same. Some of them take advantage of the
- possible abbreviations to call the subcommand.{p_end}
 
 {center:({help pcn_gd:Go back to top})}
 {center:({help pcn:Go back to Intro page})}
