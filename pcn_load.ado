@@ -124,75 +124,134 @@ qui {
 		
 	}
 	
-	*----------1.2: Path
+	*----------1.2: check for valid data given the module
+	
+	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+
 	
 	if ("`survey'" == "") {
-		
-		//------------very inefficient solution to pick surveys
-		/*
-		This section is part of the inefficiencies mentioned above. It is hardcoded and
-		inelegant. We need to find a better solution.
-		*/
-		
-		if ("`module'" == "BIN") local lis "LIS"
-		local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*`lis'", respectcase
-		
-		if ("`module'" == "GPWG") {
-			local dirs1: dir "`maindir'/`country'" dirs "`country'_`year'*LIS", respectcase
-			local dirs2: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
-			local dirs: list dirs2 - dirs1
+
+		if(!inlist("`module'","")){
+			loc textm " and module `module'"
+			loc moduleregex "`module'*"
 		}
-		//------------------------------------------
 		
+		loc validf ""
+		loc routes ""
+		foreach dir of local dirs {
+			local dirsB: dir "`maindir'/`country'/`dir'" dirs "`dir'*", respectcase
+			foreach dirr of local dirsB{
+				cap local filess: dir "`maindir'/`country'/`dir'/`dirr'/Data" files "*.dta", respectcase
+				if _rc{
+					local filess: dir "`maindir'/`country'/`dir'/`dirr'/data" files "*.dta", respectcase
+				}
+				if regexm(`"`filess'"', "(.+[Vv][0-9]+_[Mm].+`moduleregex'.dta)") local a = regexs(1)
+				loc a = subinstr(`"`a'"', `"""', "",.)
+				loc a = subinstr(`"`a'"', `".dta"', "",.)
+				if !regexm(`"`validf'"', "`a'") local routes "`routes' `maindir'/`country'/`dir'/`dirr'/Data/`a'.dta"
+				if !regexm(`"`validf'"', "`a'") local validf "`validf' `a'"
+			}
+		}
 		
-		if (wordcount(`"`dirs'"') == 0) {
+		// recover module if not given 
+		if ("`module'" == ""){
+			if (wordcount(`"`validf'"') == 0) {
 			noi disp in r "no survey in `country'-`year'"
 			error
-		}
-		else if (wordcount(`"`dirs'"') == 1) {
-			if regexm(`dirs', "([0-9]+)_(.+)$") local survey = regexs(2)
-		}
-		else {  // if more than 1 survey per year
-			foreach dir of local dirs {
-				if regexm(`"`dir'"', "([0-9]+)_(.+)") local a = regexs(2)
-				local surveys = "`surveys' `a'"
 			}
-			
-			noi disp as text "list of available surveys for `country'- `year'"
-			
-			local i = 0
-			foreach survey of local surveys {
-				local ++i
-				noi disp `"   `i' {c |} {stata `survey'}"'
+			else if (wordcount(`"`validf'"') == 1) {
+			if regexm(`"`validf'"',"`collection'_(.+)") local module = regexs(1)
 			}
-			noi disp _n "select survey to load" _request(_survey)
+			else {  // if more than 1 valid file per country-year
+				foreach file of local validf {
+					if regexm(`"`file'"', "`collection'_(.+)") local a = regexs(1)
+					if !regexm(`"`modules'"', "`a'") local modules = "`modules' `a'"
+				}
+				if (wordcount(`"`modules'"') > 1) {
+					noi disp as text "list of available modules for `country'- `year'"
+					
+					local i = 0
+					foreach module of local modules {
+						local ++i
+						noi disp `"   `i' {c |} {stata `module'}"'
+					}
+					noi disp _n "select module to load" _request(_module)
+				}
+				else {
+					loc module = subinstr(`"`modules'"'," ", "", .)
+					
+				}
+			}
+		}
+		
+		// only keep routes for the selected survey
+		local aroutes ""
+		local avalidf ""
+		foreach route of local routes {
+			if regexm(`"`route'"', "(`collection'_`module')") local aroutes "`aroutes' `route'"
+		}
+		foreach vfile of local validf {
+			if regexm(`"`vfile'"', "(`collection'_`module')") local avalidf "`avalidf' `vfile'"
+		}
+		loc routes "`aroutes'"
+		loc validf "`avalidf'"
+		
+	* ---------- Check survey 
+		
+		if (wordcount(`"`validf'"') == 0) {
+			noi disp in r "no survey in `country'-`year' `textm'"
+			error
+		}
+		else if (wordcount(`"`validf'"') == 1) {
+			if regexm(`"`validf'"', "([0-9]+)_(.+)_[Vv]([0-9]+_[Mm].+)") local survey = regexs(2)
+		}
+		else {  // if more than 1 valid file per country-year module
+			foreach file of local validf {
+				if regexm(`"`file'"', "([0-9]+)_(.+)_[Vv]([0-9]+_[Mm].+)") local a = regexs(2)
+				if !regexm(`"`surveys'"', "`a'")  local surveys = "`surveys' `a'"
+			}			
+			if (wordcount(`"`surveys'"') > 1) {
+				noi disp as text "list of available surveys for `country'- `year' `textm'"
+				
+				local i = 0
+				foreach survey of local surveys {
+					local ++i
+					noi disp `"   `i' {c |} {stata `survey'}"'
+				}
+				noi disp _n "select survey to load" _request(_survey)
+			}
+			else {
+					loc survey = subinstr(`"`surveys'"'," ", "", .)
+				}
 		}
 	} // end of survey == ""
 	else {
 		local survey = upper("`survey'")
 	}
 	
-	if ("`module'" == "") {
-		if regexm("`survey'", "LIS$") local module "BIN"
-		else                          local module "GPWG"
+	// only keep routes for the selected survey
+	local aroutes ""
+	foreach route of local routes {
+		if regexm(`"`route'"', "(.+_`survey'_.+)") local aroutes "`aroutes' `route'"
 	}
+	loc routes "`aroutes'"
+	
+
+	if (`"`routes'"' == "") {
+		noi disp as err "no data for the following combination: " ///
+		as text "`country' `year' `survey' `textm'"
+		error
+	}
+
 	
 	*-------- 1.3 version
-	local surdir "`maindir'/`country'/`country'_`year'_`survey'"
 	
-	* vermast
+	** Master Version
 	
 	if ("`vermast'" == "") {
-		local dirs: dir "`surdir'" dirs "*`type'", respectcase
 		
-		if (`"`dirs'"' == "") {
-			noi disp as err "no GMD collection for the following combination: " ///
-			as text "`country'_`year'_`survey'"
-			error
-		}
-		
-		foreach dir of local dirs {
-			if regexm(`"`dir'"', "_[Vv]([0-9]+)_[Mm]_") local a = regexs(1)
+		foreach route of local routes {
+			if regexm(`"`route'"', "_[Vv]([0-9]+)_[Mm]_") local a = regexs(1)
 			local vms = "`vms' `a'"
 		}
 		
@@ -203,16 +262,24 @@ qui {
 		if (length("`vm'") == 1) local vermast = "0`vm'"
 		else                     local vermast = "`vm'"
 	}
-	
+		
 	else {
 		if regexm("`vermast'", "^[Vv]([0-9]+)") local vermast = regexs(1)
 		if (length("`vermast'") == 1) local vermast = "0`vermast'"
 	}
 	
+	// only keep routes for the selected master version
+	local aroutes ""
+	foreach route of local routes {
+		if regexm(`"`route'"', "(_[Vv]`vermast'_[Mm]_)") local aroutes "`aroutes' `route'"
+	}
+	loc routes "`aroutes'"
+	
+	** Alternative Version
+	
 	if ("`veralt'" == "") {
-		local dirs: dir "`surdir'" dirs "*`vermast'_M_*_A_`collection'", respectcase
-		foreach dir of local dirs {
-			if regexm(`"`dir'"', "_[Vv]([0-9]+)_[Aa]_") local a = regexs(1)
+		foreach route of local routes {
+			if regexm(`"`route'"', "_[Vv]([0-9]+)_[Aa]_") local a = regexs(1)
 			local vas = "`vas' `a'"
 		}
 		
@@ -224,13 +291,20 @@ qui {
 		else                     local veralt = "`va'"
 	}
 	
+	// only keep routes for the selected master version
+	local aroutes "" 
+	foreach route of local routes {
+		if regexm(`"`route'"', "(_[Vv]`veralt'_[Aa]_)") local aroutes "`aroutes' `route'"
+	}
+	loc routes "`aroutes'"
+	
 	
 	/*==================================================
 	2: Loading according to type
 	==================================================*/
 	
-	
 	*----------2.2: Load data
+	local surdir "`maindir'/`country'/`country'_`year'_`survey'"
 	local survid = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A_`collection'"
 	
 	if ("`module'" != "") {
