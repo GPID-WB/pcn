@@ -23,6 +23,7 @@ MAINv(string)                                  ///
 server(string)                                 ///
 DISVar(string)                                 ///
 check(string)                                  ///
+POVline(string)                                 ///
 ]
 
 version 14
@@ -74,7 +75,7 @@ if !inlist("`disvar'","diff","main","all") {
 ==================================================*/
 
 // get testing data
-povcalnet, server(`server') clear
+povcalnet, server(`server') povline(`povline') clear
 
 cap isid `idvar'
 if _rc {
@@ -95,7 +96,7 @@ tempfile serverd
 save `serverd'
 
 // Get current data
-povcalnet, clear 
+povcalnet, povline(`povline') clear 
 
 if ("`check'" == "main"){
     keep `idvar' `mainv'
@@ -108,7 +109,7 @@ save `PCN'
 merge 1:1 `idvar' using `serverd', update gen(status)
 
 keep `idvar' status
-lab define statusl 1 "dropped" 2 "New point" 3 "Unchanged" 4 "Udpade from missing" 5 "Changed (conflict)"
+lab define statusl 1 "Dropped" 2 "New point" 3 "Unchanged" 4 "Udpade from missing" 5 "Changed (conflict)"
 lab values status statusl
 
 preserve 
