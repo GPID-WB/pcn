@@ -21,7 +21,7 @@ syntax [anything(name=subcmd id="subcommand")], ///
 IDvar(string)                                  ///
 MAINv(string)                                  ///
 server(string)                                 ///
-DISVar(string)                                 ///
+DISvar(string)                                 ///
 check(string)                                  ///
 POVline(string)                                 ///
 ]
@@ -187,7 +187,7 @@ if ("`disvar'" != "all") {
 // report back to user
 noi di as text "The status of observations is as follows:"
 noi tab status
-noi di as result "Comparison data load in memory"
+noi di as result "Comparison data load into memory"
 
 }
 
