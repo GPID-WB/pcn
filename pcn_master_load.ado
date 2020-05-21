@@ -344,6 +344,16 @@ qui {
 		ren cpi_time year
 		ren coverage coveragetype
 	}
+	//========================================================
+	//COUNTRY LOOKUP
+	//========================================================
+	if (lower("`load'") == "countrylookup") {
+		import excel using "`mastervin'/Master_`vcnumber'.xlsx", /*
+		*/ sheet("CountryLookUp") clear firstrow case(lower)
+		
+		missings dropvars, force
+		missings dropobs, force
+	}
 	
 	
 } // end qui
