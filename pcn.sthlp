@@ -54,6 +54,9 @@
     {c |}    6.  To update the povcalnet files, see{col 68}{c |}
     {c |}        {bf:{help pcn_download:[PCN] pcn download}}{col 68}{c |}
     {c |}{col 68}{c |}
+    {c |}    7.  To check for differences with a server, see:{col 68}{c |}
+    {c |}        {bf:{help pcn_compare:[PCN] pcn compare}}{col 68}{c |}
+    {c |}{col 68}{c |}
     {c |} Or check out the {bf:{help pcn_full:pcn full help file}}{col 68}{c |}
     {c |}{col 68}{c |}
     {c BLC}{hline 62}{c BRC}
