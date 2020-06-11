@@ -61,7 +61,7 @@ qui {
 	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
 	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Survey_price_framework.dta)
 	
-	keep region code year survname ref_year survey_coverage datatype rep_year comparability
+	* keep region code year survname ref_year survey_coverage datatype rep_year comparability
 	rename (code  survey_coverage ) (countrycode coverage)
 	
 	gen datalevel = cond(coverage == "R", 0, /* 
@@ -76,6 +76,7 @@ qui {
 	//========================================================
 	// Save
 	//========================================================
+	compress 
 
 	cap mkdir "`outdir'/vintage"
 
