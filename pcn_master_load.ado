@@ -96,6 +96,21 @@ qui {
 	else {
 		cap confirm number `version'
 		if (_rc ==0) {
+		if (length("`version'")<18 & regexm("`version'", "-") | "`version'" == "0"){
+			loc i = subinstr("`version'", "-","",.)
+			loc i = `i'
+			loc versions : list sizeof local(vcnumbers)
+			mata: vermat = J(`versions',1,.)
+			loc j = 0
+			foreach vc of local vcnumbers {
+				loc ++j
+				mata: vermat[`j',1] = `vc' 
+			}
+			qui mata: sort(vermat,1)
+			loc i = `versions' - `i'
+			mata: st_numscalar("verScalar", vermat[`i',1])
+			loc version = verScalar
+			} 
 			local vcnumber  `version'
 		}
 		else {
