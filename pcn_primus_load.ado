@@ -6,7 +6,7 @@ url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     7 Feb 2020 - 20:02:16
-Modification Date:
+Modification Date: 12 Jun 2020 - major change
 Do-file version:    01
 References:
 Output:
@@ -21,6 +21,8 @@ syntax [anything(name=subcmd id="subcommand")],  ///
 Status(string)			///
 load(string)				///
 VERsion(string) 			///
+MEeting(string)			///
+WYear(string)					///
 clear                   ///
 pause                   ///
 ]
@@ -48,16 +50,32 @@ else	 						 local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 // Working directory
 //=======================================================
 
+if !inlist("`meeting'", "AM", "SM", "")	{
+	di "meeting must be SM or AM" 
+	error
+}
+
 * working month
 local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
 *Working year
-local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
+if ("`wyear'" == ""){
+	local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
+}
+else{
+	local wkyr = `wyear'
+}
 * Either Annual meeting (AM) or Spring meeting (SM)
-if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
-if inrange(`cmonth', 5, 10) local meeting "AM"
 
-if inrange(`cmonth', 11, 12) {
-	local wkyr = `wkyr' + 1  // workign for the next year's meeting
+if ("`meeting'" == ""){
+	if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
+	if inrange(`cmonth', 5, 10) local meeting "AM"
+
+	if (inrange(`cmonth', 11, 12) & "`year'" == "") {
+		local wkyr = `wkyr' + 1  // workign for the next year's meeting
+	}
+}
+else{
+	local meeting = "`meeting'"
 }
 
 return local wkyr = `wkyr'
