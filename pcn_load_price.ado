@@ -59,8 +59,23 @@ if ("`version'" != "") {
   else {
     cap confirm number `version'
     if (_rc ==0) {
-      local vcnumber = `version'
-      local version: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
+      if (length("`version'")<18 & regexm("`version'", "-") | "`version'" == "0"){
+			loc i = subinstr("`version'", "-","",.)
+			loc i = `i'
+			loc versions : list sizeof local(vcnumbers)
+			mata: vermat = J(`versions',1,.)
+			loc j = 0
+			foreach vc of local vcnumbers {
+				loc ++j
+				mata: vermat[`j',1] = `vc' 
+			}
+			qui mata: sort(vermat,1)
+			loc i = `versions' - `i'
+			mata: st_numscalar("verScalar", vermat[`i',1])
+			loc version = verScalar
+		} 
+		local vcnumber = `version'
+		local version: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
     }
     else {
       if (!regexm("`version'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
