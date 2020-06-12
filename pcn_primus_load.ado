@@ -1,11 +1,11 @@
 /*==================================================
-project:       Load working data stored in P drive
-Author:        David L. Vargas
+project:       Load CPI data
+Author:        R.Andres Castaneda
 E-email:       acastanedaa@worldbank.org
 url:
 Dependencies:  The World Bank
 ----------------------------------------------------
-Creation Date:     5 Feb 2020 -
+Creation Date:     7 Feb 2020 - 20:02:16
 Modification Date:
 Do-file version:    01
 References:
@@ -33,7 +33,6 @@ else                      pause off
 
 
 * ---- Initial parameters
-
 local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
 local time = clock("`c(current_time)'", "hms") // %tcHH:MM:SS
 local date_time = `date'*24*60*60*1000 + `time'  // %tcDDmonCCYY_HH:MM:SS
@@ -45,164 +44,124 @@ local user=c(username)
 if ("`status'" == "approved")	 local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\approved"
 else	 						 local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 
+//=======================================================
+// Working directory
+//=======================================================
 
+* working month
+local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
+*Working year
+local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
+* Either Annual meeting (AM) or Spring meeting (SM)
+if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
+if inrange(`cmonth', 5, 10) local meeting "AM"
+
+if inrange(`cmonth', 11, 12) {
+	local wkyr = `wkyr' + 1  // workign for the next year's meeting
+}
+
+return local wkyr = `wkyr'
+return local meeting = "`meeting'"
+
+if ("`load'" == "trans" | "`load'" == "transactions") {
+	local maindir "`maindir'/`wkyr'_`meeting'/vintage"
+}
+else local maindir "`maindir'/`wkyr'_`meeting'/estimates"
 
 //========================================================
-// Check version of pending data
+// Check version of data
 //========================================================
 
-qui {
-	* working month
-	local cmonth: disp %tdnn date("`c(current_date)'", "DMY")
-
-	*Working year
-	local wkyr:  disp %tdCCyy date("`c(current_date)'", "DMY")
-
-	* Either Annual meeting (AM) or Spring meeting (SM)
-
-	if inrange(`cmonth', 1, 4) | inrange(`cmonth', 11, 12)  local meeting "SM"
-	if inrange(`cmonth', 5, 10) local meeting "AM"
-
-	if inrange(`cmonth', 11, 12) {
-		local wkyr = `wkyr' + 1  // workign for the next year's meeting
+if ("`load'" == "trans" | "`load'" == "transactions") {
+	local fileroot "`wkyr'_`meeting'"
+	noi di as text "looking for transactions"
 	}
-
-	return local wkyr = `wkyr'
-	return local meeting = "`meeting'"
-
-
-	if ("`load'" == "trans" | "`load'" == "transactions") {
-		local maindir "`maindir'/`wkyr'_`meeting'/vintage"
-	}
-	else local maindir "`maindir'/`wkyr'_`meeting'/estimates"
-
-	//========================================================
-	// conditions
-	//========================================================
-
-	/* clean version */
-
-	if ("`version'" != ""){
-		if ("`version'" != "list"){
-			if regexm("`version'","/"){
-				if (strlen("`version'") == 8 | strlen("`version'") == 10){
-					local version = date("`version'", "MDY")
-				}
-				else{
-					noi di as err "Version should be list or a date in either stata, mm/dd/yy or mm/dd/yyyy format."
-				}
-			}
-		}
-	}
-
-	/*==================================================
-	1: Load data in memory
-	==================================================*/
-
-	/* reshpaed or regular
-
-	if ("`REshaped'" != "" ){
-	local fileroot "primus_estimates_reshaped"
-	}
-	else{
+else{
+	noi di as text "looking for estimates"
 	local fileroot "primus_estimates"
-	}
-	*/
+	if ("`status'" == "approved") local fileroot = "`fileroot'_approved"
+}
 
-	if ("`load'" == "trans" | "`load'" == "transactions") {
-		local fileroot "2020_SM"
-		noi di as text "looking for transactions"
-	}
-	else{
-		noi di as text "looking for estimates"
-		local fileroot "primus_estimates"
-		if ("`status'" == "approved") local fileroot = "`fileroot'_approved"
-	}
-
-	/* filename according to version */
-	local files: dir "`maindir'" files "*.dta", respectcase
-
-	if (wordcount(`"`files'"') == 0) {
-		noi disp in r "No estimates files found"
-		error
-	}
-	else{
-		if ("`version'" == ""){
-			local filename "`fileroot'"
-		}
-		else if ("`version'"=="list"){
-			if (wordcount(`"`files'"') == 1) {
-				local filename = regexr(`files',`".dta"',"")
-				noi disp in r "Loading Only available"
+if ("`version'" != "") {
+  local files: dir "`maindir'" files "`fileroot'_*"
+  local filerootl = lower("`fileroot'")
+  local vcnumbers: subinstr local files "`filerootl'_" "", all
+  local vcnumbers: subinstr local vcnumbers ".dta" "", all
+  local vcnumbers: list sort vcnumbers 
+  local vcnumbers: list sort vcnumbers
+  * return local vcnumbers = "`vcnumbers'"
+  noi disp in y "list of available vintage control dates for file " in g "`fileroot'_"
+  local alldates ""
+  local i = 0
+  foreach vc of local vcnumbers {
+    
+    local ++i
+    if (length("`i'") == 1 ) local i = "00`i'"
+    if (length("`i'") == 2 ) local i = "0`i'"
+    
+    local dispdate: disp %tcDDmonCCYY_HH:MM:SS `vc'
+    local dispdate = trim("`dispdate'")
+    
+    noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'
+    
+    local alldates "`alldates' `dispdate'"
+  }
+  
+ if (inlist("`version'" , "", "pick", "choose", "select")) {
+    noi disp _n "select vintage control date from the list above" _request(_vcnumber)
+    local version: disp %tcDDmonCCYY_HH:MM:SS `vcnumber' 
+ }
+ else {
+    cap confirm number `version'
+    if (_rc ==0) {
+		if (length("`version'")<18 & regexm("`version'", "-") | "`version'" == "0"){
+			loc i = subinstr("`version'", "-","",.)
+			loc i = `i'
+			loc versions : list sizeof local(vcnumbers)
+			mata: vermat = J(`versions',1,.)
+			loc j = 0
+			foreach vc of local vcnumbers {
+				loc ++j
+				mata: vermat[`j',1] = `vc' 
 			}
-			else {
-				noi disp as text "list of available estimates files:"
+			qui mata: sort(vermat,1)
+			loc i = `versions' - `i'
+			mata: st_numscalar("verScalar", vermat[`i',1])
+			loc version = verScalar
+		} 
+		local vcnumber = `version'
+		local version: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
+      
+    }
+    else {
+      if (!regexm("`version'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
+      */ | length("`version'")!= 18) {
+        
+        local datesample: disp %tcDDmonCCYY_HH:MM:SS /* 
+        */   clock("`c(current_date)' `c(current_time)'", "DMYhms")
+        noi disp as err "version() format must be %tcDDmonCCYY_HH:MM:SS, e.g " _c /* 
+        */ `"{cmd:`=trim("`datesample'")'}"' _n
+        error
+      }
+      local vcnumber: disp %13.0f clock("`version'", "DMYhms")
+    }
+  }  // end of checking version format
+  
+  use "`maindir'/`fileroot'_`vcnumber'.dta", clear
+  noi disp in y "File " in g "{stata br:`fileroot'_`vcnumber'.dta}" /* 
+  */ in y " has been loaded"
+  
+} // end of version != ""
 
-				local i = 0
-				foreach file of local files {
-					if regexm(`"`file'"', "`fileroot'\.dta"){
-						local ++i
-						local human = "Main file"
-						noi disp `"  `i' {c |} {stata `human'}"'
-					}
-					else if regexm(`"`file'"', "`fileroot'_(.+)\.dta"){
-						local ++i
-						local a = regexs(1)
-						local human: disp %tcDDmonCCYY_HH:MM:SS `a'
-						noi disp `"  `i' {c |} {stata `a': `human'}"'
-					}
-				}
-				noi disp _n "select file to load" _request(_a)
-				if ("`a'" == "Main file")	local filename = "`fileroot'"
-				else{
-					*local version : di %13.0f cofd(`human')
-					local filename = "`fileroot'_`a'"
-				}
-			}
-		}
-		else{
-			cap confirm "`maindir'/`fileroot'_`version'.dta"
-			if _rc {
-				local verstart : di %13.0f cofd(`version')
-				local verstart = substr("`verstart'",1,5)
-				di "`verstart'"
-				foreach file of local files {
-					if regexm(`"`file'"', "(.+)_(`verstart'.+)\.dta"){
-						local a = regexs(2)
-						local versions "`versions' `a'"
-					}
-				}
-				if (wordcount(`"`versions'"') == 0) {
-					noi disp in r "No estimates files found for that date"
-					exit
-				}
-				if (wordcount(`"`versions'"') == 1) {
-					local version = subinstr("`versions'"," ","",.)
-					noi di as text "Loading only available for that date"
-				}
-				else {
-					noi disp as text "list of available versions for that date:"
-					local i = 0
-					foreach version of local versions{
-						loc ++i
-						local human: disp %tcDDmonCCYY_HH:MM:SS `version'
-						local human = trim("`human'")
-					noi disp `"  `i' {c |} {stata `version': `human'}"'
-					}
-					noi disp _n "select file to load" _request(_version)
-				}
-				local filename "`fileroot'_`version'"
-			}
-			else{
-				local filename "`fileroot'_`version'"
-			}
-		}
-	}
+//========================================================
+//  current file 
+//========================================================
+else {
+  use "`maindir'/`fileroot'.dta", clear
+  noi disp in y "File " in g "{stata br:`fileroot'.dta}" /* 
+  */ in y " has been loaded"
+}
 
-	noi di as text "loading `filename'.dta ..."
-	use "`maindir'/`filename'.dta", clear
-	noi disp as text "`filename'.dta" as res " successfully loaded"
-} // end qui
 end
 exit
 /* End of do-file */
@@ -216,4 +175,5 @@ Notes:
 
 
 Version Control:
-03feb2020 20:56:07
+
+
