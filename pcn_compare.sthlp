@@ -59,6 +59,8 @@ Please keep in mind the following structure:{p_end}
 	If main is set only checks for changes in the main variables, otherwise if all is set checks for changes in any variable.{p_end}
 	{p2col:{opt pov:line(list)}}Poverty lines to be used on the povacalnet query. The 1.9 line is set to default.{p_end}
 	{p2col:{opt server(string)}}Server to be used. By default the AR server is employed. {p_end}
+	{p2col:{opt tol:erance(integer)}}Number of decimal places for tolerance in the comparison. 
+	Default is 3{p_end}
 {space 4}{hline}
 {p 4 4 2}
 
