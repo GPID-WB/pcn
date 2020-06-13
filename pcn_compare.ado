@@ -24,7 +24,7 @@ server(string)                                 ///
 DISvar(string)                                 ///
 check(string)                                  ///
 POVline(string)                                ///
-tolerance(integer 3)                           ///
+TOLerance(integer 3)                           /// decimal places
 ]
 
 version 14
@@ -47,7 +47,7 @@ qui {
 if ("`idvar'" == "") loc idvar "countrycode year povertyline coveragetype datatype"
 else 				 loc idvar = lower("`idvar'")
 
-if ("`mainv'" == "")  loc mainv "ppp mean headcount"
+if ("`mainv'" == "")  loc mainv "headcount"
 else                  loc mainvar = lower("`mainv'")
 
 if ("`server'" == "") loc server "AR"
@@ -56,7 +56,7 @@ else                  loc server = lower("`server'")
 if ("`check'" == "") loc check "all"
 else                 loc check = lower("`check'")
 
-if ("`disvar'" == "") loc disvar "all"
+if ("`disvar'" == "") loc disvar "main"
 else                 loc disvar = lower("`disvar'")
 
 if !inlist("`check'","main","all") {
@@ -94,7 +94,7 @@ if ("`check'" == "main"){
 }
 
 * apply tolerance
-local tl: _dup(`tolerance') 0
+local tl: disp _dup(`=`tolerance'-1') 0
 local tl = ".`tl'1"
 foreach mv of local mainv {
 	replace `mv' = round(`mv', `tl')

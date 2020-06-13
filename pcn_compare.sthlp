@@ -49,10 +49,12 @@ Please keep in mind the following structure:{p_end}
 	{p2col:{opt id:var(varlist)}} List of variables that identify each single observation. 
 	By default countrycode, year, povertyline, coveragetype and datatype are used. {p_end}
 	{p2col:{opt main:v(varlist)}} List of variables of special interest. The comparison dataset contains the difference of current minus testing for these variables.
-	By default ppp, mean and headcount are used.{p_end}
+	By default {it:headcount} is used.{p_end}
 	{p2col:{opt dis:var(diff|main|all)}} Variables to display in the comparability dataset. 
-	Three options are available: diff, main and all. If all is set all variables are shown, if diff is set only the differences are shown,
-	and if main is set only the main variables and their differences are shown. {p_end}
+	Three options are available: diff, main and all. If all is set all variables are shown, 
+	if diff is set only the differences are shown,
+	and if main is set only the main variables and their differences are shown.
+  Default is {it:main}{p_end}
 	{p2col:{opt check(main|all)}} Determines which variables are check for changes.
 	If main is set only checks for changes in the main variables, otherwise if all is set checks for changes in any variable.{p_end}
 	{p2col:{opt pov:line(list)}}Poverty lines to be used on the povacalnet query. The 1.9 line is set to default.{p_end}
