@@ -23,7 +23,8 @@ MAINv(string)                                  ///
 server(string)                                 ///
 DISvar(string)                                 ///
 check(string)                                  ///
-POVline(string)                                 ///
+POVline(string)                                ///
+tolerance(integer 3)                           ///
 ]
 
 version 14
@@ -92,6 +93,13 @@ if ("`check'" == "main"){
     keep `idvar' `mainv'
 }
 
+* apply tolerance
+local tl: _dup(`tolerance') 0
+local tl = ".`tl'1"
+foreach mv of local mainv {
+	replace `mv' = round(`mv', `tl')
+}
+
 tempfile serverd
 save `serverd'
 
@@ -100,6 +108,10 @@ povcalnet, povline(`povline') clear
 
 if ("`check'" == "main"){
     keep `idvar' `mainv'
+}
+
+foreach mv of local mainv {
+	replace `mv' = round(`mv', `tl')
 }
 
 tempfile PCN
