@@ -283,7 +283,7 @@ qui {
 	
 	//------------Load
 	if regexm("`subcmd'", "load[ ]+(price|framework|pf)") {
-		`nq' pcn_load_price,  `pause' `options'
+		`nq' pcn_load_price, `options'
 		return add
 		exit
 	}
