@@ -54,16 +54,16 @@ histogram d_headcount  ${ifht}, ///
 by(region, title("Frequency of difference in ${var}")) ///
 	bin(10) freq note("")
 
-
-tw  (scatter ${var} test_${var} ) ///
-    (function y=x, range(0 1))   ${ifht}
-
-tw  (scatter ${var} test_${var}, by(regioncode) ) ///
-    (function y=x, range(0 1))  ${ifht}
-
 sepscatter  ${var} test_${var}  ${ifht},  separate(regioncode) ///
     addplot(function y=x)  legend(pos(11) col(2) ring(0))  
 		
+
+* tw  (scatter ${var} test_${var} ) ///
+    * (function y=x, range(0 1))   ${ifht}
+
+* tw  (scatter ${var} test_${var}, by(regioncode) ) ///
+    * (function y=x, range(0 1))  ${ifht}
+
 
 
 
