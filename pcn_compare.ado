@@ -168,7 +168,7 @@ qui {
 			gen d_`var' = `var' - test_`var'
 			lab var d_`var' "difference in `var'"
 			loc dvars "`dvars' d_`var'"
-			loc mcall "`var' test_`var'"
+			loc mcall "`mcall' `var' test_`var'"
 		}
 	}
 	
