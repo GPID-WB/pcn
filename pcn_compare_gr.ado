@@ -17,69 +17,115 @@ Output:
 ==================================================*/
 program define pcn_compare_gr, rclass
 syntax  [anything(name=subcmd id="subcommand")], ///
-[]
+[                                              ///	
+VARiables(string)                                ///
+DIRSave(string)								   ///
+SDLevel(string)										///
+*FILESave(string)							   	   ///					
+]
 
 version 15
 
 
-/*==================================================
-              1: 
-==================================================*/
+//========================================================
+// Start
+//========================================================
 
+qui { 
 
-cap which sepscatter
-if (_rc) ssc install sepscatter
+	/*================================================
+	1: Check options definition and declare macros
+	==================================================*/
+	// Check for sepscatter packg
+	cap which sepscatter
+	if (_rc) noi ssc install sepscatter
+	
+	cap which confirmdir
+	if (_rc) noi ssc install confirmdir
+	
+	// check proper variables definition 
+	if ("`variables'"=="") loc variables = "headcount"
+	
+	foreach var of local variables{
+		confirm var `var'
+	}
+	
+	// Save directory
+	if ("`dirsave'" != "") {
+		confirmdir "`dirsave'"
+	}
+	else{
+	noi dis as err "Warning: no saving directory specified" char(10) as text "plots will be only kept on memory"
+	loc filesave = "no"
+	}
+	
+	// htsd 
+	
+	if ("`sdlevel'" == "") loc sdlevel = 2
+	
+	cap loc sdlevel = real("`sdlevel'")
+	if (_rc){
+		noi di as err "The SD level must be a real number" char(10)
+		noi di "SD level set to default"
+	}
+	
+	// file save
+	*loc filesave = lower("`filesave'")
+	*if ("`filesave'" == "") loc filesave = "no"
+	
 
-global var = "headcount"
+	/*================================================
+	2: Organize data 
+	==================================================*/
+	
+	foreach var of local variables{
+	
+		foreach v in mn_d_`var' sd_d_`var'{
+			cap drop `v'
+		}
 
-bysort regioncode: egen mn_d_${var} = mean(d_${var})
-bysort regioncode: egen sd_d_${var} = sd(d_${var})
+		bysort regioncode: egen mn_d_`var' = mean(d_`var')
+		bysort regioncode: egen sd_d_`var' = sd(d_`var')
 
-foreach x in 1 2 3 {
-	// higher than variables
-	gen ht_`x'sd = abs(d_${var}) > (mn_d_${var} +   `x'*sd_d_${var})
-	tab ht_`x'sd
-}
+		forv x = 1/`sdlevel' {
+			// higher than variables
+			cap drop ht_`x'sd_`var'
+			gen ht_`x'sd_`var' = abs(d_`var') > (mn_d_`var' +   `x'*sd_d_`var')
+			tab ht_`x'sd_`var'
+		}
 
-foreach x in 1 2 3 {
-	// higher than variables
-	tab regioncode ht_`x'sd 
-}
-
-global ifht "if ht_2sd  == 1"
-
-histogram d_${var}  ${ifht}
-
-histogram d_headcount  ${ifht}, ///
-by(region, title("Frequency of difference in ${var}")) ///
-	bin(10) freq note("")
-
-sepscatter  ${var} test_${var}  ${ifht},  separate(regioncode) ///
-    addplot(function y=x)  legend(pos(11) col(2) ring(0))  
+		forv x = 1/`sdlevel' {
+			// higher than variables
+			tab regioncode ht_`x'sd_`var'
+		}
 		
+		/*================================================
+		2: Plotting
+		==================================================*/
+		
+		local ifht "if ht_`sdlevel'sd_`var'  == 1"
+		
+		histogram d_`var' `ifht', name(hist_d_`var', replace)
+		noi di as result "hist_d_`var' saved on memory"
 
-* tw  (scatter ${var} test_${var} ) ///
-    * (function y=x, range(0 1))   ${ifht}
+		histogram d_`var'  `ifht', ///
+		by(region, title("Frequency of difference in `var'")) ///
+			bin(10) freq note("") name(histR_d_`var', replace)
+		noi di as result "histR_d_`var' saved on memory"
 
-* tw  (scatter ${var} test_${var}, by(regioncode) ) ///
-    * (function y=x, range(0 1))  ${ifht}
-
-
-
-
-/*==================================================
-              2: 
-==================================================*/
-
-
-/*==================================================
-              3: 
-==================================================*/
-
-
-
-
-
+		sepscatter  `var' test_`var'  `ifht',  separate(regioncode) ///
+			addplot(function y=x)  legend(pos(11) col(2) ring(0))  ///
+			 name(sc_`var', replace)
+		noi di as result "sc_`var' saved on memory"
+	
+		if ("`dirsave'"!=""){
+			graph export "`dirsave'/hist_d_`var'.png", name(hist_d_`var') as(png) replace
+			graph export "`dirsave'/histR_d_`var'.png", name(histR_d_`var') as(png) replace
+			graph export "`dirsave'/sc_`var'.png", name(sc_`var') as(png) replace
+		}
+	}
+	
+} // end qui
 end
 exit
 /* End of do-file */
