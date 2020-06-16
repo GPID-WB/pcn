@@ -92,8 +92,9 @@ qui {
 		forv x = 1/`sdlevel' {
 			// higher than variables
 			cap drop ht_`x'sd_`var'
-			gen ht_`x'sd_`var' = abs(d_`var') > (mn_d_`var' +   `x'*sd_d_`var')
+			gen ht_`x'sd_`var' = abs(d_`var') > (mn_d_`var' +   `x'*sd_d_`var') if d_`var' != .
 			tab ht_`x'sd_`var'
+			lab var  ht_`x'sd_`var' "Higher than `x' SD" 
 		}
 
 		forv x = 1/`sdlevel' {
