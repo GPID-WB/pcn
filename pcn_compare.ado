@@ -53,7 +53,7 @@ qui {
 	if ("`server'" == "") loc server "AR"
 	else                  loc server = lower("`server'")
 	
-	if ("`check'" == "") loc check "all"
+	if ("`check'" == "") loc check "main"
 	else                 loc check = lower("`check'")
 	
 	if ("`disvar'" == "") loc disvar "main"
@@ -62,7 +62,7 @@ qui {
 	if !inlist("`check'","main","all") {
     noi di as err "Check varibables must be set to: main or all"
 		noi di as text "Check option forced to default"
-		loc check "all"
+		loc check "main"
 	}
 	
 	if !inlist("`disvar'","diff","main","all") {
@@ -130,7 +130,7 @@ qui {
 	3: Trace back changes                             
 	==================================================*/
 	
-	keep if inlist(status,4,5)
+	keep if inlist(status,3,4,5)
 	
 	merge 1:1 `idvar' using `serverd', keep(match) nogen
 	
@@ -201,7 +201,7 @@ qui {
 	noi tab status
 	noi di as result "Comparison data load into memory"
 	
-}
+} // end qui
 
 end
 exit
