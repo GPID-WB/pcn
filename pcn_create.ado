@@ -233,47 +233,25 @@ qui  {
 			restore
 			
 			
-			// Loading PPPs, population data and CPI data
+			// Loading population data
 			preserve
-			
-			// PPPs
-			pcn master, load(ppp) qui
-			keep if countrycode == "`country'" & lower(coveragetype) != "national"
-			gen urban = lower(coveragetype) == "urban"
-			keep urban ppp2011
-			tempfile ppp
-			save    `ppp'
-			
-			// Population
 			pcn master, load(population) qui
 			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
 			gen urban = lower(coveragetype) == "urban"
 			keep urban population
 			tempfile pop
 			save    `pop'
-			
-			// CPI
-			pcn master, load(cpi) qui
-			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-			gen urban = lower(coveragetype) == "urban"
-			keep urban cpi
-			tempfile cpi
-			save    `cpi'
-			
 			restore
 			
 			// Merge with raw data
-			merge m:1 urban using `ppp', nogen
 			merge m:1 urban using `pop', nogen
-			merge m:1 urban using `cpi', nogen
-			
+
 			// Rescaling weights
 			forvalues x = 0/1 {
 				sum weight if urban==`x'
 				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
 			}
 			
-			label var welfare "Welfare in 2011 USD PPP per day"
 			local urban "urban"
 			char _dta[cov]  "A"
 			tempfile wfile
