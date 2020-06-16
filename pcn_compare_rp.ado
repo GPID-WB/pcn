@@ -32,6 +32,7 @@ version 16
 // Start
 //========================================================
 
+qui{
 	/*================================================
 	1: Check options definition and declare macros
 	==================================================*/
@@ -103,8 +104,12 @@ version 16
 	putdocx table mytable = data(status occurrences), varnames width(50%)
 	restore
 	
+	putdocx sectionbreak 
 	
 	// by variable
+	
+	levelsof regioncode, local(regions)
+	
 	putdocx paragraph
 	putdocx text ("Analysing by variable we have the following"), linebreak(1)
 	
@@ -116,19 +121,23 @@ version 16
 		putdocx text ("Regarding the `var':"), linebreak(2)
 		putdocx text ("The differences across servers have the following stats:"), linebreak(1)
 		
-		loc vars "d_`var' ht_`sdlevel'sd_`var'"
+		loc vars "d_`var'"
+		forv x = 1/`sdlevel' {		
+			loc vars "`vars' ht_`x'sd_`var'"
+
+		}
 		local nvars: word count `vars'
 		local nrows=`nvars'+2 
 		
-		putdocx table table2 = (`nrows',7), border(all, nil) width(100%) layout(autofitcontents) note(Note: The table notes can be found here.)
+		putdocx table table2 = (`nrows',7), border(all, nil) width(100%) layout(autofitcontents) note(Note: The differences are computed as current - testing values.)
 		putdocx table table2(1,1)=("Summary Statistics"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
-		putdocx table table2(2,1) = ("Variable")
-		putdocx table table2(2,2) = ("Variable Definition")
-		putdocx table table2(2,3) = ("Obs.")
-		putdocx table table2(2,4) = ("Mean")
-		putdocx table table2(2,5) = ("Std. Dev.")
-		putdocx table table2(2,6) = ("Min.")
-		putdocx table table2(2,7) = ("Max.")
+		putdocx table table2(2,1) = ("Variable"), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,2) = ("Variable Definition"), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,3) = ("Obs."), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,4) = ("Mean"), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,5) = ("Std. Dev."), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,6) = ("Min."), bold font("Calibri", 11) halign(center)
+		putdocx table table2(2,7) = ("Max."), bold font("Calibri", 11) halign(center)
 		
 		local i=3
 		foreach vh of local vars {
@@ -143,18 +152,79 @@ version 16
 			putdocx table table2(`i',7) = (r(max))
 			local i=`i'+1
 		}
+		
+		putdocx paragraph
+		putdocx text ("The differences beyond the `sdlevel' SD from the mean are distributed as follows:"), linebreak(1)
+		
+		putdocx image hist_d_`var'.png
+		
+		putdocx paragraph
+		putdocx text ("Differencing by region:"), linebreak(1)
+		
+		putdocx image histR_d_`var'.png
+		
+		// freq table by region
+		
+		putdocx paragraph
+		putdocx text ("By region and level of SD from the mean we have:"), linebreak(1)
+		
+		loc vars ""
+		forv x = 1/`sdlevel' {		
+			loc vars "`vars' ht_`x'sd_`var'"
+
+		}
+		local nreg: word count `regions'
+		local nrows=`nreg'+2
+		
+		loc j = 3
+		foreach vh of local vars {
+			local lab: variable label `vh'
+		
+			putdocx table table`j' = (`nrows',4), border(all, nil) width(100%) layout(autofitcontents) note("Note: The variable is a dummy, with value of one if the absolute difference is higher than the mean plus the selected number of standard deviations.")
+			putdocx table table`j'(1,1)=("`lab' by region"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
+			putdocx table table`j'(2,1) = ("Region"), bold font("Calibri", 11) halign(center)
+			putdocx table table`j'(2,2) = ("1"),  bold font("Calibri", 11) halign(center)
+			putdocx table table`j'(2,3) = ("0"),  bold font("Calibri", 11) halign(center)
+			putdocx table table`j'(2,4) = ("Total"),  bold font("Calibri", 11) halign(center)
+
+			local i=3
+			foreach rg of local regions {
+				qui count if regioncode == "`rg'" & `vh' == 1
+				loc uno = r(N)
+				qui count if regioncode == "`rg'" & `vh' == 0
+				loc zero = r(N)
+				qui count if regioncode == "`rg'"
+				loc tot = r(N)
+				
+				putdocx table table`j'(`i',1) = ("`rg'")
+				putdocx table table`j'(`i',2) = ("`uno'")
+				putdocx table table`j'(`i',3) = ("`zero'")
+				putdocx table table`j'(`i',4) = ("`tot'")
+				local i=`i'+1
+			}
+			loc j = `j' + 1
+		}
+		
+		// Difference scatter
+		
+		putdocx paragraph
+		putdocx text ("Scatter plot of differences:"), linebreak(1)
+		
+		putdocx image sc_`var'.png
+		
 		putdocx paragraph
 		putdocx text ("The following countries have differences in headcount beyond the tolerance level of `tolerance' digits:"), linebreak(1)
 		
 		
+		putdocx sectionbreak 	
 	}
 	
 	
-	
-	
-	
 	putdocx save "`dirsave'/pcn_report.docx", replace
-	
+	noi di as result "Graphs and report (pcn_report.docx) saved at `dirsave'."
+
+}
+
 end
 exit
 /* End of do-file */
@@ -169,6 +239,6 @@ Notes:
 
 Version Control:
 
-cd "C:\Users\wb562350\OneDrive - WBG\Desktop"
-pcn_compare_rp, dirs(wd)
+cd "~\OneDrive - WBG\Desktop"
+pcn_compare_rp, dirs(wd) var(headcount ppp)
 
