@@ -70,7 +70,7 @@ version 16
 	2: Get comparison data and graphs
 	==================================================*/
 
-	pcn compare, mainv(`variables') server(`server') check("main")
+	pcn_compare, mainv(`variables') server(`server') check("main")
 	pcn_compare_gr, variables(`variables') dirsave(`dirsave') ///
 	   sdlevel(`sdlevel') tolerance(`tolerance')
 
@@ -95,29 +95,59 @@ version 16
 	putdocx text ("Overview of changes")
 	
 	putdocx paragraph
-	putdocx text ("The `_N' year-country points, have the following status:"), linebreak(1)
+	putdocx text ("The year-country points, have the following status:"), linebreak(1)
 	
 	preserve
 	contract status	
-	rename _freq occurences
-	putdocx table mytable = data(status _freq), varnames width(50%)
+	rename _freq occurrences
+	putdocx table mytable = data(status occurrences), varnames width(50%)
 	restore
 	
 	
 	// by variable
-	putdocx text ("Analysing by varible we have the following"), linebreak(1)
-	
-	foreach v of local variables{
-	putdocx paragraph, style(Heading1)
-	putdocx text ("Changes on `var'")
-	
 	putdocx paragraph
-	putdocx text ("The `_N' year-country points, have the following status:"), linebreak(1)
+	putdocx text ("Analysing by variable we have the following"), linebreak(1)
 	
+	foreach var of local variables{
+		putdocx paragraph, style(Heading1)
+		putdocx text ("Changes on `var'")
+		
+		putdocx paragraph
+		putdocx text ("Regarding the `var':"), linebreak(2)
+		putdocx text ("The differences across servers have the following stats:"), linebreak(1)
+		
+		loc vars "d_`var' ht_`sdlevel'sd_`var'"
+		local nvars: word count `vars'
+		local nrows=`nvars'+2 
+		
+		putdocx table table2 = (`nrows',7), border(all, nil) width(100%) layout(autofitcontents) note(Note: The table notes can be found here.)
+		putdocx table table2(1,1)=("Summary Statistics"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
+		putdocx table table2(2,1) = ("Variable")
+		putdocx table table2(2,2) = ("Variable Definition")
+		putdocx table table2(2,3) = ("Obs.")
+		putdocx table table2(2,4) = ("Mean")
+		putdocx table table2(2,5) = ("Std. Dev.")
+		putdocx table table2(2,6) = ("Min.")
+		putdocx table table2(2,7) = ("Max.")
+		
+		local i=3
+		foreach vh of local vars {
+			local lab: variable label `vh'
+			quietly summarize `vh'
+			putdocx table table2(`i',1) = ("`vh'")
+			putdocx table table2(`i',2) = ("`lab'")
+			putdocx table table2(`i',3) = (r(N))
+			putdocx table table2(`i',4) = (r(mean)), nformat(%5.2f)
+			putdocx table table2(`i',5) = (r(sd)), nformat(%5.2f)
+			putdocx table table2(`i',6) = (r(min))
+			putdocx table table2(`i',7) = (r(max))
+			local i=`i'+1
+		}
+		putdocx paragraph
+		putdocx text ("The following countries have differences in headcount beyond the tolerance level of `tolerance' digits:"), linebreak(1)
+		
+		
 	}
-	
-	
-	
 	
 	
 	
