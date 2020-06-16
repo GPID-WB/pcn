@@ -45,6 +45,8 @@ qui {
 	
 	// check proper variables definition 
 	if ("`variables'"=="") loc variables = "headcount"
+	else                  loc variables = lower("`variables'")
+
 	
 	foreach var of local variables{
 		confirm var `var'
