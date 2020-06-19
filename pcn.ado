@@ -320,6 +320,18 @@ qui {
 		exit
 	}
 	
+	if regexm("`subcmd'", "compare[ ]+graph") {
+		`nq' pcn_compare_gr, `pause'  `options'
+		return add
+		exit
+	}
+	
+	if regexm("`subcmd'", "compare[ ]+report") {
+		`nq' pcn_compare_rp, `pause'  `options'
+		return add
+		exit
+	}
+	
 	// ----------------------------------------------------------------------------------
 	//  create text file (collapsed)
 	// ----------------------------------------------------------------------------------
