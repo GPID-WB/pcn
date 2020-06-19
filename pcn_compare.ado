@@ -25,6 +25,8 @@ DISvar(string)                                 ///
 check(string)                                  ///
 POVline(string)                                ///
 TOLerance(integer 3)                           /// decimal places
+listc(string)								 ///
+SDLevel(string)								 ///
 ]
 
 version 14
@@ -58,6 +60,8 @@ qui {
 	
 	if ("`disvar'" == "") loc disvar "main"
 	else                 loc disvar = lower("`disvar'")
+	
+	if ("`sdlevel'" == "") loc sdlevel = 2 				
 	
 	if !inlist("`check'","main","all") {
     noi di as err "Check varibables must be set to: main or all"
@@ -192,6 +196,7 @@ qui {
 		}
 	}
 	
+
 	/*================================================
 	4: Report results and return values
 	==================================================*/
@@ -199,7 +204,49 @@ qui {
 	// report back to user
 	noi di as text "The status of observations is as follows:"
 	noi tab status
-	noi di as result "Comparison data load into memory"
+	
+	// list of problematic obs
+	
+	if ("`listc'"=="yes"){
+		
+		tempvar obsid
+		egen `obsid' = concat(countrycode year), p(-)
+		lab var `obsid' "Country-year"
+		
+		foreach var of local mainv{
+			foreach v in mn_d_`var' sd_d_`var'{
+				cap drop `v'
+			}
+
+			bysort regioncode: egen mn_d_`var' = mean(d_`var')
+			bysort regioncode: egen sd_d_`var' = sd(d_`var')
+						
+			forv x = 1/`sdlevel' {
+			// higher than variables
+				cap drop ht_`x'sd_`var'
+				gen ht_`x'sd_`var' = abs(d_`var') > (mn_d_`var' +   `x'*sd_d_`var') if d_`var' != .
+				tab ht_`x'sd_`var'
+				lab var  ht_`x'sd_`var' "Higher than `x' SD from mean" 
+			}
+		}
+		
+		levelsof regioncode, local(regions)
+		
+		forv x = 1/`sdlevel' {		
+				loc vars "`vars' ht_`x'sd_`var'"
+			}
+			
+		foreach vh of local vars{
+			foreach rg of local regions {
+					noi di "List of problems `rg'"
+					noi tab `obsid' if regioncode == "`rg'" & `vh' == 1
+			}
+		}
+		
+		
+		noi di as result "Comparison data load into memory"
+	}
+	
 	
 } // end qui
 
