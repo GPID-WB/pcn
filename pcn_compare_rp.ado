@@ -23,6 +23,10 @@ VARiables(string)                               ///
 DIRSave(string)								  ///
 SDLevel(string)								  ///
 TOLerance(integer 3)                           /// decimal places
+COUNtry(string)								 ///
+REGion(string)								 ///
+year(string)									 ///
+level(string)								///
 ]
 
 version 15
@@ -66,14 +70,36 @@ qui{
 	noi dis as err "No saving directory specified. STOP" char(10) as text "Either provide a directory or set dirsave(wd) to use working directory."
 	err
 	}
-	
+	if ("`level'"!=""){
+		loc level = lower("`level'")
+		if !inlist("`level'","country","region"){
+			noi dis as err "Level must be either country or region" char(10)
+			noi di "level set to default region"
+			loc level = "region"
+		}
+		
+		if ("`level'"=="region"){
+			loc levcall "regioncode"
+		}
+		else{
+			loc level "country"
+			loc levcall "countrycode"
+		}
+		
+	}
+	else{
+		loc level "region"
+		loc levcall "regioncode"
+	}
+
 	/*================================================
 	2: Get comparison data and graphs
 	==================================================*/
 
-	pcn_compare, mainv(`variables') server(`server') check("main")
+	pcn_compare, mainv(`variables') server(`server') check("main") ///
+			    country(`country') region(`region') year(`year')
 	pcn_compare_gr, variables(`variables') dirsave(`dirsave') ///
-	   sdlevel(`sdlevel') tolerance(`tolerance')
+	   sdlevel(`sdlevel') level(`level')
 
 	/*================================================
 	3: Report 
@@ -90,6 +116,16 @@ qui{
 	putdocx text ("- server: `server'"), linebreak(1)
 	putdocx text ("- SD level: `sdlevel'"), linebreak(1)
 	putdocx text ("- Decimal points tolerance: `tolerance'"), linebreak(1)
+	if ("`year'"!=""){
+		putdocx text ("- Years: `year'"), linebreak(1)
+	}
+	putdocx text ("- level: `level'"), linebreak(1)
+	if ("`region'"!=""){
+		putdocx text ("- region: `region'"), linebreak(1)
+	}
+	if ("`country'"!=""){
+		putdocx text ("- country: `country'"), linebreak(1)
+	}
 	
 	// Overview
 	putdocx paragraph, style(Heading1)
@@ -108,7 +144,7 @@ qui{
 	
 	// by variable
 	
-	levelsof regioncode, local(regions)
+	levelsof `levcall', local(levs)
 	
 	putdocx paragraph
 	putdocx text ("Analysing by variable we have the following"), linebreak(1)
@@ -159,21 +195,21 @@ qui{
 		putdocx image hist_d_`var'.png
 		
 		putdocx paragraph
-		putdocx text ("Differencing by region:"), linebreak(1)
+		putdocx text ("Differencing by `level':"), linebreak(1)
 		
 		putdocx image histR_d_`var'.png
 		
-		// freq table by region
+		// freq table by level
 		
 		putdocx paragraph
-		putdocx text ("By region and level of SD from the mean we have:"), linebreak(1)
+		putdocx text ("By `level' and level of SD from the mean we have:"), linebreak(1)
 		
 		loc vars ""
 		forv x = 1/`sdlevel' {		
 			loc vars "`vars' ht_`x'sd_`var'"
 
 		}
-		local nreg: word count `regions'
+		local nreg: word count `levs'
 		local nrows=`nreg'+2
 		
 		loc j = 3
@@ -181,19 +217,19 @@ qui{
 			local lab: variable label `vh'
 		
 			putdocx table table`j' = (`nrows',4), border(all, nil) width(100%) layout(autofitcontents) note("Note: The variable is a dummy, with value of one if the absolute difference is higher than the mean plus the selected number of standard deviations.")
-			putdocx table table`j'(1,1)=("`lab' by region"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
-			putdocx table table`j'(2,1) = ("Region"), bold font("Calibri", 11) halign(center)
+			putdocx table table`j'(1,1)=("`lab' by `level'"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
+			putdocx table table`j'(2,1) = ("`level'"), bold font("Calibri", 11) halign(center)
 			putdocx table table`j'(2,2) = ("1"),  bold font("Calibri", 11) halign(center)
 			putdocx table table`j'(2,3) = ("0"),  bold font("Calibri", 11) halign(center)
 			putdocx table table`j'(2,4) = ("Total"),  bold font("Calibri", 11) halign(center)
 
 			local i=3
-			foreach rg of local regions {
-				qui count if regioncode == "`rg'" & `vh' == 1
+			foreach rg of local levs {
+				qui count if `levcall' == "`rg'" & `vh' == 1
 				loc uno = r(N)
-				qui count if regioncode == "`rg'" & `vh' == 0
+				qui count if `levcall' == "`rg'" & `vh' == 0
 				loc zero = r(N)
-				qui count if regioncode == "`rg'"
+				qui count if `levcall' == "`rg'"
 				loc tot = r(N)
 				
 				putdocx table table`j'(`i',1) = ("`rg'")
@@ -215,7 +251,7 @@ qui{
 		putdocx paragraph
 		putdocx text ("The following countries have differences in headcount beyond the tolerance level of `SDLevel' deviation of the mean:"), linebreak(1)
 		
-		// problematic observations by region table by region		
+		// problematic observations by level table by level		
 		
 		tempvar obsid
 		*countrycode year povertyline coveragetype datatype
@@ -225,18 +261,18 @@ qui{
 		forv x = 1/`sdlevel' {		
 			loc vars "`vars' ht_`x'sd_`var'"
 		}
-		local nreg: word count `regions'
+		local nreg: word count `levs'
 		local nrows=`nreg'+2
 		
 		foreach vh of local vars {
 			local lab: variable label `vh'
 			putdocx table table`j' = (`nrows',2), border(all, nil) width(100%) layout(autofitcontents) note("Note: The variable is a dummy, with value of one if the absolute difference is higher than the mean plus the selected number of standard deviations.")
-			putdocx table table`j'(1,1)=("countries `lab' by region'"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
+			putdocx table table`j'(1,1)=("countries `lab' by `level''"), bold font("Calibri", 12) halign(center) colspan(7) linebreak
 			putdocx table table`j'(2,1) = ("observation"), bold font("Calibri", 11) halign(center)
 
 			local i=3
-			foreach rg of local regions {
-				qui levelsof `obsid' if regioncode == "`rg'" & `vh' == 1, clean s(", ") local(obsi)
+			foreach rg of local levs {
+				qui levelsof `obsid' if `levcall' == "`rg'" & `vh' == 1, clean s(", ") local(obsi)
 				putdocx table table`j'(`i',1) = ("`rg'")
 				putdocx table table`j'(`i',2) = ("`obsi'")
 				local i=`i'+1

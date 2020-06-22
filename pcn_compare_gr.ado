@@ -20,8 +20,8 @@ syntax  [anything(name=subcmd id="subcommand")], ///
 [                                              ///	
 VARiables(string)                                ///
 DIRSave(string)								   ///
-SDLevel(string)										///
-*FILESave(string)							   	   ///					
+SDLevel(string)								///
+level(string)								///
 ]
 
 version 15
@@ -69,12 +69,33 @@ qui {
 	if (_rc){
 		noi di as err "The SD level must be a real number" char(10)
 		noi di "SD level set to default"
+		loc sdlevel = 2
 	}
 	
 	// file save
 	*loc filesave = lower("`filesave'")
 	*if ("`filesave'" == "") loc filesave = "no"
 	
+	// level 
+	if ("`level'"!=""){
+		loc level = lower("`level'")
+		if !inlist("`level'","country","region"){
+			noi dis as err "Level must be either country or region" char(10)
+			noi di "level set to default region"
+			loc level = "region"
+		}
+		
+		if ("`level'"=="region"){
+			loc levcall "regioncode"
+		}
+		else{
+			loc levcall "countrycode"
+		}
+		
+	}
+	else{
+		loc levcall "regioncode"
+	}
 
 	/*================================================
 	2: Organize data 
@@ -86,8 +107,8 @@ qui {
 			cap drop `v'
 		}
 
-		bysort regioncode: egen mn_d_`var' = mean(d_`var')
-		bysort regioncode: egen sd_d_`var' = sd(d_`var')
+		bysort `levcall': egen mn_d_`var' = mean(d_`var')
+		bysort `levcall': egen sd_d_`var' = sd(d_`var')
 
 		forv x = 1/`sdlevel' {
 			// higher than variables
@@ -99,7 +120,7 @@ qui {
 
 		forv x = 1/`sdlevel' {
 			// higher than variables
-			tab regioncode ht_`x'sd_`var'
+			tab `levcall' ht_`x'sd_`var'
 		}
 		
 		/*================================================
@@ -112,11 +133,11 @@ qui {
 		noi di as result "hist_d_`var' saved on memory"
 
 		histogram d_`var'  `ifht', ///
-		by(region, title("Frequency of difference in `var'")) ///
+		by(`levcall', title("Frequency of difference in `var'")) ///
 			bin(10) freq note("") name(histR_d_`var', replace)
 		noi di as result "histR_d_`var' saved on memory"
 
-		sepscatter  `var' test_`var'  `ifht',  separate(regioncode) ///
+		sepscatter  `var' test_`var'  `ifht',  separate(`levcall') ///
 			addplot(function y=x)  legend(pos(11) col(2) ring(0))  ///
 			 name(sc_`var', replace)
 		noi di as result "sc_`var' saved on memory"

@@ -27,6 +27,9 @@ POVline(string)                                ///
 TOLerance(integer 3)                           /// decimal places
 listc(string)								 ///
 SDLevel(string)								 ///
+COUNtry(string)								 ///
+REGion(string)								 ///
+year(string)									 ///
 ]
 
 version 14
@@ -80,7 +83,9 @@ qui {
 	==================================================*/
 	
 	// get testing data
-	povcalnet, server(`server') povline(`povline') clear
+	povcalnet, server(`server') povline(`povline') ///
+				country(`country') region(`region') ///
+				year(`year') clear
 	
 	cap isid `idvar'
 	if _rc {
@@ -108,7 +113,9 @@ qui {
 	save `serverd'
 	
 	// Get current data
-	povcalnet, povline(`povline') clear 
+	povcalnet, povline(`povline') ///
+				country(`country') region(`region') ///
+				year(`year') clear 
 	
 	if ("`check'" == "main"){
     keep `idvar' `mainv'
@@ -207,7 +214,7 @@ qui {
 	
 	// list of problematic obs
 	
-	if ("`listc'"=="yes"){
+	if (lower("`listc'")=="yes"){
 		
 		tempvar obsid
 		egen `obsid' = concat(countrycode year), p(-)
@@ -237,8 +244,10 @@ qui {
 			}
 			
 		foreach vh of local vars{
+			local lab: variable label `vh'
 			foreach rg of local regions {
 					noi di "List of problems `rg'"
+					noi di "`lab'"
 					noi tab `obsid' if regioncode == "`rg'" & `vh' == 1
 			}
 		}
