@@ -140,6 +140,10 @@ All the files are available in the {browse "https://github.com/worldbank/pcn":Gi
 {p 6 6 4}Email {browse "acastanedaa@worldbank.org":acastanedaa@worldbank.org}{p_end}
 {p 6 6 4}GitHub: {browse "https://github.com/randrescastaneda":randrescastaneda }{p_end}
 
+{p 4 4 4}David L. Vargas Mogollon, The World Bank{p_end}
+{p 6 6 4}Email: {browse "dvargasm@worldbank.org":dvargasm@worldbank.org}{p_end}
+{p 6 6 4}GitHub: {browse "https://github.com/davidlvargas":davidlvargas }{p_end}
+
 {title:Maintainer}
 {p 4 4 4}David L. Vargas Mogollon, The World Bank{p_end}
 {p 6 6 4}Email: {browse "dvargasm@worldbank.org":dvargasm@worldbank.org}{p_end}

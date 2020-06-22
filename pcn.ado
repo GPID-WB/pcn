@@ -283,7 +283,7 @@ qui {
 	
 	//------------Load
 	if regexm("`subcmd'", "load[ ]+(price|framework|pf)") {
-		`nq' pcn_load_price,  `pause' `options'
+		`nq' pcn_load_price, `options'
 		return add
 		exit
 	}
@@ -315,7 +315,23 @@ qui {
 	
 	if inlist(lower("`subcmd'"), "compare") {
 		
-		`nq' pcn_compare, `pause'  `options'
+		`nq' pcn_compare,  country(`countries') year(`years') ///
+		region(`regions') ///
+		`pause'  `options'
+		return add
+		exit
+	}
+	
+	if regexm("`subcmd'", "compare[ ]+graph") {
+		`nq' pcn_compare_gr,	`pause'  `options'
+		return add
+		exit
+	}
+	
+	if regexm("`subcmd'", "compare[ ]+report") {
+		`nq' pcn_compare_rp,  country(`countries') year(`years') ///
+		region(`regions') ///
+		`pause'  `options'
 		return add
 		exit
 	}
