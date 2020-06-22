@@ -245,12 +245,6 @@ qui  {
 			
 			// Merge with raw data
 			merge m:1 urban using `pop', nogen
-
-			// Rescaling weights
-			forvalues x = 0/1 {
-				sum weight if urban==`x'
-				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
-			}
 			
 			local urban "urban"
 			char _dta[cov]  "A"
