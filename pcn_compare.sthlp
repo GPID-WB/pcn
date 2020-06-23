@@ -80,8 +80,12 @@ However, {pcn compare report} can and must be run as a standalone. {p_end}
 	Default is 3{p_end}
 	{p2col:{opt sd:level(integer)}}Number of standard deviations from the mean to be considered as large.Default is 2{p_end}
 	{p2col:{opt countries(3-letter country-code)}}Analyse a particualar country. Default all.{p_end}
-	{p2col:{opt years(yes|no)}}Set of year for analysis. Default all.{p_end}
+	{p2col:{opt years(list)}}Set of year for analysis. Default all.{p_end}
 	{p2col:{opt region(3-letter region-code)}}Analyse a particualar region. Default all.{p_end}
+	{p2col:{opt fill:gaps}}Uses all countries employed to create regional aggregates{p_end}
+	{p2col:{opt agg:regate}}as directed on povcalnet{p_end}
+	{p2col:{opt wb}}Uses regional and global aggregates.{p_end}
+	{p2col:{opt listc(yes|no)}}Prints in console a list of the problematic obsevations. Do not combine with {opt aggregate}{p_end}
 	
 	{cmd:pcn compare graph}
 	{hline 22}
@@ -98,10 +102,12 @@ However, {pcn compare report} can and must be run as a standalone. {p_end}
 	{p2col:{opt tol:erance(integer)}}Number of decimal places for tolerance in the comparison. 
 	Default is 3{p_end}
 	{p2col:{opt countries(3-letter code)}}Analyse a particular country. Default all.{p_end}
-	{p2col:{opt years(yes|no)}}Set of year for analysis. Default all.{p_end}
+	{p2col:{opt years(list)}}Set of year for analysis. Default all.{p_end}
 	{p2col:{opt region(3-letter code)}}Analyse a particular country. Default all.{p_end}
-
 	{p2col:{opt level(country|region)}}Level to group. Default region{p_end}
+	{p2col:{opt fill:gaps}}Uses all countries employed to create regional aggregates{p_end}
+	{p2col:{opt wb}}Uses regional and global aggregates.{p_end}
+
 
 {space 4}{hline}
 {p 4 4 2}
@@ -174,6 +180,23 @@ Listing large differeces in the console{p_end}
 {phang2}
 {stata pcn compare, regions(EAP) listc(yes)}
 
+{p 4 4 2}
+Using the regional and global estimates{p_end}
+
+{phang2}
+{stata pcn compare, wb}
+
+{p 4 4 2}
+Using the povacalnet aggregates{p_end}
+
+{phang2}
+{stata pcn compare, agg}
+
+{p 4 4 2}
+Using the lineup data used on regional aggregates{p_end}
+
+{phang2}
+{stata pcn compare, fill}
 
 {cmd:pcn compare graph}
 {hline 22}
