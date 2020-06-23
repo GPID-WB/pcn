@@ -220,9 +220,12 @@ qui {
 	// list of problematic obs
 	
 	if (lower("`listc'")=="yes"){
-		
+	
+		if ("`wb'"!="")		loc idc = "regioncode"
+		else 				loc idc = "countrycode"
+				
 		tempvar obsid
-		egen `obsid' = concat(countrycode year), p(-)
+		egen `obsid' = concat(`idc' year), p(-)
 		lab var `obsid' "Country-year"
 		
 		foreach var of local mainv{
