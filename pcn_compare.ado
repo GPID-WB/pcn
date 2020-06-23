@@ -30,6 +30,9 @@ SDLevel(string)								 ///
 COUNtry(string)								 ///
 REGion(string)								 ///
 year(string)									 ///
+FILLgaps                     				 ///
+AGGregate                    			     ///
+wb											 ///
 ]
 
 version 14
@@ -49,7 +52,9 @@ qui {
 	==================================================*/
 	
 	// relevant macros 
-	if ("`idvar'" == "") loc idvar "regioncode countrycode year povertyline coveragetype datatype"
+	if ("`idvar'" == "" & "`aggregate'" != "") loc idvar "year povertyline "
+	else if ("`idvar'" == "" & "`wb'" != "") loc idvar "regioncode  year povertyline"
+	else if ("`idvar'" == "") loc idvar "regioncode countrycode year povertyline coveragetype datatype"
 	else 				 loc idvar = lower("`idvar'")
 	
 	if ("`mainv'" == "")  loc mainv "headcount"
@@ -83,9 +88,9 @@ qui {
 	==================================================*/
 	
 	// get testing data
-	povcalnet, server(`server') povline(`povline') ///
+	povcalnet `wb', server(`server') povline(`povline') ///
 				country(`country') region(`region') ///
-				year(`year') clear
+				year(`year') `fillgaps' `aggregate' clear
 	
 	cap isid `idvar'
 	if _rc {
@@ -113,9 +118,9 @@ qui {
 	save `serverd'
 	
 	// Get current data
-	povcalnet, povline(`povline') ///
+	povcalnet `wb', povline(`povline') ///
 				country(`country') region(`region') ///
-				year(`year') clear 
+				year(`year') `fillgaps' `aggregate' clear 
 	
 	if ("`check'" == "main"){
     keep `idvar' `mainv'
@@ -215,9 +220,12 @@ qui {
 	// list of problematic obs
 	
 	if (lower("`listc'")=="yes"){
-		
+	
+		if ("`wb'"!="")		loc idc = "regioncode"
+		else 				loc idc = "countrycode"
+				
 		tempvar obsid
-		egen `obsid' = concat(countrycode year), p(-)
+		egen `obsid' = concat(`idc' year), p(-)
 		lab var `obsid' "Country-year"
 		
 		foreach var of local mainv{

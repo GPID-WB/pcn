@@ -27,6 +27,8 @@ COUNtry(string)								 ///
 REGion(string)								 ///
 year(string)									 ///
 level(string)								///
+FILLgaps                     				 ///
+wb											 ///
 ]
 
 version 15
@@ -97,7 +99,9 @@ qui{
 	==================================================*/
 
 	pcn_compare, mainv(`variables') server(`server') check("main") ///
-			    country(`country') region(`region') year(`year')
+			    country(`country') region(`region') year(`year') ///
+				`fillgaps' `aggregate'
+				
 	pcn_compare_gr, variables(`variables') dirsave(`dirsave') ///
 	   sdlevel(`sdlevel') level(`level')
 
