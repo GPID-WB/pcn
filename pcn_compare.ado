@@ -30,6 +30,7 @@ SDLevel(string)								 ///
 COUNtry(string)								 ///
 REGion(string)								 ///
 year(string)									 ///
+FILLgaps                     				 ///
 ]
 
 version 14
@@ -85,7 +86,7 @@ qui {
 	// get testing data
 	povcalnet, server(`server') povline(`povline') ///
 				country(`country') region(`region') ///
-				year(`year') clear
+				year(`year') `fillgaps' clear
 	
 	cap isid `idvar'
 	if _rc {
@@ -115,7 +116,7 @@ qui {
 	// Get current data
 	povcalnet, povline(`povline') ///
 				country(`country') region(`region') ///
-				year(`year') clear 
+				year(`year') `fillgaps' clear 
 	
 	if ("`check'" == "main"){
     keep `idvar' `mainv'
