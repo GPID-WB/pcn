@@ -75,6 +75,8 @@ The different options and parameters may be described:
 	{p2col:{opt module:}}It will search accordingly for those either "BIN" or "GPWG"\"GMD" surveys.{p_end}
 	{p2col:{opt veralt(##)}}If given it will use surveys with the given alternative version.{p_end}
 	{p2col:{opt vermast(##)}}If given it will use surveys with the given master version.{p_end}
+	{p2col:{opt lyear}}If set list the years availible for a given country. The local years containg them is returned.{p_end}
+
 
 {space 4}{hline}
 {p 4 4 2}
