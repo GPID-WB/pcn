@@ -146,9 +146,9 @@ qui {
 	3: Trace back changes                             
 	==================================================*/
 	
-	keep if inlist(status,3,4,5)
+	*keep if inlist(status,3,4,5)
 	
-	merge 1:1 `idvar' using `serverd', keep(match) nogen
+	merge 1:1 `idvar' using `serverd', /*keep(match)*/ nogen
 	
 	loc vlist 
 	loc vlistt
@@ -169,7 +169,7 @@ qui {
 		}
 	}
 	
-	merge 1:1 `idvar' using `PCN', keep(match) nogen
+	merge 1:1 `idvar' using `PCN', /*keep(match)*/ nogen
 	
 	keep `idvar' status `vlist' `vlistt'
 	
