@@ -61,9 +61,11 @@ qui  {
 	pause after primus query
 	*/
 	
-	pcn load price, clear
+	pcn load price, clear `pause'
 	rename countrycode country
 	tostring _all, replace
+	
+	pause create - after loading price framework data
 	
 	/*==================================================
 	2: Condition to filter data
@@ -129,25 +131,35 @@ qui  {
 		
 		//------------ get metadata
 		
-		local mod "GPWG"
-		cap pcn_load, country(`country') year(`year') type(GMD) /*
-		*/ maindir("`maindir'")  module(`mod')  survey("`survey'") /*
+		pause create - before searching for data 
+		local module "GPWG"
+		cap pcn load, count(`country') year(`year') type(GMD) /*
+		*/  module(`module')  survey("`survey'") /*
 		*/ `pause' `clear' `options' noload
 		
 		if (_rc) {
-			local mod "BIN"
-			cap pcn_load, country(`country') year(`year') type(GMD) /*
-			*/ maindir("`maindir'")  module(`mod')  survey("`survey'") /*
+			local module "BIN"
+			cap pcn load, count(`country') year(`year') type(GMD) /*
+			*/ module(`module')  survey("`survey'") /*
 			*/ `pause' `clear' `options' noload
+			
 			if (_rc) {
-				local status "error. loading"
-				local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'")  survey("`survey'")  module(`mod') `pause' `clear' `options' noload"
-				mata: P = pcn_info(P)
+				local module "HIST"
+				cap pcn load, count(`country') year(`year') type(GMD) /*
+				*/ module(`module')  survey("`survey'") /*
+				*/ `pause' `clear' `options' noload
 				
-				noi _dots `i' 2
-				continue
+				if (_rc) {
+					local status "error. loading"
+					local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options' noload"
+					mata: P = pcn_info(P)
+					
+					noi _dots `i' 2
+					continue
+				}
 			}
 		}
+		
 		
 		local filename  = "`r(filename)'"
 		local survin    = "`r(survin)'"
@@ -155,6 +167,8 @@ qui  {
 		local survey_id = "`survid'"
 		local surdir    = "`r(surdir)'"
 		return add
+		
+		pause create - after having searched for data 
 		
 		cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
 		if (_rc & "`replace'" == "") {  //  File exists
@@ -167,20 +181,21 @@ qui  {
 			continue // there is not need to load data and check datasignature
 		}
 		*--------------------2.2: Load data
-		cap pcn_load, country(`country') year(`year') type(GMD) /*
-		*/ maindir("`maindir'")  module(`mod') survey("`survey'")  /*
+		cap pcn load, count(`country') year(`year') type(GMD) /*
+		*/ module(`module') survey("`survey'")  /*
 		*/ `pause' `clear' `options'
 		
 		if (_rc) {
 			
 			local status "error. loading"
-			local dlwnote "pcn_load, country(`country') year(`year') type(`type') maindir("`maindir'")  survey("`survey'")  module(`mod') `pause' `clear' `options'"
+			local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options'"
 			mata: P = pcn_info(P)
 			noi _dots `i' 2
 			continue
 			
 		}
 		
+		pause after loading data 
 		/*==================================================
 		3:  Clear and save data
 		==================================================*/
@@ -245,7 +260,7 @@ qui  {
 			
 			// Merge with raw data
 			merge m:1 urban using `pop', nogen
-
+			
 			// Rescaling weights
 			forvalues x = 0/1 {
 				sum weight if urban==`x'
