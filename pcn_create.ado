@@ -226,8 +226,10 @@ qui  {
 		recast double weight
 		
 		* monthly data
-		replace welfare=welfare/12
-		
+		// Already monthly data for IDN 1993, 1996, 1998 and 1999
+		if ("`country'"!="IDN") | !inlist(`year',1993,1996,1998,1999)	{
+			replace welfare=welfare/12
+		}
 		
 		* special treatment for IDN and IND
 		if inlist("`country'", "IND", "IDN") {
@@ -247,25 +249,49 @@ qui  {
 			
 			restore
 			
-			
-			// Loading population data
+			// Loading PPPs, population data and CPI data
 			preserve
+			
+			// PPPs
+			pcn master, load(ppp) qui
+			keep if countrycode == "`country'" & lower(coveragetype) != "national"
+			gen urban = lower(coveragetype) == "urban"
+			keep urban ppp2011
+			tempfile ppp
+			save    `ppp'
+			
+			// Population
 			pcn master, load(population) qui
 			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
 			gen urban = lower(coveragetype) == "urban"
 			keep urban population
 			tempfile pop
 			save    `pop'
+			
+			// CPI
+			pcn master, load(cpi) qui
+			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+			gen urban = lower(coveragetype) == "urban"
+			keep urban cpi
+			tempfile cpi
+			save    `cpi'
+			
 			restore
 			
 			// Merge with raw data
+			merge m:1 urban using `ppp', nogen
 			merge m:1 urban using `pop', nogen
-			
+			merge m:1 urban using `cpi', nogen
+
 			// Rescaling weights
 			forvalues x = 0/1 {
 				sum weight if urban==`x'
 				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
 			}
+			
+			// Converting into 2011 PPPs (needed to compute the right national inequality 	statitsics and for getting the right median)
+			replace welfare = welfare/cpi/ppp
+			label var welfare "Welfare in 2011 USD PPP per month"
 			
 			local urban "urban"
 			char _dta[cov]  "A"
