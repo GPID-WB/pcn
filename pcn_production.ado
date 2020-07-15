@@ -51,6 +51,7 @@ qui {
 		// If vintage is not selected
 		if ("`vintage'" == "") {
 			noi _disp_dirs `subcmd' , maindir("`maindir'")
+			return add
 			
 		}
 		
@@ -85,6 +86,7 @@ qui {
 		if ("`vintage'" == "") {
 			noi disp in red "You must select a pre-existing vintage folder"
 			noi _disp_dirs `subcmd' , maindir("`maindir'") server(`server') `clear'
+			return add
 		}
 		else {
 			mata: st_local("direx", strofreal(direxists("`maindir'/`vintage'")))
@@ -140,7 +142,7 @@ end
 // Aux programs
 //========================================================
 
-program define _disp_dirs
+program define _disp_dirs, rclass
 syntax anything(name=subcmd), maindir(string) *
 
 
@@ -156,6 +158,8 @@ foreach dir of local dirs {
 	
 	noi disp in y _col(2) `i' _col(5) "{c |} {stata `pcncmd':`dir'}" 
 } // end of dirs loop 
+
+return local production_vtgs = `"`dirs'"'
 
 end 
 

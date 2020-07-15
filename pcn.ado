@@ -344,6 +344,7 @@ qui {
 		
 		if regexm(lower("`subcmd'"), "load") {
 			`nq' pcn_production load, `options'
+			return add
 		}
 		
 		else if regexm(lower("`subcmd'"), "create") {
@@ -352,11 +353,13 @@ qui {
 				error
 			}
 			`nq' pcn_production create, `options'
+			return add
 		} 
 		
 		else {
 			if regexm(lower("`subcmd'"), "^production[ ]+(.*)") local action = regexs(1)
 			`nq' pcn_production `action', `options'
+			return add
 		}
 		
 	}
