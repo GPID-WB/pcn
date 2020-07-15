@@ -72,7 +72,7 @@ qui {
 	pcn load, countr(EST) year(2004) clear module(GPWG) // does not work
 	pcn load, countr(EST) year(2004) clear module(BIN)  // does not work
 	pcn load, countr(EST) year(2004) clear lis          // works
-
+	
 	*/
 	
 	
@@ -124,95 +124,98 @@ qui {
 		local year = max(0, `years')
 		
 	}
-
-    return local years = "`years'"
-
-    ** if list years
-    if ("`lyear'"!= ""){
-	    noi di "years: `years'"
-	    exit
-    }
-    
+	
+	return local years = "`years'"
+	
+	** if list years
+	if ("`lyear'"!= ""){
+		noi di "years: `years'"
+		exit
+	}
+	
 	
 	*----------1.2: check for valid data given the module
 	
-	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
-
 	
-	if ("`survey'" == "") {
-
-		if(!inlist("`module'","")){
-			loc textm " and module `module'"
-			loc moduleregex "`module'*"
-		}
-		
-		loc validf ""
-		loc routes ""
-		foreach dir of local dirs {
-			local dirsB: dir "`maindir'/`country'/`dir'" dirs "`dir'*", respectcase
-			foreach dirr of local dirsB{
-				cap local filess: dir "`maindir'/`country'/`dir'/`dirr'/Data" files "*.dta", respectcase
-				if _rc{
-					local filess: dir "`maindir'/`country'/`dir'/`dirr'/data" files "*.dta", respectcase
-				}
-				if regexm(`"`filess'"', "(.+[Vv][0-9]+_[Mm].+`moduleregex'.dta)") local a = regexs(1)
-				loc a = subinstr(`"`a'"', `"""', "",.)
-				loc a = subinstr(`"`a'"', `".dta"', "",.)
-				if !regexm(`"`validf'"', "`a'") local routes "`routes' `maindir'/`country'/`dir'/`dirr'/Data/`a'.dta"
-				if !regexm(`"`validf'"', "`a'") local validf "`validf' `a'"
+	
+	
+	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
+	
+	if(!inlist("`module'","")) {
+		loc textm " and module `module'"
+		loc moduleregex "`module'*"
+	}
+	
+	loc validf ""
+	loc routes ""
+	foreach dir of local dirs {
+		local dirsB: dir "`maindir'/`country'/`dir'" dirs "`dir'*", respectcase
+		foreach dirr of local dirsB{
+			cap local filess: dir "`maindir'/`country'/`dir'/`dirr'/Data" files "*.dta", respectcase
+			if _rc{
+				local filess: dir "`maindir'/`country'/`dir'/`dirr'/data" files "*.dta", respectcase
 			}
+			if regexm(`"`filess'"', "(.+[Vv][0-9]+_[Mm].+`moduleregex'.dta)") local a = regexs(1)
+			loc a = subinstr(`"`a'"', `"""', "",.)
+			loc a = subinstr(`"`a'"', `".dta"', "",.)
+			if !regexm(`"`validf'"', "`a'") local routes "`routes' `maindir'/`country'/`dir'/`dirr'/Data/`a'.dta"
+			if !regexm(`"`validf'"', "`a'") local validf "`validf' `a'"
 		}
-		
-		// recover module if not given 
-		if ("`module'" == ""){
-			if (wordcount(`"`validf'"') == 0) {
-			noi disp in r "no survey in `country'-`year'"
-			error
-			}
-			else if (wordcount(`"`validf'"') == 1) {
-			if regexm(`"`validf'"',"`collection'_(.+)") local module = regexs(1)
-			}
-			else {  // if more than 1 valid file per country-year
-				foreach file of local validf {
-					if regexm(`"`file'"', "`collection'_(.+)") local a = regexs(1)
-					if !regexm(`"`modules'"', "`a'") local modules = "`modules' `a'"
-				}
-				if (wordcount(`"`modules'"') > 1) {
-					noi disp as text "list of available modules for `country'- `year'"
-					
-					local i = 0
-					foreach module of local modules {
-						local ++i
-						noi disp `"   `i' {c |} {stata `module'}"'
-					}
-					noi disp _n "select module to load" _request(_module)
-				}
-				else {
-					loc module = subinstr(`"`modules'"'," ", "", .)
-					
-				}
-			}
-		}
-		
-		// only keep routes for the selected survey
-		local aroutes ""
-		local avalidf ""
-		foreach route of local routes {
-			if regexm(`"`route'"', "(`collection'_`module')") local aroutes "`aroutes' `route'"
-		}
-		foreach vfile of local validf {
-			if regexm(`"`vfile'"', "(`collection'_`module')") local avalidf "`avalidf' `vfile'"
-		}
-		loc routes "`aroutes'"
-		loc validf "`avalidf'"
-		
-	* ---------- Check survey 
-		
+	}
+	
+	// recover module if not given 
+	if ("`module'" == ""){
 		if (wordcount(`"`validf'"') == 0) {
-			noi disp in r "no survey in `country'-`year' `textm'"
+			noi disp in r "no survey in `country'-`year'"
 			error
 		}
 		else if (wordcount(`"`validf'"') == 1) {
+			if regexm(`"`validf'"',"`collection'_(.+)") local module = regexs(1)
+		}
+		else {  // if more than 1 valid file per country-year
+			foreach file of local validf {
+				if regexm(`"`file'"', "`collection'_(.+)") local a = regexs(1)
+				if !regexm(`"`modules'"', "`a'") local modules = "`modules' `a'"
+			}
+			if (wordcount(`"`modules'"') > 1) {
+				noi disp as text "list of available modules for `country'- `year'"
+				
+				local i = 0
+				foreach module of local modules {
+					local ++i
+					noi disp `"   `i' {c |} {stata `module'}"'
+				}
+				noi disp _n "select module to load" _request(_module)
+			}
+			else {
+				loc module = subinstr(`"`modules'"'," ", "", .)
+				
+			}
+		}
+	}
+	
+	// only keep routes for the selected survey
+	local aroutes ""
+	local avalidf ""
+	foreach route of local routes {
+		if regexm(`"`route'"', "(`collection'_`module')") local aroutes "`aroutes' `route'"
+	}
+	foreach vfile of local validf {
+		if regexm(`"`vfile'"', "(`collection'_`module')") local avalidf "`avalidf' `vfile'"
+	}
+	loc routes "`aroutes'"
+	loc validf "`avalidf'"
+	
+	* ---------- Check survey 
+	
+	if (wordcount(`"`validf'"') == 0) {
+		noi disp in r "no survey in `country'-`year' `textm'"
+		error
+	}
+	
+	
+	if ("`survey'" == "") {
+		if (wordcount(`"`validf'"') == 1) {
 			if regexm(`"`validf'"', "([0-9]+)_(.+)_[Vv]([0-9]+_[Mm].+)") local survey = regexs(2)
 		}
 		else {  // if more than 1 valid file per country-year module
@@ -231,8 +234,8 @@ qui {
 				noi disp _n "select survey to load" _request(_survey)
 			}
 			else {
-					loc survey = subinstr(`"`surveys'"'," ", "", .)
-				}
+				loc survey = subinstr(`"`surveys'"'," ", "", .)
+			}
 		}
 	} // end of survey == ""
 	else {
@@ -246,13 +249,13 @@ qui {
 	}
 	loc routes "`aroutes'"
 	
-
+	
 	if (`"`routes'"' == "") {
 		noi disp as err "no data for the following combination: " ///
 		as text "`country' `year' `survey' `textm'"
 		error
 	}
-
+	
 	
 	*-------- 1.3 version
 	
@@ -272,7 +275,7 @@ qui {
 		if (length("`vm'") == 1) local vermast = "0`vm'"
 		else                     local vermast = "`vm'"
 	}
-		
+	
 	else {
 		if regexm("`vermast'", "^[Vv]([0-9]+)") local vermast = regexs(1)
 		if (length("`vermast'") == 1) local vermast = "0`vermast'"
@@ -404,7 +407,6 @@ Notes:
 3.
 
 
-		Version Control:
-		
-		
-				
+Version Control:
+
+
