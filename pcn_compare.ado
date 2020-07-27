@@ -21,6 +21,7 @@ syntax [anything(name=subcmd id="subcommand")], ///
 IDvar(string)                                  ///
 MAINv(string)                                  ///
 server(string)                                 ///
+server0(string)								 ///
 DISvar(string)                                 ///
 check(string)                                  ///
 POVline(string)                                ///
@@ -69,7 +70,9 @@ qui {
 	if ("`disvar'" == "") loc disvar "main"
 	else                 loc disvar = lower("`disvar'")
 	
-	if ("`sdlevel'" == "") loc sdlevel = 2 				
+	if ("`sdlevel'" == "") loc sdlevel = 2 		
+
+	if ("`server0'" != "")  loc serverm = "server(`server0')"
 	
 	if !inlist("`check'","main","all") {
     noi di as err "Check varibables must be set to: main or all"
@@ -120,7 +123,7 @@ qui {
 	// Get current data
 	povcalnet `wb', povline(`povline') ///
 				country(`country') region(`region') ///
-				year(`year') `fillgaps' `aggregate' clear 
+				year(`year') `serverm' `fillgaps' `aggregate' clear 
 	
 	if ("`check'" == "main"){
     keep `idvar' `mainv'
