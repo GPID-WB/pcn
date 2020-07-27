@@ -262,20 +262,36 @@ qui  {
 			
 			// Population
 			pcn master, load(population) qui
+			if "`country'"=="IDN" { 
 			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+			}
+			// Need to account for decimal years with India
+			if "`country'"=="IND" { 
+			keep if countrycode=="`country'" & lower(coveragetype) != "national" & inlist(year,`year',`year'+1)
+			bysort coverage (year): replace pop = (pop+pop[_n+1])/2 
+			keep if year==`year'
+			}
 			gen urban = lower(coveragetype) == "urban"
 			keep urban population
 			tempfile pop
 			save    `pop'
 			
 			// CPI
+					// Special treatment for India 2011.5 where the CPIs are in the 2012 column:
+					if "`country'"=="IND" & `year'==2011 {
+					local year= `year'+1 
+					}
 			pcn master, load(cpi) qui
 			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
 			gen urban = lower(coveragetype) == "urban"
 			keep urban cpi
 			tempfile cpi
 			save    `cpi'
-			
+					// Undo special treatment for India 2011.5:
+					if "`country'"=="IND" & `year'==2011 {
+					local year= `year-+1 
+					}
+					
 			restore
 			
 			// Merge with raw data
@@ -292,6 +308,9 @@ qui  {
 			// Converting into 2011 PPPs (needed to compute the right national inequality 	statitsics and for getting the right median)
 			replace welfare = welfare/cpi/ppp
 			label var welfare "Welfare in 2011 USD PPP per month"
+			
+			keep welfare weight urban
+			compress
 			
 			local urban "urban"
 			char _dta[cov]  "A"
