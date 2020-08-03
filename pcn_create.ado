@@ -150,16 +150,22 @@ qui  {
 				*/ `pause' `clear' `options' noload
 				
 				if (_rc) {
-					local status "error. loading"
-					local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options' noload"
-					mata: P = pcn_info(P)
+					local module "isynth"
+					cap synth_distribution, count(`country') year(`year') /*
+					*/ `pause' `clear' `options'
+				
+					if (_rc){
+						local status "error. loading"
+						local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options' noload"
+						mata: P = pcn_info(P)
 					
-					noi _dots `i' 2
-					continue
+						noi _dots `i' 2
+						continue
+					}
+					
 				}
 			}
 		}
-		
 		
 		local filename  = "`r(filename)'"
 		local survin    = "`r(survin)'"
@@ -170,6 +176,60 @@ qui  {
 		
 		pause create - after having searched for data 
 		
+		// if synth check and create needed directories
+		*loc survid "CHN_1981_synth"
+		*loc module "isynth"
+		*loc surdir "P:/01.PovcalNet/01.Vintage_control/CHN/CHN_1981_synth"
+		if ("`module'"=="isynth"){
+			// if isynth no loop needed, override while
+			local i = `n'
+			noi di as result "No survey data. Synthetic Distribution"
+		
+			// if synth folder does not exist create 
+			capture mkdir "`surdir'"
+			
+			// check versions 
+			local subdirs : dir "`surdir'" dirs "`survid'*"
+			loc j = 0
+			foreach ver of local subdirs{
+				loc ++j
+				loc k = `j' - 1
+				if regexm("`ver'", ".+_v([0-9]+)_[M|m]_v([0-9]+)_[A|a]"){
+					loc m_v_`j' = regexs(1)
+					loc a_v_`j' = regexs(2)
+					
+					if (`j' == 1){
+					loc m_v = `m_v_`j''
+					loc a_v = `a_v_`j''
+					}
+					
+					if (`j' > 1){
+						if (`m_v_`j'' > `m_v'){
+							loc m_v = `m_v_`j''
+							loc a_v = `a_v_`j''
+						}
+						
+						if (`m_v_`j'' == `m_v'){
+							if (`a_v_`j'' > `a_v')	 loc a_v = `a_v_`j''
+						}
+					}
+				}
+			}
+			loc m_v = `m_v' + 1
+			loc a_v = 1
+			
+			if (`m_v' < 9) 	loc m_v "0`m_v'"
+			if (`a_v' < 9) 	loc a_v "0`a_v'"
+			
+			loc survid = "`survid'_v`m_v'_M_v`a_v'_A"
+			di "`survid'"
+			
+			di "`surdir'/`survid'/Data"
+			cap mkdir "`surdir'/`survid'"
+			cap mkdir "`surdir'/`survid'/Data"
+		}
+		
+	
 		cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
 		if (_rc & "`replace'" == "") {  //  File exists
 			
@@ -181,18 +241,41 @@ qui  {
 			continue // there is not need to load data and check datasignature
 		}
 		*--------------------2.2: Load data
-		cap pcn load, count(`country') year(`year') type(GMD) /*
-		*/ module(`module') survey("`survey'")  /*
-		*/ `pause' `clear' `options'
+		if ("`module'" != "isynth"){
+			cap pcn load, count(`country') year(`year') type(GMD) /*
+			*/ module(`module') survey("`survey'")  /*
+			*/ `pause' `clear' `options'
+
+			if (_rc) {
+				
+				local status "error. loading"
+				local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options'"
+				mata: P = pcn_info(P)
+				noi _dots `i' 2
+				continue
+				
+			}
+		}
+		else{
+			if ("`allvars'" == ""){
+				if !regexm("`addvar'", "coveragetype") 		local addvar "coveragetype `addvar'"
+			}
+			
+			cap synth_distribution, count(`country') year(`year') addvar(`addvar')/*
+			*/ `pause' `clear' `options'
+			
+			if (_rc) {
+				
+				local status "error. loading"
+				local dlwnote "isynth distribution, count(`country') year(`year') addvar(`addvar') `pause' `clear' `options'"				
+			}
+			else{
+				gen urban = inlist(coveragetype, "urban", "Urban")
+			
+			}
+			
 		
-		if (_rc) {
-			
-			local status "error. loading"
-			local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options'"
-			mata: P = pcn_info(P)
-			noi _dots `i' 2
-			continue
-			
+		
 		}
 		
 		pause after loading data 
