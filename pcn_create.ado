@@ -53,8 +53,8 @@ local user=c(username)
 /*==================================================
 1: primus query
 ==================================================*/
-qui  {
-	
+qui {
+
 	/*
 	pcn_primus_query, countries(`countries') years(`years') ///
 	`pause' gpwg
@@ -98,7 +98,9 @@ qui  {
 		keep if regexm(veralt, "`valist'")
 	}
 	
-	
+	levelsof survname, clean local(survname) sep(`"",""')
+	local survname = `""`survname'""'
+	mata: S = (`survname')
 	
 	qui ds
 	local varlist = "`r(varlist)'"
@@ -166,23 +168,35 @@ qui  {
 				}
 			}
 		}
+		if ("`module'"=="isynth"){
+			if ("`survey'" != "")		loc survid = `survey'
+			else						mata: st_local("survm", S[`i'])
+			
+			local survid "`survm'"
+			local survid = "`country'_`year'_`survid'"
+			local surdir = "P:/01.PovcalNet/01.Vintage_control/`country'/`survid'"
+			local survey_id = "`survid'"
+			di "`survid'"
+			di  "`surdir'"
 		
-		local filename  = "`r(filename)'"
-		local survin    = "`r(survin)'"
-		local survid    = "`r(survid)'"
-		local survey_id = "`survid'"
-		local surdir    = "`r(surdir)'"
+		}
+		else{
+			local filename  = "`r(filename)'"
+			local survin    = "`r(survin)'"
+			local survid    = "`r(survid)'"
+			local survey_id = "`survid'"
+			local surdir    = "`r(surdir)'"
+		}
 		return add
 		
 		pause create - after having searched for data 
 		
-		// if synth check and create needed directories
-		*loc survid "CHN_1981_synth"
 		*loc module "isynth"
-		*loc surdir "P:/01.PovcalNet/01.Vintage_control/CHN/CHN_1981_synth"
+		*loc survid "CHN_1981_CRHS"
+		*loc surdir "P:\01.PovcalNet\01.Vintage_control/CHN/CHN_1981_CRHS"
+		
+		// if synth check and create needed directories
 		if ("`module'"=="isynth"){
-			// if isynth no loop needed, override while
-			local i = `n'
 			noi di as result "No survey data. Synthetic Distribution"
 		
 			// if synth folder does not exist create 
@@ -193,7 +207,6 @@ qui  {
 			loc j = 0
 			foreach ver of local subdirs{
 				loc ++j
-				loc k = `j' - 1
 				if regexm("`ver'", ".+_v([0-9]+)_[M|m]_v([0-9]+)_[A|a]"){
 					loc m_v_`j' = regexs(1)
 					loc a_v_`j' = regexs(2)
@@ -213,18 +226,22 @@ qui  {
 							if (`a_v_`j'' > `a_v')	 loc a_v = `a_v_`j''
 						}
 					}
+					di "`ver'"
+					di "`m_v'"
+					di "``m_v'_`j''"
+					di "`a_v'"
+					di "``a_v'_`j''"
+				}
+				else{
+					loc m_v = 1
+					loc a_v = 1
 				}
 			}
-			loc m_v = `m_v' + 1
-			loc a_v = 1
 			
-			if (`m_v' < 9) 	loc m_v "0`m_v'"
-			if (`a_v' < 9) 	loc a_v "0`a_v'"
+			if (strlen("`m_v'") == 1) 	loc m_v "0`m_v'"
+			if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
 			
-			loc survid = "`survid'_v`m_v'_M_v`a_v'_A"
-			di "`survid'"
-			
-			di "`surdir'/`survid'/Data"
+			loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
 			cap mkdir "`surdir'/`survid'"
 			cap mkdir "`surdir'/`survid'/Data"
 		}
@@ -263,6 +280,11 @@ qui  {
 			
 			cap synth_distribution, count(`country') year(`year') addvar(`addvar')/*
 			*/ `pause' `clear' `options'
+			
+			// condition for synth
+			replace welfare = welfare*(365/12) //to monthly
+			if ("`survm'" == "CRHS") 	keep if coverage == "Rural"
+			if ("`survm'" == "CUHS") 	keep if coverage == "Urban"
 			
 			if (_rc) {
 				
