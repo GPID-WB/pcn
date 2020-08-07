@@ -336,15 +336,34 @@ qui {
 		exit
 	}
 	
-	// ----------------------------------------------------------------------------------
-	//  create text file (collapsed)
-	// ----------------------------------------------------------------------------------
+	//========================================================
+	// Production vintages
+	//========================================================
 	
-	if ("`subcmd'" == "test") {
+	if regexm(lower("`subcmd'"), "^production") {
 		
-		`nq' pcn_test
-		exit
+		if regexm(lower("`subcmd'"), "load") {
+			`nq' pcn_production load, `options'
+			return add
+		}
+		
+		else if regexm(lower("`subcmd'"), "create") {
+			if !inlist(lower("`c(username)'"), "wb384996", "wb424681") {
+				noi disp in red "you don't have permission to create an official povcalnet production vintage"
+				error
+			}
+			`nq' pcn_production create, `options'
+			return add
+		} 
+		
+		else {
+			if regexm(lower("`subcmd'"), "^production[ ]+(.*)") local action = regexs(1)
+			`nq' pcn_production `action', `options'
+			return add
+		}
+		
 	}
+	
 	
 } // end of qui
 

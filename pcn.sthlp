@@ -57,6 +57,9 @@
     {c |}    7.  To check for differences with a server, see:{col 68}{c |}
     {c |}        {bf:{help pcn_compare:[PCN] pcn compare}}{col 68}{c |}
     {c |}{col 68}{c |}
+    {c |}    8.  To load or create production vintages, see:{col 68}{c |}
+    {c |}        {bf:{help pcn_production:[PCN] pcn production}}{col 68}{c |}
+    {c |}{col 68}{c |}
     {c |} Or check out the {bf:{help pcn_full:pcn full help file}}{col 68}{c |}
     {c |}{col 68}{c |}
     {c BLC}{hline 62}{c BRC}

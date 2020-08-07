@@ -393,11 +393,6 @@ qui  {
 				local dlwnote "OK. country(`country') year(`year') veralt(`veralt') cov `cc'"
 				noi _dots `i' 0
 				
-				//------------ collapse data
-				collapse (sum) weight, by(welfare)
-				
-				save "`surdir'/`survid'/Data/`survid'_PCNc`cov'.dta", `replace'
-				
 			}
 			else { // Skipped data has not change. 
 				local status "skipped. data has not changed"

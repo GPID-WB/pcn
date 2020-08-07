@@ -50,6 +50,7 @@ Sections are presented under the following headings:
 		  - {it:{help pcn_full##subdownload:download}}
 		  - {it:{help pcn_full##submaster:master}}
 		  - {it:{help pcn_full##subprimus:primus}}
+		  - {it:{help pcn_full##subproduction:production}}
                 {it:{help pcn_full##param:Parameters description}}
                 {it:{help pcn_full##options:Options description}}
                 {it:{help pcn_full##examples:Examples}}
@@ -548,7 +549,7 @@ The following allows the user to select a version of the master file and a sheet
 {dlgtab:primus}
 
 {p 4 4 2}
-The {cmd:load} subcommand allows to manage with ease both the pending and approved data on PRIMUS. 
+The {cmd:primus} subcommand allows to manage with ease both the pending and approved data on PRIMUS. 
 {p_end}
 
 
@@ -631,6 +632,81 @@ If you need to update the information just use the {opt down} option:
 {phang2}
 {stata pcn primus approved, down(trans)}
 
+
+{center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
+{center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
+{center:({help pcn:Go back to Intro page})}
+
+
+{marker subproduction}{...}
+{dlgtab:production}
+
+{p2colset 5 30 29 2}{...}
+{p 4 4 2}
+This subcommand allows the user the load or create PovcalNet production vintages.
+{p_end}
+
+{p 4 4 2}
+Two actions are available:{p_end}
+
+                {hline 73}
+                Subcommand + Action{col 45}Result
+                {hline 25}{col 45}{hline 45}
+                production load	  {col 45}Loads specific vintage.
+                production create	{col 45}Create vintage in pre-existing folder in P drive.
+                {hline 73}
+
+{p 4 4 2}
+Options and overall structure changes according to the companion word, please keep in mind the following:{p_end}
+
+    {hline 87}
+    Action{col 25}Basic recommended syntax
+    {hline 15}{col 25}{hline 67}
+    load	{col 25}{cmd:pcn production load} [, {it:vintage(YYYY_VT) clear}]
+    create {col 25}{cmd:pcn production create} [, {it:vintage(YYYY_VT) server(string) clear}]
+    {hline 87}
+		
+{p 4 4 2} 
+Where {it:YYYY} refers to the year and {it:VT} refers to the vintage of the year, which may be a three-letter word for the month of the update (e.g, JUL for July) or a two-letter word for the WB meeting (e.g., SM for Spring meetings). 
+
+{col 5}Option{col 30}Description
+{space 4}{hline}
+	{p2col:{opt vintage:}(YYYY_VT)}Vintage of the data{p_end}
+	{p2col:{opt clear:}}Replaces data in Stata memory{p_end}
+	{p2col:{opt replace:}}Replaces vintage file in P drive. Only available with {it:create} action. {p_end}
+
+{space 4}{hline}
+{p 4 4 2}
+	
+	
+
+{center:{hline 16}}
+{center:{bf:Examples}}
+{center:{hline 16}}
+
+{p 5 4 2} {bf:Load production vintage}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+Display list of available ("clickable") vintages:{p_end}
+
+{phang2}
+{stata pcn production load}
+
+{p 4 4 2}
+Load a specific vintage:{p_end}
+
+{phang2}
+{stata pcn production load, vintage(2020_JUL)}
+
+{p 5 4 2} {bf:Create production vintage}{p_end}
+{space 4}{hline 15}
+
+{p 4 4 2}
+Create a new vintage version. Only available for some members of the PovcalNet Team. {p_end}
+
+{phang2}
+{stata pcn production create, vintage(2020_JUL)}
 
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
 {center:(Go up to {it:{help pcn_full##sections:Sections Menu}})}
