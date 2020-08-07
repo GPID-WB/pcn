@@ -106,6 +106,7 @@ qui {
 	local n = _N
 	
 	mata: S = st_sdata(.,tokens("survname"))
+	mata: CV = st_sdata(.,tokens("coverage"))
 	
 	/*==================================================
 	2:  Loop over surveys
@@ -124,6 +125,8 @@ qui {
 		local ++i
 		local status   ""
 		local dlwnote  ""
+		local iscover  ""
+		local iscoverpr  ""
 		
 		mata: pcn_ind(R)
 		
@@ -171,6 +174,11 @@ qui {
 			if ("`survey'" != "")		loc survid = `survey'
 			else						mata: st_local("survm", S[`i'])
 			
+			if ("`country'" == "CHN"){
+				mata: st_local("iscover", CV[`i'])
+				if ("`iscover'" == "N")			loc iscover "A"
+				if ("`iscover'" != "") 			loc iscoverpr "-`iscover'"
+			}
 			local survid "`survm'"
 			local survid = "`country'_`year'_`survid'"
 			local surdir = "P:/01.PovcalNet/01.Vintage_control/`country'/`survid'"
@@ -249,10 +257,8 @@ qui {
 				
 				loc survid "`survey_id'"
 			
-				loc m_v = `m_v' + 1
 				loc a_v = `a_v' + 1
 			
-				if (strlen("`m_v'") == 1) 	loc m_v "0`m_v'"
 				if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
 			
 				loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
@@ -298,8 +304,10 @@ qui {
 			
 			// condition for synth
 			replace welfare = welfare*(365/12) //to monthly
-			if ("`survm'" == "CRHS") 	keep if coverage == "Rural"
-			if ("`survm'" == "CUHS") 	keep if coverage == "Urban"
+			if ("`country'"== "CHN"){
+				if ("`iscover'" == "R") 	keep if coverage == "Rural"
+				if ("`iscover'" == "U") 	keep if coverage == "Urban"
+			}
 			
 			if (_rc) {
 				
@@ -308,11 +316,7 @@ qui {
 			}
 			else{
 				gen urban = inlist(coveragetype, "urban", "Urban")
-			
-			}
-			
-		
-		
+			}		
 		}
 		
 		pause after loading data 
@@ -454,6 +458,7 @@ qui {
 			local urban ""
 			tempfile wfile
 			char _dta[cov]  ""
+			if ("`module'" == "isynth") 	char _dta[cov]  "`iscover'"
 			save `wfile'
 			local cfiles "`wfile'"
 		}
@@ -483,6 +488,23 @@ qui {
 			//========================================================
 			// Check if data is the same as the previous one and save.
 			//========================================================
+			
+			// new check for synths  
+			if ("`module'" == "isynth"){
+				cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta"
+				if (_rc & "`newsynth'" != ""){
+					
+					loc survid "`survey_id'"
+				
+					loc a_v = `a_v' + 1
+				
+					if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
+				
+					loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
+					cap mkdir "`surdir'/`survid'"
+					cap mkdir "`surdir'/`survid'/Data"
+				}
+			}
 			
 			cap datasignature confirm using  "`surdir'/`survid'/Data/`survid'_PCN`cov'"
 			local dsrc = _rc
