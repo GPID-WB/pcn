@@ -61,6 +61,9 @@ qui {
 	pause after primus query
 	*/
 	
+	*loc countries "CHN"
+	*loc years 1981 1984
+	
 	pcn load price, clear `pause'
 	rename countrycode country
 	tostring _all, replace
@@ -98,15 +101,13 @@ qui {
 		keep if regexm(veralt, "`valist'")
 	}
 	
-	levelsof survname, clean local(survname) sep(`"",""')
-	local survname = `""`survname'""'
-	mata: S = (`survname')
-	
 	qui ds
 	local varlist = "`r(varlist)'"
 	
 	mata: R = st_sdata(.,tokens(st_local("varlist")))
 	local n = _N
+	
+	mata: S = st_sdata(.,tokens("survname"))
 	
 	/*==================================================
 	2:  Loop over surveys
