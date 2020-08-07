@@ -358,6 +358,8 @@ qui {
 			restore
 			
 			if ("`module'"!= "isynth"){
+			
+				// This section is problably not longer neeed, but as I'm unsure I leave it there. DV
 				// Loading PPPs, population data and CPI data
 				preserve
 				
