@@ -153,7 +153,7 @@ qui {
 				
 				if (_rc) {
 					local module "isynth"
-					cap synth_distribution, count(`country') year(`year') /*
+					cap isynth distribution, count(`country') year(`year') server(AR) natppp/*
 					*/ `pause' `clear' `options'
 				
 					if (_rc){
@@ -197,8 +197,7 @@ qui {
 		
 		// if synth check and create needed directories
 		if ("`module'"=="isynth"){
-			noi di as result "No survey data. Synthetic Distribution"
-		
+			
 			// if synth folder does not exist create 
 			capture mkdir "`surdir'"
 			
@@ -278,8 +277,8 @@ qui {
 				if !regexm("`addvar'", "coveragetype") 		local addvar "coveragetype `addvar'"
 			}
 			
-			cap synth_distribution, count(`country') year(`year') addvar(`addvar')/*
-			*/ `pause' `clear' `options'
+			cap isynth distribution, count(`country') year(`year') addvar(`addvar') server(AR) natppp /*
+			*/ `pause' `clear' `options' 			
 			
 			// condition for synth
 			replace welfare = welfare*(365/12) //to monthly
@@ -332,10 +331,14 @@ qui {
 		
 		* monthly data
 		// Already monthly data for IDN 1993, 1996, 1998 and 1999
-		if ("`country'"!="IDN") | !inlist(`year',1993,1996,1998,1999)	{
+		*if ("`country'"!="IDN") | !inlist(`year',1993,1996,1998,1999)	{
+		
+		if ("`module'"!="isynth") {
 			replace welfare=welfare/12
 		}
 		
+	
+			
 		* special treatment for IDN and IND
 		if inlist("`country'", "IND", "IDN") {
 			keep weight welfare urban
@@ -354,65 +357,68 @@ qui {
 			
 			restore
 			
-			// Loading PPPs, population data and CPI data
-			preserve
-			
-			// PPPs
-			pcn master, load(ppp) qui
-			keep if countrycode == "`country'" & lower(coveragetype) != "national"
-			gen urban = lower(coveragetype) == "urban"
-			keep urban ppp2011
-			tempfile ppp
-			save    `ppp'
-			
-			// Population
-			pcn master, load(population) qui
-			if "`country'"=="IDN" { 
-			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-			}
-			// Need to account for decimal years with India
-			if "`country'"=="IND" { 
-			keep if countrycode=="`country'" & lower(coveragetype) != "national" & inlist(year,`year',`year'+1)
-			bysort coverage (year): replace pop = (pop+pop[_n+1])/2 
-			keep if year==`year'
-			}
-			gen urban = lower(coveragetype) == "urban"
-			keep urban population
-			tempfile pop
-			save    `pop'
-			
-			// CPI
-					// Special treatment for India 2011.5 where the CPIs are in the 2012 column:
-					if "`country'"=="IND" & `year'==2011 {
-					local year= `year'+1 
-					}
-			pcn master, load(cpi) qui
-			keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-			gen urban = lower(coveragetype) == "urban"
-			keep urban cpi
-			tempfile cpi
-			save    `cpi'
-					// Undo special treatment for India 2011.5:
-					if "`country'"=="IND" & `year'==2011 {
-					local year= `year-+1'
-					}
-					
-			restore
-			
-			// Merge with raw data
-			merge m:1 urban using `ppp', nogen
-			merge m:1 urban using `pop', nogen
-			merge m:1 urban using `cpi', nogen
+			if ("`module'"!= "isynth"){
+				// Loading PPPs, population data and CPI data
+				preserve
+				
+				// PPPs
+				pcn master, load(ppp) qui
+				keep if countrycode == "`country'" & lower(coveragetype) != "national"
+				gen urban = lower(coveragetype) == "urban"
+				keep urban ppp2011
+				tempfile ppp
+				save    `ppp'
+				
+				// Population
+				pcn master, load(population) qui
+				if "`country'"=="IDN" { 
+				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+				}
+				// Need to account for decimal years with India
+				if "`country'"=="IND" { 
+				keep if countrycode=="`country'" & lower(coveragetype) != "national" & inlist(year,`year',`year'+1)
+				bysort coverage (year): replace pop = (pop+pop[_n+1])/2 
+				keep if year==`year'
+				}
+				gen urban = lower(coveragetype) == "urban"
+				keep urban population
+				tempfile pop
+				save    `pop'
+				
+				// CPI
+						// Special treatment for India 2011.5 where the CPIs are in the 2012 column:
+						if "`country'"=="IND" & `year'==2011 {
+						local year= `year'+1 
+						}
+				pcn master, load(cpi) qui
+				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
+				gen urban = lower(coveragetype) == "urban"
+				keep urban cpi
+				tempfile cpi
+				save    `cpi'
+						// Undo special treatment for India 2011.5:
+						if "`country'"=="IND" & `year'==2011 {
+						local year= `year-+1'
+						}
+						
+				restore
+				
+				// Merge with raw data
+				merge m:1 urban using `ppp', nogen
+				merge m:1 urban using `pop', nogen
+				merge m:1 urban using `cpi', nogen
 
-			// Rescaling weights
-			forvalues x = 0/1 {
-				sum weight if urban==`x'
-				replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
+				// Rescaling weights
+				forvalues x = 0/1 {
+					sum weight if urban==`x'
+					replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
+				}
+				
+				// Converting into 2011 PPPs (needed to compute the right national inequality 	statitsics and for getting the right median)
+				if ("`module'" != "isynth")			replace welfare = welfare/cpi/ppp
+				label var welfare "Welfare in 2011 USD PPP per month"
 			}
 			
-			// Converting into 2011 PPPs (needed to compute the right national inequality 	statitsics and for getting the right median)
-			replace welfare = welfare/cpi/ppp
-			label var welfare "Welfare in 2011 USD PPP per month"
 			
 			keep welfare weight urban
 			compress
