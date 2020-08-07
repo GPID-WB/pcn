@@ -27,6 +27,7 @@ replace                       ///
 vermast(string)               ///
 veralt(string)                ///
 MODule(string)                ///
+newsynth					  ///
 clear                         ///
 pause                         ///
 *                             ///
@@ -60,9 +61,6 @@ qui {
 	`pause' gpwg
 	pause after primus query
 	*/
-	
-	*loc countries "CHN"
-	*loc years 1981 1984
 	
 	pcn load price, clear `pause'
 	rename countrycode country
@@ -244,6 +242,23 @@ qui {
 			loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
 			cap mkdir "`surdir'/`survid'"
 			cap mkdir "`surdir'/`survid'/Data"
+			
+			//  if newsynth is declarated
+			cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
+			if (_rc & "`newsynth'" != ""){
+				
+				loc survid "`survey_id'"
+			
+				loc m_v = `m_v' + 1
+				loc a_v = `a_v' + 1
+			
+				if (strlen("`m_v'") == 1) 	loc m_v "0`m_v'"
+				if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
+			
+				loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
+				cap mkdir "`surdir'/`survid'"
+				cap mkdir "`surdir'/`survid'/Data"
+			}
 		}
 		
 	
