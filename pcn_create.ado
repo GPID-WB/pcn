@@ -155,7 +155,7 @@ qui {
 				
 				if (_rc) {
 					local module "isynth"
-					cap isynth distribution, count(`country') year(`year') server(AR) natppp/*
+					cap isynth distribution, count(`country') year(`year') server(AR) natppp /*
 					*/ `pause' `clear' `options'
 					
 					if (_rc){
@@ -165,12 +165,17 @@ qui {
 						
 						noi _dots `i' 2
 						continue
-					}
 					
-				}
-			}
-		}
-		if ("`module'"=="isynth"){
+					} // end of isynth
+					
+				} // end of HIST
+				
+			} // end of BIN
+			
+		} // end of GPWG
+		
+		
+		if ("`module'"=="isynth") { 
 			if ("`survey'" != "")		loc survid = `survey'
 			else						mata: st_local("survm", S[`i'])
 			
@@ -209,22 +214,22 @@ qui {
 			loc j = 0
 			foreach ver of local subdirs{
 				loc ++j
-				if regexm("`ver'", ".+_v([0-9]+)_[M|m]_v([0-9]+)_[A|a]"){
+				if regexm("`ver'", ".+_v([0-9]+)_[M|m]_v([0-9]+)_[A|a]") {
 					loc m_v_`j' = regexs(1)
 					loc a_v_`j' = regexs(2)
 					
-					if (`j' == 1){
+					if (`j' == 1) {
 						loc m_v = `m_v_`j''
 						loc a_v = `a_v_`j''
 					}
 					
-					if (`j' > 1){
-						if (`m_v_`j'' > `m_v'){
+					if (`j' > 1) {
+						if (`m_v_`j'' > `m_v') {
 							loc m_v = `m_v_`j''
 							loc a_v = `a_v_`j''
 						}
 						
-						if (`m_v_`j'' == `m_v'){
+						if (`m_v_`j'' == `m_v') {
 							if (`a_v_`j'' > `a_v')	 loc a_v = `a_v_`j''
 						}
 					}
@@ -234,7 +239,7 @@ qui {
 					di "`a_v'"
 					di "``a_v'_`j''"
 				}
-				else{
+				else {
 					loc m_v = 1
 					loc a_v = 1
 				}
