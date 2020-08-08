@@ -289,7 +289,7 @@ qui  {
 			save    `cpi'
 					// Undo special treatment for India 2011.5:
 					if "`country'"=="IND" & `year'==2011 {
-					local year= `year-+1 
+					local year= `year'+1 
 					}
 					
 			restore
