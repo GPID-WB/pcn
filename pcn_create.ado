@@ -204,7 +204,7 @@ qui {
 		
 		// if synth check and create needed directories
 		if ("`module'"=="isynth"){
-			
+			*noi di "`year'"
 			// if synth folder does not exist create 
 			capture mkdir "`surdir'"
 			
@@ -242,6 +242,11 @@ qui {
 					loc m_v = 1
 					loc a_v = 1
 				}
+			}
+			
+			if (`j' == 0){
+				loc m_v = 1
+			    loc a_v = 1
 			}
 			
 			if (strlen("`m_v'") == 1) 	loc m_v "0`m_v'"
