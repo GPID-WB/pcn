@@ -34,6 +34,8 @@ year(string)									 ///
 FILLgaps                     				 ///
 AGGregate                    			     ///
 wb											 ///
+vintage(string)								///
+vintage0(string)								///
 ]
 
 version 14
@@ -91,9 +93,16 @@ qui {
 	==================================================*/
 	
 	// get testing data
-	povcalnet `wb', server(`server') povline(`povline') ///
+	if ("`vintage'" == ""){
+		povcalnet `wb', server(`server') povline(`povline') ///
 				country(`country') region(`region') ///
 				year(`year') `fillgaps' `aggregate' clear
+	}
+	else{
+		pcn_production load, server(`server') vintage(`vintage') clear
+	}
+	
+	replace povertyline=round(povertyline,.1) // some odd cases they do not quite match 
 	
 	cap isid `idvar'
 	if _rc {
@@ -121,13 +130,21 @@ qui {
 	save `serverd'
 	
 	// Get current data
-	povcalnet `wb', povline(`povline') ///
-				country(`country') region(`region') ///
-				year(`year') `serverm' `fillgaps' `aggregate' clear 
-	
-	if ("`check'" == "main"){
-    keep `idvar' `mainv'
+	if ("`vintage0'" == ""){
+		povcalnet `wb', povline(`povline') ///
+					country(`country') region(`region') ///
+					year(`year') `serverm' `fillgaps' `aggregate' clear 
+		
+		if ("`check'" == "main"){
+			keep `idvar' `mainv'
+		}
 	}
+	else{
+		pcn_production load, `serverm' vintage(`vintage0') clear
+	}
+	
+	replace povertyline=round(povertyline,.1)
+	
 	
 	foreach mv of local mainv {
 		replace `mv' = round(`mv', `tl')
