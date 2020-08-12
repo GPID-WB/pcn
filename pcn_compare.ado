@@ -57,7 +57,7 @@ qui {
 	// relevant macros 
 	if ("`idvar'" == "" & "`aggregate'" != "") loc idvar "year povertyline "
 	else if ("`idvar'" == "" & "`wb'" != "") loc idvar "regioncode  year povertyline"
-	else if ("`idvar'" == "") loc idvar "regioncode countrycode year povertyline coveragetype datatype"
+	else if ("`idvar'" == "") loc idvar "countrycode year povertyline coveragetype datatype"
 	else 				 loc idvar = lower("`idvar'")
 	
 	if ("`mainv'" == "")  loc mainv "headcount"
@@ -100,6 +100,22 @@ qui {
 	}
 	else{
 		pcn_production load, server(`server') vintage(`vintage') clear
+		cap rename wbcode countrycode
+		if (!_rc){
+			cap gen povertyline = 1.9
+			cap replace surveyyear = round(surveyyear)
+			cap rename surveyyear 
+			cap gen datatype = . 
+			cap gen coveragetype = .
+			cap replace datatype =  1 if inlist(inc_con, "c", "C")
+			cap replace datatype = 2 if inlist(inc_con, "i", "I")
+			cap replace coveragetype = 2 if regexm(country, "(Urban)") & national == 0
+			cap replace coveragetype = 1 if regexm(country, "(Rural)") & national == 0
+			cap replace coveragetype = 3 if national == 1
+			cap replace countrycode = substr(countrycode,1,3)
+			replace headcount = headcount/100
+			replace gini = gini/100
+		}
 	}
 	
 	replace povertyline=round(povertyline,.1) // some odd cases they do not quite match 
@@ -126,6 +142,8 @@ qui {
 		replace `mv' = round(`mv', `tl')
 	}
 	
+	replace coveragetype = 3 if coveragetype == 4 // One national 
+	
 	tempfile serverd
 	save `serverd'
 	
@@ -141,6 +159,22 @@ qui {
 	}
 	else{
 		pcn_production load, `serverm' vintage(`vintage0') clear
+		cap rename wbcode countrycode
+		if (!_rc){
+			cap gen povertyline = 1.9
+			cap replace surveyyear = round(surveyyear)
+			cap rename surveyyear 
+			cap gen datatype = . 
+			cap gen coveragetype = .
+			cap replace datatype =  1 if inlist(inc_con, "c", "C")
+			cap replace datatype = 2 if inlist(inc_con, "i", "I")
+			cap replace coveragetype = 2 if regexm(country, "(Urban)") & national == 0
+			cap replace coveragetype = 1 if regexm(country, "(Rural)") & national == 0
+			cap replace coveragetype = 3 if national == 1
+			cap replace countrycode = substr(countrycode,1,3)
+			replace headcount = headcount/100
+			replace gini = gini/100
+		}
 	}
 	
 	replace povertyline=round(povertyline,.1)
@@ -149,6 +183,8 @@ qui {
 	foreach mv of local mainv {
 		replace `mv' = round(`mv', `tl')
 	}
+	
+	replace coveragetype = 3 if coveragetype == 4 // One national 
 	
 	tempfile PCN
 	save `PCN'
