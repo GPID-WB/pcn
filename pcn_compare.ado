@@ -142,7 +142,7 @@ qui {
 		replace `mv' = round(`mv', `tl')
 	}
 	
-	replace coveragetype = 3 if coveragetype == 4 // One national 
+	cap replace coveragetype = 3 if coveragetype == 4 // One national 
 	
 	tempfile serverd
 	save `serverd'
@@ -184,7 +184,7 @@ qui {
 		replace `mv' = round(`mv', `tl')
 	}
 	
-	replace coveragetype = 3 if coveragetype == 4 // One national 
+	cap replace coveragetype = 3 if coveragetype == 4 // One national 
 	
 	tempfile PCN
 	save `PCN'
