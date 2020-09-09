@@ -307,20 +307,19 @@ qui {
 			
 			cap isynth distribution, count(`country') year(`year') addvar(`addvar') server(AR) natppp /*
 			*/ `pause' `clear' `options' 			
-			
-			// condition for synth
-			replace welfare = welfare*(365/12) //to monthly
-			if ("`country'"== "CHN"){
-				if ("`iscover'" == "R") 	keep if coverage == "Rural"
-				if ("`iscover'" == "U") 	keep if coverage == "Urban"
-			}
-			
 			if (_rc) {
 				
 				local status "error. loading"
 				local dlwnote "isynth distribution, count(`country') year(`year') addvar(`addvar') `pause' `clear' `options'"				
 			}
 			else{
+				// condition for synth
+				replace welfare = welfare*(365/12) //to monthly
+				if ("`country'"== "CHN"){
+					if ("`iscover'" == "R") 	keep if coverage == "Rural"
+					if ("`iscover'" == "U") 	keep if coverage == "Urban"
+				}
+				
 				gen urban = inlist(coveragetype, "urban", "Urban")
 			}		
 		}
@@ -460,8 +459,15 @@ qui {
 			local cfiles "`rfile' `ufile' `wfile'"
 		} // end of special cases
 		else {
-			keep weight welfare 
-			local urban ""
+			cap confirm variable urban 
+			if (_rc){
+				keep weight welfare
+				local urban ""
+			}
+			else{
+				keep weight welfare urban
+				local urban "urban"
+			}
 			tempfile wfile
 			char _dta[cov]  ""
 			if ("`module'" == "isynth") 	char _dta[cov]  "`iscover'"
