@@ -21,6 +21,7 @@ syntax [anything(name=subcmd id="subcommand")], ///
 IDvar(string)                                  ///
 MAINv(string)                                  ///
 server(string)                                 ///
+server0(string)								 ///
 DISvar(string)                                 ///
 check(string)                                  ///
 POVline(string)                                ///
@@ -33,6 +34,8 @@ year(string)									 ///
 FILLgaps                     				 ///
 AGGregate                    			     ///
 wb											 ///
+vintage(string)								///
+vintage0(string)								///
 ]
 
 version 14
@@ -54,7 +57,7 @@ qui {
 	// relevant macros 
 	if ("`idvar'" == "" & "`aggregate'" != "") loc idvar "year povertyline "
 	else if ("`idvar'" == "" & "`wb'" != "") loc idvar "regioncode  year povertyline"
-	else if ("`idvar'" == "") loc idvar "regioncode countrycode year povertyline coveragetype datatype"
+	else if ("`idvar'" == "") loc idvar "countrycode year povertyline coveragetype datatype"
 	else 				 loc idvar = lower("`idvar'")
 	
 	if ("`mainv'" == "")  loc mainv "headcount"
@@ -69,7 +72,9 @@ qui {
 	if ("`disvar'" == "") loc disvar "main"
 	else                 loc disvar = lower("`disvar'")
 	
-	if ("`sdlevel'" == "") loc sdlevel = 2 				
+	if ("`sdlevel'" == "") loc sdlevel = 2 		
+
+	if ("`server0'" != "")  loc serverm = "server(`server0')"
 	
 	if !inlist("`check'","main","all") {
     noi di as err "Check varibables must be set to: main or all"
@@ -88,9 +93,32 @@ qui {
 	==================================================*/
 	
 	// get testing data
-	povcalnet `wb', server(`server') povline(`povline') ///
+	if ("`vintage'" == ""){
+		povcalnet `wb', server(`server') povline(`povline') ///
 				country(`country') region(`region') ///
 				year(`year') `fillgaps' `aggregate' clear
+	}
+	else{
+		pcn_production load, server(`server') vintage(`vintage') clear
+		cap rename wbcode countrycode
+		if (!_rc){
+			cap gen povertyline = 1.9
+			cap replace surveyyear = round(surveyyear)
+			cap rename surveyyear 
+			cap gen datatype = . 
+			cap gen coveragetype = .
+			cap replace datatype =  1 if inlist(inc_con, "c", "C")
+			cap replace datatype = 2 if inlist(inc_con, "i", "I")
+			cap replace coveragetype = 2 if regexm(country, "(Urban)") & national == 0
+			cap replace coveragetype = 1 if regexm(country, "(Rural)") & national == 0
+			cap replace coveragetype = 3 if national == 1
+			cap replace countrycode = substr(countrycode,1,3)
+			replace headcount = headcount/100
+			replace gini = gini/100
+		}
+	}
+	
+	replace povertyline=round(povertyline,.1) // some odd cases they do not quite match 
 	
 	cap isid `idvar'
 	if _rc {
@@ -114,21 +142,49 @@ qui {
 		replace `mv' = round(`mv', `tl')
 	}
 	
+	cap replace coveragetype = 3 if coveragetype == 4 // One national 
+	
 	tempfile serverd
 	save `serverd'
 	
 	// Get current data
-	povcalnet `wb', povline(`povline') ///
-				country(`country') region(`region') ///
-				year(`year') `fillgaps' `aggregate' clear 
-	
-	if ("`check'" == "main"){
-    keep `idvar' `mainv'
+	if ("`vintage0'" == ""){
+		povcalnet `wb', povline(`povline') ///
+					country(`country') region(`region') ///
+					year(`year') `serverm' `fillgaps' `aggregate' clear 
+		
+		if ("`check'" == "main"){
+			keep `idvar' `mainv'
+		}
 	}
+	else{
+		pcn_production load, `serverm' vintage(`vintage0') clear
+		cap rename wbcode countrycode
+		if (!_rc){
+			cap gen povertyline = 1.9
+			cap replace surveyyear = round(surveyyear)
+			cap rename surveyyear 
+			cap gen datatype = . 
+			cap gen coveragetype = .
+			cap replace datatype =  1 if inlist(inc_con, "c", "C")
+			cap replace datatype = 2 if inlist(inc_con, "i", "I")
+			cap replace coveragetype = 2 if regexm(country, "(Urban)") & national == 0
+			cap replace coveragetype = 1 if regexm(country, "(Rural)") & national == 0
+			cap replace coveragetype = 3 if national == 1
+			cap replace countrycode = substr(countrycode,1,3)
+			replace headcount = headcount/100
+			replace gini = gini/100
+		}
+	}
+	
+	replace povertyline=round(povertyline,.1)
+	
 	
 	foreach mv of local mainv {
 		replace `mv' = round(`mv', `tl')
 	}
+	
+	cap replace coveragetype = 3 if coveragetype == 4 // One national 
 	
 	tempfile PCN
 	save `PCN'
