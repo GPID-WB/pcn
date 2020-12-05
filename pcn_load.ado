@@ -33,7 +33,8 @@ pause                         ///
 lis                           ///
 cpi                           ///
 noLOAD                        ///
-lyear						 ///
+lyear						              ///
+INVentory                     ///
 ]
 
 version 14
@@ -52,13 +53,14 @@ local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `date_time'
 local datetimeHRF = trim("`datetimeHRF'")
 local user=c(username)
 
-
-//========================================================
-// conditions
-//========================================================
-
 qui {
-	* ----- Initial conditions
+	
+	//========================================================
+	// conditions
+	//========================================================
+	tempfile orig
+	save `orig'
+	preserve
 	
 	local country = upper("`country'")
 	local lis = upper("`lis'")
@@ -76,9 +78,8 @@ qui {
 	*/
 	
 	
-	*---------- conditions
-	if ("`type'" == "") local type "GMD"
-	if ("`lis'" == "LIS") local module "BIN"
+	if ("`type'" == "")          local type "GMD"
+	if (upper("`lis'") == "LIS") local module "BIN"
 	
 	
 	if (inlist("`type'", "GMD", "GPWG")) {
@@ -87,6 +88,12 @@ qui {
 	else {
 		noi disp as error "type: `type' is not valid"
 		error
+	}
+	
+	
+	* load and inventory
+	if ("`inventory'" != "") {
+		local load = "noload"
 	}
 	
 	
@@ -134,268 +141,215 @@ qui {
 	}
 	
 	
-	*----------1.2: check for valid data given the module
-	
-	
-	
+	//========================================================
+	// Get data available 
+	//========================================================
+	*##s
+	local maindir = "//wbntpcifs/povcalnet/01.PovcalNet/01.Vintage_control"
+	local country = "DEU"
+	local year    = "2010"
+	local veralt  = ""
 	
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
 	
 	if(!inlist("`module'","")) {
 		loc textm " and module `module'"
-		loc moduleregex "`module'*"
 	}
 	
 	loc validf ""
 	loc routes ""
 	foreach dir of local dirs {
-		local dirsB: dir "`maindir'/`country'/`dir'" dirs "`dir'*", respectcase
-		foreach dirr of local dirsB{
-			cap local filess: dir "`maindir'/`country'/`dir'/`dirr'/Data" files "*.dta", respectcase
-			if _rc{
-				local filess: dir "`maindir'/`country'/`dir'/`dirr'/data" files "*.dta", respectcase
-			}
-			if regexm(`"`filess'"', "(.+[Vv][0-9]+_[Mm].+`moduleregex'.dta)") local a = regexs(1)
-			loc a = subinstr(`"`a'"', `"""', "",.)
-			loc a = subinstr(`"`a'"', `".dta"', "",.)
-			if !regexm(`"`validf'"', "`a'") local routes "`routes' `maindir'/`country'/`dir'/`dirr'/Data/`a'.dta"
-			if !regexm(`"`validf'"', "`a'") local validf "`validf' `a'"
+		
+		local dirsB: dir "`maindir'/`country'/`dir'" dirs "`dir'*"
+		
+		foreach dirr of local dirsB {
+			
+			local filess: dir "`maindir'/`country'/`dir'/`dirr'/Data" files "`dirr'*.dta"
+			
+			local filess = subinstr(`"`filess'"', `"""', "",.)
+			local filess = subinstr(`"`filess'"', `".dta"', "",.)
+			local filess = upper("`filess'")
+			
+			if !regexm(`"`validf'"', "`filess'") local validf "`validf' `filess'"
 		}
 	}
 	
-	// recover module if not given 
-	if ("`module'" == ""){
-		if (wordcount(`"`validf'"') == 0) {
-			noi disp in r "no survey in `country'-`year'"
-			error
-		}
-		else if (wordcount(`"`validf'"') == 1) {
-			if regexm(`"`validf'"',"`collection'_(.+)") local module = regexs(1)
-		}
-		else {  // if more than 1 valid file per country-year
-			foreach file of local validf {
-				if regexm(`"`file'"', "`collection'_(.+)") local a = regexs(1)
-				if !regexm(`"`modules'"', "`a'") local modules = "`modules' `a'"
-			}
-			if (wordcount(`"`modules'"') > 1) {
-				noi disp as text "list of available modules for `country'- `year'"
-				
-				local i = 0
-				foreach module of local modules {
-					local ++i
-					noi disp `"   `i' {c |} {stata `module'}"'
-				}
-				noi disp _n "select module to load" _request(_module)
-			}
-			else {
-				loc module = subinstr(`"`modules'"'," ", "", .)
-				
-			}
+	//------------data to mata
+	drop _all
+	cap noi mata: validf = pcn_split_id("`validf'")
+	if (_rc) {
+		noi disp in red "Error in Mata. check, local validf" _n /* 
+		*/ "`validf'"
+	}
+	
+	//------------ clean data
+	getmata (id countrycode year survey vermast veralt  collection module) = validf
+	gen vermast_int = regexs(1) if regexm(vermast, "[Vv]([0-9]+)")
+	gen veralt_int  = regexs(1) if regexm(veralt, "[Vv]([0-9]+)")
+	destring vermast_int veralt_int, replace force
+	
+	* create paths
+	gen dir1  = countrycode + "_" + year + "_" + survey
+	gen dir2  = regexr(id, "_[A-Z]+$", "")
+	gen strL path = "`maindir'/" + countrycode + "/" + dir1 + "/" /* 
+	*/ + dir2 + "/Data/" + id + ".dta"
+	
+	//========================================================
+	// Filter depending on user options
+	//========================================================
+	
+	//------------ filter if vermast or veralt are provided
+	
+	local vers "vermast veralt"
+	foreach v of local vers {
+		if ("``v''" != "") {
+			local `v' = regexr("``v''", "[Vv]", "")
+			keep if `v'_int == ``v''
 		}
 	}
 	
-	// only keep routes for the selected survey
-	local aroutes ""
-	local avalidf ""
-	foreach route of local routes {
-		if regexm(`"`route'"', "(`collection'_`module')") local aroutes "`aroutes' `route'"
-	}
-	foreach vfile of local validf {
-		if regexm(`"`vfile'"', "(`collection'_`module')") local avalidf "`avalidf' `vfile'"
-	}
-	loc routes "`aroutes'"
-	loc validf "`avalidf'"
 	
-	* ---------- Check survey 
-	
-	if (wordcount(`"`validf'"') == 0) {
-		noi disp in r "no survey in `country'-`year' `textm'"
+	//------------ Make sure there is only one vintage
+	tempvar uniq
+	qui bysort vermast veralt: gen byte `uniq' = (_n==_N)
+  cap summ `uniq', meanonly
+	if (_rc) {
+		noi disp in r "the combination `country'-`year'-vermast(`vermast') " _n/* 
+		*/  "and veralt(`veralt') does not exist"
 		error
 	}
 	
 	
-	if ("`survey'" == "") {
-		if (wordcount(`"`validf'"') == 1) {
-			if regexm(`"`validf'"', "([0-9]+)_(.+)_[Vv]([0-9]+_[Mm].+)") local survey = regexs(2)
-		}
-		else {  // if more than 1 valid file per country-year module
-			foreach file of local validf {
-				if regexm(`"`file'"', "([0-9]+)_(.+)_[Vv]([0-9]+_[Mm].+)") local a = regexs(2)
-				if !regexm(`"`surveys'"', "`a'")  local surveys = "`surveys' `a'"
-			}			
-			if (wordcount(`"`surveys'"') > 1) {
-				noi disp as text "list of available surveys for `country'- `year' `textm'"
-				
-				local i = 0
-				foreach survey of local surveys {
-					local ++i
-					noi disp `"   `i' {c |} {stata `survey'}"'
-				}
-				noi disp _n "select survey to load" _request(_survey)
-			}
-			else {
-				loc survey = subinstr(`"`surveys'"'," ", "", .)
-			}
-		}
-	} // end of survey == ""
-	else {
-		local survey = upper("`survey'")
-	}
-	
-	// only keep routes for the selected survey
-	local aroutes ""
-	foreach route of local routes {
-		if regexm(`"`route'"', "(.+_`survey'_.+)") local aroutes "`aroutes' `route'"
-	}
-	loc routes "`aroutes'"
-	
-	
-	if (`"`routes'"' == "") {
-		noi disp as err "no data for the following combination: " ///
-		as text "`country' `year' `survey' `textm'"
-		error
-	}
-	
-	
-	*-------- 1.3 version
-	
-	** Master Version
-	
-	if ("`vermast'" == "") {
+	if (r(sum) > 1) {
+		tempvar mmast malt
+		bysort survey: egen `mmast' = max(vermast_int)
+		keep if `mmast' == vermast_int
 		
-		foreach route of local routes {
-			if regexm(`"`route'"', "_[Vv]([0-9]+)_[Mm]_") local a = regexs(1)
-			local vms = "`vms' `a'"
-		}
-		
-		local vms = trim("`vms'")
-		local vms: subinstr local vms " " ", ", all
-		local vm = max(0, `vms')
-		
-		if (length("`vm'") == 1) local vermast = "0`vm'"
-		else                     local vermast = "`vm'"
+		bysort survey: egen `malt'  = max(veralt_int)
+		keep if `malt'  == veralt_int
 	}
+	*##e
 	
-	else {
-		if regexm("`vermast'", "^[Vv]([0-9]+)") local vermast = regexs(1)
-		if (length("`vermast'") == 1) local vermast = "0`vermast'"
-	}
-	
-	// only keep routes for the selected master version
-	local aroutes ""
-	foreach route of local routes {
-		if regexm(`"`route'"', "(_[Vv]`vermast'_[Mm]_)") local aroutes "`aroutes' `route'"
-	}
-	loc routes "`aroutes'"
-	
-	** Alternative Version
-	
-	if ("`veralt'" == "") {
-		foreach route of local routes {
-			if regexm(`"`route'"', "_[Vv]([0-9]+)_[Aa]_") local a = regexs(1)
-			local vas = "`vas' `a'"
-		}
-		
-		local vas = trim("`vas'")
-		local vas: subinstr local vas " " ", ", all
-		local va = max(0, `vas')
-		
-		if (length("`va'") == 1) local veralt = "0`va'"
-		else                     local veralt = "`va'"
-	}
-	
-	// only keep routes for the selected master version
-	local aroutes "" 
-	foreach route of local routes {
-		if regexm(`"`route'"', "(_[Vv]`veralt'_[Aa]_)") local aroutes "`aroutes' `route'"
-	}
-	loc routes "`aroutes'"
-	
-	
-	/*==================================================
-	2: Loading according to type
-	==================================================*/
-	
-	*----------2.2: Load data
-	local surdir "`maindir'/`country'/`country'_`year'_`survey'"
-	local survid = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A_`collection'"
+	//------------ filter by module and survey
 	
 	if ("`module'" != "") {
-		local filename = "`survid'_`module'"
-	}
-	else {
-		local filename = "`survid'"
+		keep if module == upper("`module'")
 	}
 	
-	return local surdir = "`surdir'"
-	return local survid = "`survid'"
-	return local survin = "`country'_`year'_`survey'_v`vermast'_M_v`veralt'_A"
-	return local filename = "`filename'"
-	confirm file "`surdir'/`survid'/Data/`filename'.dta" 
+	if ("`survey'" != "") {
+		keep if survey == upper("`survey'")
+	}
 	
-	if ("`load'" == "") {
-		use "`surdir'/`survid'/Data/`filename'.dta", clear
-		noi disp as text "`filename'.dta" as res " successfully loaded"
-		
-		if ("`cpi'" == "cpi") {
-			if regexm("`module'", "\-U$") {
-				local datalevel = 1
-			} 
-			else if regexm("`module'", "\-R$") {
-				local datalevel = 0
-			}
-			else {
-				local datalevel = 2
-			}
-			gen datalevel = `datalevel'
-			if ("`country'" == "ARG") {
-				replace datalevel = 1
-			}
-			if ("`country'" == "URY" & inrange(`year', 1992, 2005)) {
-				replace datalevel = 1
-			}
-			gen countrycode = "`country'"
-			
-			preserve
-			pcn load pf, clear
-			keep if countrycode == "`country'" & year == `year' /* 
-			*/      & survname == "`survey'" & datalevel == `datalevel'
-			drop coverage 
-			tempfile pf
-			save `pf'
-			
-			pcn load cpi, clear
-			if inlist("`country'", "IND", "IDN", "CHN") {
-				merge m:1 countrycode year survname datalevel using `pf', ///
-				keep( 3 4 5) nogen update replace
-			}
-			else {
-				merge m:1 countrycode ref_year survname datalevel using `pf', ///
-				keep( 3 4 5) nogen update replace
-			}
-			
-			keep if countrycode == "`country'" & year == `year' & survname == "`survey'"
-			tempfile cpipf
-			save `cpipf'
-			
+	//========================================================
+	// Load or display results
+	//========================================================
+	
+	* error if there is not data
+	if (_N  == 0) {
+		noi disp in r "the combination `country'-`year' - vermast(`vermast') " _n/* 
+		*/  "- veralt(`veralt') - survey(`survey') - module(`module') does not exist"
+		error
+	}
+	* load is there is one data
+	else if (_N == 1) {
+		local dta2use = path[1]
+		if ("`load'" == "") {
+			local fid = id[1]
 			restore
+			use "`dta2use'", `clear'
+			noi disp as text "`fid'" as res " successfully loaded"
 			
-			merge m:1 countrycode datalevel using `cpipf', keep(3) nogen
+			if ("`cpi'" == "cpi") {
+				if regexm("`module'", "\-U$") {
+					local datalevel = 1
+				} 
+				else if regexm("`module'", "\-R$") {
+					local datalevel = 0
+				}
+				else {
+					local datalevel = 2
+				}
+				gen datalevel = `datalevel'
+				if ("`country'" == "ARG") {
+					replace datalevel = 1
+				}
+				if ("`country'" == "URY" & inrange(`year', 1992, 2005)) {
+					replace datalevel = 1
+				}
+				gen countrycode = "`country'"
+				
+				preserve
+				pcn load pf, clear
+				keep if countrycode == "`country'" & year == `year' /* 
+				*/      & survname == "`survey'" & datalevel == `datalevel'
+				drop coverage 
+				tempfile pf
+				save `pf'
+				
+				pcn load cpi, clear
+				if inlist("`country'", "IND", "IDN", "CHN") {
+					merge m:1 countrycode year survname datalevel using `pf', ///
+					keep( 3 4 5) nogen update replace
+				}
+				else {
+					merge m:1 countrycode ref_year survname datalevel using `pf', ///
+					keep( 3 4 5) nogen update replace
+				}
+				
+				keep if countrycode == "`country'" & year == `year' & survname == "`survey'"
+				tempfile cpipf
+				save `cpipf'
+				
+				restore
+				
+				merge m:1 countrycode datalevel using `cpipf', keep(3) nogen
+			}
+			exit
+		}
+	}
+	* display option if there is more than one file
+	else {
+		if ("`inventory'" == "") {
+			levelsof id , local(ids)
+			local i = 0
+			noi disp as text "list of available surveys `country'- `year'"
+			foreach id of local ids {
+				local ++i
+				local path = path[`i']
+				noi disp `"   `i' {c |} {stata use "`path'", clear: `id'}"'
+			}
 		}
 	}
 	
-}
-/*==================================================
-3:
-==================================================*/
-
-
+	
+	//========================================================
+	// Load inventory of most recent vintage
+	//========================================================
+	
+	* display inventory
+	if ("`inventory'" != "") {
+		tempfile inv
+		save `inv'
+		restore
+		use `inv', `clear'
+		exit 
+	}
+	
+} // end of qui
 *----------3.1:
 
 
 *----------3.2:
 
 end
+
+/*==================================================
+3: Mata functions
+==================================================*/
+
+findfile "pcn_functions.mata"
+include "`r(fn)'"
+
 exit
 /* End of do-file */
 

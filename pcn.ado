@@ -73,13 +73,13 @@ qui {
 	
 	* Directory path
 	if ("`drive'" == "") {
-		if ("`c(hostname)'" == "wbgmsbdat002") local drive "Q"
-		else                                   local drive "P"
+		if ("`c(hostname)'" == "wbgmsbdat002") local drive "\\wbgmsbdat002"
+		else                                   local drive "//wbntpcifs/povcalnet"
 	}
 	
 	if ("`root'" == "") local root "01.PovcalNet/01.Vintage_control"
 	
-	if ("`maindir'" == "") local maindir "`drive':/`root'"
+	if ("`maindir'" == "") local maindir "`drive'//`root'"
 	
 	if ("`qui'" == "") {
 		local nq  "noi"
