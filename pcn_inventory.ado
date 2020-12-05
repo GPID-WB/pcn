@@ -97,11 +97,7 @@ qui {
 	* local veralt  = ""
 	
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
-	
-	if(!inlist("`module'","")) {
-		loc textm " and module `module'"
-	}
-	
+		
 	loc validf ""
 	loc routes ""
 	foreach dir of local dirs {
@@ -142,7 +138,7 @@ qui {
 	
 	* create paths
 	gen dir1  = countrycode + "_" + year + "_" + survey
-	gen dir2  = regexr(id, "_[A-Z]+$", "")
+	gen dir2  = regexr(id, "_[A-Z\-]+$", "")
 	gen strL path = "`maindir'/" + countrycode + "/" + dir1 + "/" /* 
 	*/ + dir2 + "/Data/" + id + ".dta"
 	
