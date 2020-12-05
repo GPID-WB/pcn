@@ -50,7 +50,9 @@ if ("`status'" == "approved")	 local dir "p:\01.PovcalNet\03.QA\05.PRIMUS_approv
 else	 						 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS_pending"
 */
 if ("`status'" == "approved")	 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS\approved"
-else	 						 local dir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
+else	 						             local dir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
+
+if ("`countries'" == "") local countries "all"
 
 // =============================
 // Preliminay checks
@@ -87,7 +89,7 @@ qui {
 	//===========================================================
 	// Check transaction ID's
 	//===========================================================
-	if ("`transfile'" == ""){
+	if ("`transfile'" == "") {
 		noi pcn_primus_download_trans, countries(`countries') years(`years') status(`status') ///
 		wkyr(`wkyr') meeting(`meeting') dir(`dir') date_time(`date_time')
 		return local change = "`r(change)'"

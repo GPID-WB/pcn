@@ -17,18 +17,18 @@ Output:
 ==================================================*/
 program define pcn_primus_download_trans, rclass
 syntax [anything(name=subcmd id="subcommand")],  ///
-[                                   ///
-COUNtries(string)                   ///
-Years(numlist)                      ///
-REGions(string)                     ///
-DIR(string)                         ///
+[                         ///
+COUNtries(string)         ///
+Years(numlist)            ///
+DIR(string)               ///
+REGions(string)           ///
 status(string)						///
 wkyr(string)							///
 meeting(string)						///
-date_time(string)						///
-replace                             ///
-clear                              ///
-pause                              ///
+date_time(string)				  ///
+replace                   ///
+clear                     ///
+pause                     ///
 ]
 
 version 14
@@ -45,10 +45,10 @@ qui {
 	`pause' status(`status')
 
 	if ("`meeting'" == "SM") {
-		local filtdate = "`=`wkyr'-1'-12" // filter date (december last year)
+		local filtdate = "`=`wkyr'-1'-11" // filter date (december last year)
 	}
 	else {
-		// I still don't know the cut off for Annual meetings
+		local filtdate = "`=`wkyr''-05" // filter date (december last year)
 	}
 
 	tempvar fd
@@ -61,7 +61,7 @@ qui {
 	local n = _N
 
 	if (`n' == 0) {
-		noi disp as error "There is no data in PRIMUS for the convination of " ///
+		noi disp as error "There is no `status' data in PRIMUS for the combination of " ///
 		"country/years selected"
 		error
 	}
@@ -78,14 +78,17 @@ qui {
 
 	cap noi datasignature confirm using "`dirname'/`wkyr'_`meeting'"
 	if (_rc == 601) { // file not found
+	
 		qui datasignature set, reset saving("`dirname'/`wkyr'_`meeting'", replace)
 		save "`dirname'/`wkyr'_`meeting'.dta", replace
 		save "`dirname'/`wkyr'_`meeting'_`date_time'.dta", replace
-		noi di as text "Data siganture not found"
-		noi di as result "Data siganture created"
+		noi di as text "Data signature not found"
+		noi di as result "Data signature created"
 		local change = "Real Change"
+		
 	}
 	else if (_rc ==9) {
+	
 		local files: dir "`dirname'"  files "`wkyr'_`meeting'_*.dta", respectcase
 
 		local vers = 0
