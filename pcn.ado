@@ -16,6 +16,7 @@ References:
 Output:
 ==================================================*/
 
+
 /*==================================================
 0: Program set up
 ==================================================*/
@@ -28,12 +29,10 @@ REGions(string)                     ///
 maindir(string)                     ///
 type(string)                        ///
 pause                               ///
-vermast(string)                     ///
-veralt(string)                      ///
 *                                   ///
 qui                                 ///
 ]
-version 14
+version 16
 
 *---------- conditions
 if ("`pause'" == "pause") pause on
@@ -118,6 +117,16 @@ qui {
 	}
 	
 	
+	//========================================================
+	//  inventory
+	//========================================================
+	
+	if regexm("`subcmd'", "^inv(e|en|ent|ento|entor|entor)") {
+		pcn_inventory, country(`countries') year(`years') maindir("`maindir'") /* 
+		*/  `pause' `options'
+		exit
+	}
+	
 	// ------------------------------------------------------------------------------
 	// Download GPWG
 	// -------------------------------------------------------------------------------
@@ -180,8 +189,7 @@ qui {
 	if ("`subcmd'" == "load" | "`subcmd'" == "load[ ]+gpwg") {
 		
 		`nq' pcn_load, country(`countries') year(`years') type(`type')  /*
-		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause'  `options'
+		*/ maindir("`maindir'") `pause'  `options'
 		return add
 		exit
 	}
@@ -194,8 +202,7 @@ qui {
 		local maindir "p:\01.PovcalNet\03.QA\02.PRIMUS\pending"
 		
 		`nq' pcn_load_wrk, country(`countries') year(`years')  /*
-		*/ maindir("`maindir'") vermast(`vermast')  /*
-		*/ `pause' `clear' `options'
+		*/ maindir("`maindir'")  `pause' `clear' `options'
 		return add
 		exit
 	}
@@ -221,8 +228,7 @@ qui {
 	if ("`subcmd'" == "create") {
 		
 		`nq' pcn_create, countries(`countries') years(`years') type(`type')  /*
-		*/ maindir("`maindir'") vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause'  `options'
+		*/ maindir("`maindir'")  `pause'  `options'
 		return add
 		exit
 	}
@@ -235,8 +241,7 @@ qui {
 	if inlist(lower("`subcmd'"), "group", "groupdata", "gd", "groupd") {
 		
 		`nq' pcn_groupdata, country(`countries') years(`years') type(`type')  /*
-		*/  vermast(`vermast') veralt(`veralt')  /*
-		*/ `pause'  `options'
+		*/  `pause'  `options'
 		return add
 		exit
 	}
@@ -365,13 +370,13 @@ qui {
 	}
 	
 	
+	
+	
+	
+	
 } // end of qui
 
 end
-
-// ------------------------------------------------------------------------
-// Mata functions
-// ------------------------------------------------------------------------
 
 
 exit

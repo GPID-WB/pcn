@@ -2,6 +2,7 @@
 // MATA code to loop over primus results
 // ------------------------------------------------------------------------
 
+cap mata: mata drop pcn_*()
 
 mata:
 
@@ -39,8 +40,7 @@ string matrix pcn_info(matrix P) {
 	return(P)
 }
 
-string matrix pcn_split_id(string scalar invs)
-{
+string matrix pcn_split_id(string scalar invs) {
 	string colvector Y
 	string matrix    A
 	
