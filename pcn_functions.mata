@@ -2,6 +2,7 @@
 // MATA code to loop over primus results
 // ------------------------------------------------------------------------
 
+cap mata: mata drop pcn_*()
 
 mata:
 
@@ -38,6 +39,33 @@ string matrix pcn_info(matrix P) {
 
 	return(P)
 }
+
+string matrix pcn_split_id(string scalar invs) {
+	string colvector Y
+	string matrix    A
+	
+	Y = tokens(invs)'
+	
+	A = J(0,0, .z)
+	
+	for (i =1; i<=rows(Y); i++) {
+		//printf("i=%s\n", Y[i])
+		
+		if (rows(A) == 0) {
+			A = tokens(Y[i], "_")
+		}
+		else {
+			A = A \ tokens(Y[i], "_")
+		}
+		
+	}
+	
+	A = select(A,  !regexm(A[1,.],"^(_|M|A)$"))
+	
+	A = Y, A
+	return(A)
+}
+
 
 end
 
