@@ -107,7 +107,7 @@ qui foreach id of local ids {
 		local dir `dirs'
 		local fileid `dir'
 		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
-		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cov'.dta", respect
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GD-`cov'.dta", respect
 		if (`"`exfile'"' == "") local fe = "`dir'"  // file does not exists
 	}
 	else{
@@ -115,7 +115,7 @@ qui foreach id of local ids {
 		local va = ""
 		foreach dir of local dirs {
 			if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
-			local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cov'.dta", respect
+			local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GD-`cov'.dta", respect
 			if (`"`exfile'"' != "") continue
 			else local fe = "`dir'"  // file does not exists
 		}
@@ -129,7 +129,7 @@ qui foreach id of local ids {
 		local fileid "`cc'_`yr'_`sy'_v01_M_v`va'_A_GMD"
 	}
 	
-	local signature "`cc'_`yr'_`sy'_GMD_GROUP-`cov'"
+	local signature "`cc'_`yr'_`sy'_GMD_GD-`cov'"
 	
 	cap datasignature confirm using /*
 	*/ "`sydir'/`fileid'/Data/`signature'", strict
@@ -158,7 +158,7 @@ qui foreach id of local ids {
 		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 		local datetimeHRF = trim("`datetimeHRF'")
 
-		char _dta[filename]        `fileid'_GROUP-`cov'.dta
+		char _dta[filename]        `fileid'_GD-`cov'.dta
 		char _dta[id]              `fileid'
 		char _dta[welfaretype]     `dt'
 		char _dta[weighttype]      "PW"
@@ -169,12 +169,15 @@ qui foreach id of local ids {
 		char _dta[formattype]      `ft'
 		char _dta[datetime]        `datetime'
 		char _dta[datetimeHRF]     `datetimeHRF'
-
+		char _dta[gdtype]          "T`ft'"
+		char _dta[datatype]        "`dt'"
+		
+		
 		cap mkdir "`sydir'/_vintage"
 		save "`sydir'/_vintage/`signature'_`datetime'.dta", replace
-		save "`verid'/Data/`fileid'_GROUP-`cov'.dta", replace
+		save "`verid'/Data/`fileid'_GD-`cov'.dta", replace
 
-		export delimited using "`verid'/Data/`fileid'_GROUP-`cov'.txt", ///
+		export delimited using "`verid'/Data/`fileid'_GD-`cov'.txt", ///
 		novarnames nolabel delimiter(tab) `replace'
 
 		export delimited using "`verid'/Data/`cc'`cov'`l2y'.T`ft'", ///
@@ -182,7 +185,7 @@ qui foreach id of local ids {
 
 	}
 	else {
-		noi disp in y "File " in w "`fileid'_GROUP-`cov'.dta" in /*
+		noi disp in y "File " in w "`fileid'_GD-`cov'.dta" in /*
 		*/ y " is up to date."
 	}
 
@@ -191,71 +194,6 @@ qui foreach id of local ids {
 	local `cc'`yr'`cov'm = r(mean)
 
 	restore
-}
-
-//------------ Check both files are in the most recent folder
-qui foreach id of local ids {
-	local cc:   word 1 of `id'
-	local yr:   word 2 of `id'
-	local cov:  word 3 of `id'
-	local dt:   word 4 of `id'
-	local ft:   word 5 of `id'
-	local sy:   word 6 of `id'
-
-	local l2y = substr("`yr'", 3,.)
-
-	if (inlist("`sy'", "", ".")) local sy = "USN" // Unknown Survey Name
-
-	local cc = upper("`cc'")
-	local sydir "../../01.Vintage_control/`cc'/`cc'_`yr'_`sy'"
-
-	local dirs: dir "`sydir'" dirs "*GMD", respect
-
-	local fe = ""  // file exists
-	local va = ""
-	foreach dir of local dirs {
-
-		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
-
-		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GROUP-`cov'.dta", respect
-		if (`"`exfile'"' != "") continue
-		else local fe = "`dir'"  // file does not exists
-	}
-
-	if ("`fe'" != "") {
-
-		local mfiles: dir "`sydir'/_vintage" files "`signature'*.dta", respect
-		disp `"`mfiles'"'
-		local vcs: subinstr local mfiles "`signature'_" "", all
-		local vcs: subinstr local vcs ".dta" "", all
-		local vcs: list sort vcs
-		disp `"`vcs'"'
-
-		mata: VC = strtoreal(tokens(`"`vcs'"'));  /*
-		*/	  st_local("mvc", strofreal(max(VC), "%15.0f"))
-
-		copy "`sydir'/vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'_GROUP-`cov'.dta"
-
-		use "`sydir'/`fe'/Data/`fe'_GROUP-`cov'.dta", clear
-
-		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-		local datetimeHRF = trim("`datetimeHRF'")
-
-		char _dta[filename]     `fe'_GROUP-`cov'.dta
-		char _dta[id]           `fe'
-		char _dta[datetime]     `datetime'
-		char _dta[datetimeHRF]  `datetimeHRF'
-
-		save, replace
-
-		export delimited using "`sydir'/`fe'/Data/`fileid'_GROUP-`cov'.txt", ///
-		novarnames nolabel delimiter(tab) `replace'
-
-		export delimited using "`sydir'/`fe'/Data/`cc'`cov'`l2y'.T`ft'", ///
-		novarnames nolabel delimiter(tab) `replace'
-
-	}
-
 }
 
 end
@@ -305,4 +243,71 @@ local exfile: dir "../../01.Vintage_control/CHN/CHN_2016_USN/chn_2016_usn_v01_m_
 disp `"`exfile'"'
 
 
+
+
+
+//------------ Check both files are in the most recent folder
+qui foreach id of local ids {
+	local cc:   word 1 of `id'
+	local yr:   word 2 of `id'
+	local cov:  word 3 of `id'
+	local dt:   word 4 of `id'
+	local ft:   word 5 of `id'
+	local sy:   word 6 of `id'
+
+	local l2y = substr("`yr'", 3,.)
+
+	if (inlist("`sy'", "", ".")) local sy = "USN" // Unknown Survey Name
+
+	local cc = upper("`cc'")
+	local sydir "../../01.Vintage_control/`cc'/`cc'_`yr'_`sy'"
+
+	local dirs: dir "`sydir'" dirs "*GMD", respect
+
+	local fe = ""  // file exists
+	local va = ""
+	foreach dir of local dirs {
+
+		if regexm("`dir'", "v([0-9]+)_A") local va = "`va' " + regexs(1)
+
+		local exfile: dir "`sydir'/`dir'/Data" files "*GMD_GD-`cov'.dta", respect
+		if (`"`exfile'"' != "") continue
+		else local fe = "`dir'"  // file does not exists
+	}
+
+	if ("`fe'" != "") {
+
+		local mfiles: dir "`sydir'/_vintage" files "`signature'*.dta", respect
+		disp `"`mfiles'"'
+		local vcs: subinstr local mfiles "`signature'_" "", all
+		local vcs: subinstr local vcs ".dta" "", all
+		local vcs: list sort vcs
+		disp `"`vcs'"'
+
+		mata: VC = strtoreal(tokens(`"`vcs'"'));  /*
+		*/	  st_local("mvc", strofreal(max(VC), "%15.0f"))
+
+		copy "`sydir'/vintage/`signature'_`mvc'.dta" "`sydir'/`fe'/Data/`fe'_GD-`cov'.dta"
+
+		use "`sydir'/`fe'/Data/`fe'_GD-`cov'.dta", clear
+
+		local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
+		local datetimeHRF = trim("`datetimeHRF'")
+
+		char _dta[filename]     `fe'_GD-`cov'.dta
+		char _dta[id]           `fe'
+		char _dta[datetime]     `datetime'
+		char _dta[datetimeHRF]  `datetimeHRF'
+
+		save, replace
+
+		export delimited using "`sydir'/`fe'/Data/`fileid'_GD-`cov'.txt", ///
+		novarnames nolabel delimiter(tab) `replace'
+
+		export delimited using "`sydir'/`fe'/Data/`cc'`cov'`l2y'.T`ft'", ///
+		novarnames nolabel delimiter(tab) `replace'
+
+	}
+
+}
 
