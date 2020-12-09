@@ -43,32 +43,14 @@ qui {
 	
 	
 	//========================================================
-	// Load latest data on datalibweb
+	// Reading from PIP folder now
 	//========================================================
 	
-	if ("`cpivin'" == "") {
-		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
-		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
-		
-		local cpivins "0"
-		foreach cpidir of local cpidirs {
-			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
-			local cpivins "`cpivins', `cpivin'"
-		}
-		local cpivin = max(`cpivins')
-	} // if no cpi vintage is selected
-	
-	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
-	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Survey_price_framework.dta)
-	
+	use "y:\PIP-Data\_aux\pfw\pfw.dta", clear
 	* keep region code year survname ref_year survey_coverage datatype rep_year comparability
-	rename (code  survey_coverage ) (countrycode coverage)
-	
-	gen datalevel = cond(coverage == "R", 0, /* 
-  */	            cond(coverage == "U", 1, 2)) 
+	rename country_code countrycode
 	
 	//------------Characteristics
-	char _dta[dlwversion]         "`cpivin'"
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
 	char _dta[pcn_datetime]       "`date_time'"
 	char _dta[pcn_user]           "`user'"
