@@ -92,8 +92,8 @@ qui {
 	//========================================================
 	*##s
 	* local maindir = "//wbntpcifs/povcalnet/01.PovcalNet/01.Vintage_control"
-	* local country = "DEU"
-	* local year    = "2010"
+	* local country = "PHL"
+	* local year    = "1988"
 	* local veralt  = ""
 	
 	local dirs: dir "`maindir'/`country'" dirs "`country'_`year'*", respectcase
@@ -112,7 +112,12 @@ qui {
 			local filess = subinstr(`"`filess'"', `".dta"', "",.)
 			local filess = upper("`filess'")
 			
-			if !regexm(`"`validf'"', "`filess'") local validf "`validf' `filess'"
+			foreach file of local filess {
+				if !regexm(`"`file'"', "[Vv][0-9]+_M_[Vv][0-9]+_A") continue
+				
+				if !regexm(`"`validf'"', "`file'") local validf "`validf' `file'"
+			}
+			
 		}
 	}
 	
@@ -123,12 +128,12 @@ qui {
 			noi disp in red "function pcn_split_id not fount. Error " _rc
 		}
 		else {
-			noi disp in red "Error in Mata. check, local validf" _n /* 
-			*/ "`validf'"
+			noi disp in red "Error in function {cmd:pcn_split_id} of Mata. check " _n /* 
+			*/ " local validf, " _n " `validf'"
 		}
 		error _rc
 	}
-	
+*##e
 	//------------ clean data
 	drop _all
 	getmata (id countrycode year survey vermast veralt  collection module) = validf
@@ -176,7 +181,7 @@ qui {
 		bysort survey: egen `malt'  = max(veralt_int)
 		keep if `malt'  == veralt_int
 	}
-	*##e
+
 	
 	//------------ filter by module and survey
 	
