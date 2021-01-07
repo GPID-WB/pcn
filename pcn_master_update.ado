@@ -6,7 +6,7 @@ url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     8 Feb 2020 - 21:40:33
-Modification Date:
+Modification Date: 6 Jan 2021 by Daniel Gerszon Mahler
 Do-file version:    01
 References:
 Output:
@@ -568,11 +568,32 @@ qui {
     rename (`vars') pop=
     reshape long pop, i(`idvars') j(col) string
     replace col = upper(col)
-    replace pop = pop/1e6   // divide by million
     
-    //------------Merge data and clean
+    //------------Merge with year data
     merge m:1 col using `fyear', keep(match) nogen
-    rename *, lower
+	
+	//------------Merge with special country data
+	/* Note for PSE, KWT and SXM, some years of population data are missing in Emi's main file and hence in WDI.
+	   Here we are complementing the main file with an additional file she shared to assure complete coveage.
+	   This file contains historical data and will not need to be updated every year. 
+	   Hence, here we are just calling the version we received. Should we receive a new version, 
+	   the import line below should be updated to reflect the accurate file.
+	*/
+	preserve
+	import excel using "`popdir'/population_missing_2020-12-01.xlsx", clear firstrow sheet("Long")
+	drop SCALE
+	rename Data pop
+	replace Time = substr(Time,3,.)
+	destring Time, replace
+	rename Time year
+	tempfile specialcases
+	save `specialcases'
+	restore
+	merge 1:1 Country Series year using `specialcases', update nogen
+	
+	//-----------clean
+	replace pop = pop/1e6   // divide by million
+	rename *, lower
     gen coverage = cond(series == "SP.POP.TOTL", "National", /*
     */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
     
