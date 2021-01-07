@@ -250,7 +250,7 @@ qui {
 	// Update CPI
 	//========================================================
 	if regexm("`subcmd'", "update[ ]+cpi") {
-		if !inlist("`c(username)'", "wb384996") {
+		if !inlist("`c(username)'", "wb384996","WB514665") {
 			noi disp in r "You're not authorized to execute this command"
 			error
 		}
@@ -275,7 +275,7 @@ qui {
 	//========================================================
 	//------------update
 		if regexm("`subcmd'", "update[ ]+(price|framework|pf)") {
-		if !inlist("`c(username)'", "wb384996") {
+		if !inlist("`c(username)'", "wb384996","WB514665") {
 			noi disp in r "You're not authorized to execute this command"
 			error
 		}
@@ -298,7 +298,7 @@ qui {
 	//========================================================
 	if regexm("`subcmd'", "master") {
 		if regexm("`options'", "update\(.*\)") {
-			if !inlist("`c(username)'", "wb384996") {
+			if !inlist("`c(username)'", "wb384996","WB514665") {
 				noi disp in r "You're not authorized to execute this command"
 				error
 			}
