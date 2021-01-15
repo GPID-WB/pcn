@@ -6,7 +6,7 @@ url:
 Dependencies:  The World Bank
 ----------------------------------------------------
 Creation Date:     8 Feb 2020 - 21:40:33
-Modification Date:
+Modification Date: 6 Jan 2021 by Daniel Gerszon Mahler
 Do-file version:    01
 References:
 Output:
@@ -169,118 +169,184 @@ qui {
   ==================================================*/
   if (inlist(lower("`update'"),"gdp")) {
     
-    
-    //========================================================
-    // gets data from WDI API
-    //========================================================
-    
-    /* Note: This section is based on Espen's do-files available in
-    p:\02.personal\_handover\Espen\NAS process\*/
-    
-    *##s
-    set checksum off
-    wbopendata, indicator(NY.GDP.PCAP.KD) long clear
-    ren ny_gdp_pcap_kd wdi_gdp
-    keep countrycode year wdi_gdp
-    
-    gen sourcegdp="WDI 2020-02"
-    
-    local madison "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2018.dta"
-    merge 1:1 countrycode year using "`madison'", nogen
-    rename rgdpnapc mdp_gdp
-    
-    replace sourcegdp ="Maddison 2018" if sourcegdp == ""
-    
-    replace mdp_gdp = . if year>1999 // do not use madison for recent spells
-    
-    //========================================================
-    // Special cases
-    //========================================================
-    expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
-    bysort countrycode year: egen coverage = seq()
-    tostring coverage, replace
-    replace coverage =cond(coverage == "1", "National", /*
-    */                cond(coverage == "2", "Urban", "Rural"))
-    
-    tempfile fna
-    save `fna'
-    
-    //------------Find most recent version
-    local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
-    local files: dir "`popdir'" files "NAS special*xlsx"
-    local vers = 0
-    foreach file of local files {
-      if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
-      local sdata = date("`fdate'", "YMD")
-      local vers "`vers', `sdata'"
-    }
-    local maxdate = max(`vers')
-    local fver: disp %tdCCYY-NN-DD `maxdate' // file version
-    local fver = trim("`fver'")
-    
-    import excel using "`popdir'/NAS special_`fver'.xlsx", describe
-    
-    import excel using "`popdir'/NAS special_`fver'.xlsx", /*
-    */  clear sheet("`sheet'") firstrow case(lower)
-    
-    tempfile sna
-    save `sna'
-    
-    * Merge with special cases and downloaded data
-    use `fna', clear
-    
-    merge 1:1 countrycode coverage year using `sna', replace update
-    rename gdp sp_=
-    
-    gen special= inlist(_merge, 2, 3, 4, 5)
-    drop _merge
-    
-    keep if inrange(year,1960, `maxyear')
-    //========================================================
-    // Espen's code
-    //========================================================
-    //---- ----- Start
-    
-    gen     new_gdp=wdi_gdp               // default
-    replace new_gdp=sp_gdp   if special   // default
-    
-    
-    local s "mdp_gdp"
-    
-    bys countrycode coverage (year): gen lfbck_`s'= /*
-    */ (new_gdp!=. & new_gdp[_n-1]==. & _n!=1)*new_gdp/`s'
-    
-    bys countrycode coverage (year): egen lfbck_`s'i=max(lfbck_`s')
-    
-    // Linking factors, forward
-    bys countrycode coverage (year): gen lffwd_`s'= /*
-    */  (new_gdp!=. & new_gdp[_n+1]==. & _n!=_N)*new_gdp/`s'
-    
-    bys countrycode coverage (year): egen lffwd_`s'i=max(lffwd_`s')
-    
-    // Assess where to apply (forward==1 or backward==1)
-    bys countrycode coverage (year): gen gap_`s'=1 if new_gdp==. & new_gdp[_n-1]!=.
-    bys countrycode coverage (year): replace gap_`s'=1 if _n==1
-    bys countrycode coverage (year): gen gapsum_`s'=sum(gap_`s')
-    
-    // Apply: create linked value
-    gen lvfwd_`s'=`s'*lffwd_`s'i
-    gen lvbck_`s'=`s'*lfbck_`s'i
-    
-    // Replace where missing and indicate source
-    
-    // fwd
-    replace new_gdp= lvfwd_`s' if new_gdp==. & gapsum_`s'==2
-    replace sourcegdp="`s'" if new_gdp==. & gapsum_`s'==2 & lvfwd_`s'!=.
-    
-    // bck
-    replace new_gdp   = lvbck_`s' if new_gdp==. & gapsum_`s'==1
-    replace sourcegdp = "`s'"     if new_gdp==. & gapsum_`s'==1 & lvbck_`s'!=.
-    replace sourcegdp = "NONE"    if new_gdp==.
-    
-    //---- Espen's code ----- End
-    missings dropobs, force
-    
+	************************
+	*** PREPARE WDI DATA ***
+	************************
+	
+	set checksum off
+	wbopendata, indicator(NY.GDP.PCAP.KD) long clear
+	ren ny_gdp_pcap_kd wdi_gdp
+	keep countrycode countryname year wdi_gdp
+	tempfile wdi_gdp
+	save    `wdi_gdp'
+
+	************************
+	*** PREPARE WEO DATA ***
+	************************
+	
+	// Find and load most recent version
+	local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
+	local files: dir "`popdir'" files "WEO*xls"
+	local vers = 0
+	foreach file of local files {
+	  if regexm("`file'", "_([0-9\-]+)\.xls") local fdate = regexs(1)
+	  local sdata = date("`fdate'", "YMD")
+	  local vers "`vers', `sdata'"
+	}
+	local maxdate = max(`vers')
+	local fver: disp %tdCCYY-NN-DD `maxdate' // file version
+	local fver = trim("`fver'")
+
+	import excel using "`popdir'/WEO_`fver'.xls", describe
+
+	import excel using "`popdir'/WEO_`fver'.xls", /*
+	*/  clear sheet("`sheet'") firstrow case(lower)
+	
+	// Only keeping variables on real gdp per capita
+	keep if inlist(weosubjectcode,"NGDPRPC","NGDPRPPPPC","NGDP_R")
+	replace weosubjectcode="_lcu"     if weosubjectcode=="NGDPRPC"
+	replace weosubjectcode="_ppp2017" if weosubjectcode=="NGDPRPPPPC"
+	// Somalia, and possibly other countries, have data on real GDP but not real GDP per capita:
+	// We keep this variable as well. We will merge in population data, and convert it to per capita terms
+	replace weosubjectcode="_lcu_notpc"        if weosubjectcode=="NGDP_R"
+	// Renaming variable names after year
+	foreach var of varlist * {
+	// Only perform changes for variables whose label start with 19 or 20 
+	if inlist(substr("`: var label `var''",1,2),"19","20") {
+	rename `var' weo_gdp`: var label `var''
+	}
+	}
+	// Only keeping relevant variables 
+	keep iso weosubjectcode weo*
+	rename iso countrycode
+	// Fix countrycode discrepancies
+	replace countrycode="PSE" if countrycode=="WBG"
+	replace countrycode="XKX" if countrycode=="UVK"
+	// Reshape long by year
+	reshape long weo_gdp, i(countrycode weosubjectcode) j(year)
+	drop if inlist(weo_gdp,"n/a","--")
+	destring weo_gdp, replace
+	// Dropping data for current year, last year and future years
+	local currentyear = substr("$S_DATE",-4,.)
+	drop if year >= `currentyear'-1
+	// Reshape wide by gdp variables
+	reshape wide weo_gdp, i(countrycode year) j(weosubjectcode) string
+	// Merge popoulation data to convert gdp_lcu_weo series into per capita terms
+	preserve
+	pcn master, load(population)
+	keep if coveragetype=="National"
+	keep countrycode year population
+	tempfile pop
+	save    `pop'
+	restore
+	merge 1:1 countrycode year using `pop', nogen keep(1 3)
+	// Fill out missings in the per capita variable
+	replace weo_gdp_lcu = weo_gdp_lcu_notpc/pop if missing(weo_gdp_lcu)
+	// No longer need non per capita series nor population data
+	drop weo_gdp_lcu_notpc population
+	tempfile weo_gdp
+	save    `weo_gdp'
+
+	*****************************
+	*** PREPARE MADDISON DATA ***
+	*****************************
+	
+	// Load data from website
+	use "https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2020.dta", clear
+	// The ancient Maddison data are not needed
+	keep if year>=1960
+	// Keep relevant variables
+	keep countrycode year gdppc
+	rename gdppc mdp_gdp
+	tempfile mdp_gdp
+	save    `mdp_gdp'
+
+	**************************************
+	*** PREPARE SPECIAL COUNTRY SERIES ***
+	**************************************
+
+	// Find and load most recent version
+	local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
+	local files: dir "`popdir'" files "NAS special*xlsx"
+	local vers = 0
+	foreach file of local files {
+	  if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
+	  local sdata = date("`fdate'", "YMD")
+	  local vers "`vers', `sdata'"
+	}
+	local maxdate = max(`vers')
+	local fver: disp %tdCCYY-NN-DD `maxdate' // file version
+	local fver = trim("`fver'")
+
+	import excel using "`popdir'/NAS special_`fver'.xlsx", describe
+
+	import excel using "`popdir'/NAS special_`fver'.xlsx", /*
+	*/  clear sheet("`sheet'") firstrow case(lower)
+
+	// Only keep relevant data
+	keep countrycode year gdp
+	drop if missing(gdp)
+	rename gdp sna_gdp
+
+	tempfile sna_gdp
+	save `sna_gdp'
+
+	*************************
+	*** MERGE ALL SOURCES ***
+	*************************
+	
+	use `wdi_gdp', clear
+	merge 1:1 countrycode year using `weo_gdp', nogen
+	merge 1:1 countrycode year using `mdp_gdp', nogen
+	merge 1:1 countrycode year using `sna_gdp', nogen
+	// Only keeping the 218 economies we care about
+	merge m:1 countrycode using `countrylist', nogen keep(3)
+
+	*******************************
+	*** CREATE PREFERRED SERIES ***
+	*******************************
+	
+	// We start with the WDI series
+	gen new_gdp = wdi_gdp
+	// Now we chain on the other sources in this order of importance:
+	// 1. weo_gdp_ppp2017
+	// 2. weo_gdp_lcu
+	// 3. mdp_gdp
+	foreach var of varlist weo_gdp_ppp2017 weo_gdp_lcu mdp_gdp {
+	// If all data for a country is missing so far, use the looping-variable as the baseline
+	bysort countrycode: egen nonmissing = count(new_gdp)
+	bysort countrycode: replace new_gdp = `var' if nonmissing == 0
+	drop nonmissing
+	// Chain forwards
+	bysort countrycode (year): replace new_gdp = `var'/`var'[_n-1]*new_gdp[_n-1] if missing(new_gdp)
+	// Chain backwards
+	gsort countrycode -year
+	bysort countrycode       : replace new_gdp = `var'/`var'[_n-1]*new_gdp[_n-1] if missing(new_gdp)
+	}
+	sort countrycode year
+
+	********************************
+	*** FINAL MANUAL ADJUSTMENTS ***
+	********************************
+	
+	// There should be no data for Venezuela after 
+	replace new_gdp = . if countrycode=="VEN" & year>2014
+	// Syria should be replaced with country specific-sources from 2010
+	replace new_gdp = . if countrycode=="SYR" & year>2010
+	bysort countrycode (year): replace new_gdp = sna_gdp/sna_gdp[_n-1]*new_gdp[_n-1] if countrycode=="SYR" & year>2010
+	// So far everything is national
+	// For IDN, IND, and CHN duplicate the series for urban and rural
+	expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
+		bysort countrycode year: egen coverage = seq()
+		tostring coverage, replace
+		replace coverage =cond(coverage == "1", "National", /*
+		*/                cond(coverage == "2", "Urban", "Rural"))
+	// Only keep data from 1960
+	drop if year<1960
+
+	
+	
+	
     //------------ Save metadata
     merge m:1 countrycode using `countrylist', keep(2 3 4 5) update replace 
     levelsof _merge, local(mms) sep(,)
@@ -359,79 +425,98 @@ qui {
   //=================================================
   if (inlist(lower("`update'"),"pce", "hfce")) {
     
-    
-    //========================================================
-    // gets data from WDI API
-    //========================================================
-    
-    /* Note: This section is based on Espen's do-files available in
-    p:\02.personal\_handover\Espen\NAS process\*/
-    
-    
-    set checksum off
+    ************************
+	*** PREPARE WDI DATA ***
+	************************
+	
+	set checksum off
     wbopendata, indicator(NE.CON.PRVT.PC.KD) long clear
     ren ne_con_prvt_pc_kd wdi_pce
-    keep countrycode year wdi_pce
+    keep countrycode countryname year wdi_pce
     
-		gen sourcepce="WDI 2019"
-    
-    //========================================================
-    // Special cases
-    //========================================================
-    expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
+	// Expand by three for IDN, IND and CHN
+	 expand 3 if inlist(countrycode, "IND", "IDN", "CHN")
     bysort countrycode year: egen coverage = seq()
     tostring coverage, replace
     replace coverage =cond(coverage == "1", "National", /*
     */                cond(coverage == "2", "Urban", "Rural"))
-    
-    tempfile fna
-    save `fna'
-    
-    //------------Find most recent version
-    local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
-    local files: dir "`popdir'" files "NAS special*xlsx"
-    local vers = 0
-    foreach file of local files {
-      if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
-      local sdata = date("`fdate'", "YMD")
-      local vers "`vers', `sdata'"
-    }
-    local maxdate = max(`vers')
-    local fver: disp %tdCCYY-NN-DD `maxdate' // file version
-    local fver = trim("`fver'")
-    
-    import excel using "`popdir'/NAS special_`fver'.xlsx", describe
-    
-    import excel using "`popdir'/NAS special_`fver'.xlsx", /*
-    */  clear sheet("`sheet'") firstrow case(lower)
-    
-    tempfile sna
-    save `sna'
-    
-    * Merge with special cases and downloaded data
-    use `fna', clear
-    
-    merge 1:1 countrycode coverage year using `sna', replace update
-    rename pce sp_=
-    
-    gen special= inlist(_merge, 3, 4, 5)
-    drop _merge
-    
-    //========================================================
-    // Espen's code
-    //========================================================
-    //---- ----- Start
-    
-    gen     new_pce=wdi_pce                 // default
-    replace new_pce=sp_pce     if special   // default
-    replace sourcepce = "NONE" if new_pce==.
-    
-    //---- Espen's code ----- End
-    
-    
-    keep if inrange(year,1960, `maxyear')
+	
+	tempfile wdi_pce
+	save    `wdi_pce'
+	
+	**************************************
+	*** PREPARE SPECIAL COUNTRY SERIES ***
+	**************************************
+
+	// Find and load most recent version
+	local popdir "p:\01.PovcalNet\03.QA\04.NationalAccounts\data"
+	local files: dir "`popdir'" files "NAS special*xlsx"
+	local vers = 0
+	foreach file of local files {
+	  if regexm("`file'", "_([0-9\-]+)\.xlsx") local fdate = regexs(1)
+	  local sdata = date("`fdate'", "YMD")
+	  local vers "`vers', `sdata'"
+	}
+	local maxdate = max(`vers')
+	local fver: disp %tdCCYY-NN-DD `maxdate' // file version
+	local fver = trim("`fver'")
+
+	import excel using "`popdir'/NAS special_`fver'.xlsx", describe
+
+	import excel using "`popdir'/NAS special_`fver'.xlsx", /*
+	*/  clear sheet("`sheet'") firstrow case(lower)
+
+	// Only keep relevant data
+	keep countrycode coverage year pce
+	drop if missing(pce)
+	rename pce sna_pce
+
+	tempfile sna_pce
+	save `sna_pce'
+	
+	*************************
+	*** MERGE ALL SOURCES ***
+	*************************
+	
+	cap pcn master, load(CountryList) `pause'
+	keep countryname countrycode
+	tempfile countrylist
+	save `countrylist'
+	
+	use `wdi_pce', clear
+	merge 1:1 countrycode coverage year using `sna_pce', nogen
+	// Make sure all 218 economies we care about are there
+	merge m:1 countrycode using `countrylist', gen(nopce) keep(2 3)
+	// If not, create blank series
+	levelsof year
+	expand	r(r) if nopce==2
+	replace coverage = "National" if nopce==2
+	// Bad code trying to fill out blank series for with relevant years. The code wouldn't work if the country with no pce data is the first alphabetically. However, it is Taiwan, so it works for now
+	sort countrycode coverage year
+	replace year = year[_n-r(r)] if nopce==2
+	
+
+	*******************************
+	*** CREATE PREFERRED SERIES ***
+	*******************************
+	
+	// We start with the WDI series
+	gen new_pce = wdi_pce
+
+	********************************
+	*** FINAL MANUAL ADJUSTMENTS ***
+	********************************
+	
+	// There should be no data for Venezuela after 
+	replace new_pce = .       if countrycode=="VEN" & year>2014
+	// India should be replaced with country specific-sources from 2011
+	replace new_pce = sna_pce if countrycode=="IND" & year>2010
+	// Only keep data from 1960
+	keep if inrange(year,1960, `maxyear')	
     missings dropobs, force
     
+	
+	
     //------------ Save metadata
     pause PCE: after merge with country list
     merge m:1 countrycode using `countrylist', keep(2 3 4 5) update replace
@@ -568,11 +653,32 @@ qui {
     rename (`vars') pop=
     reshape long pop, i(`idvars') j(col) string
     replace col = upper(col)
-    replace pop = pop/1e6   // divide by million
     
-    //------------Merge data and clean
+    //------------Merge with year data
     merge m:1 col using `fyear', keep(match) nogen
-    rename *, lower
+	
+	//------------Merge with special country data
+	/* Note for PSE, KWT and SXM, some years of population data are missing in Emi's main file and hence in WDI.
+	   Here we are complementing the main file with an additional file she shared to assure complete coveage.
+	   This file contains historical data and will not need to be updated every year. 
+	   Hence, here we are just calling the version we received. Should we receive a new version, 
+	   the import line below should be updated to reflect the accurate file.
+	*/
+	preserve
+	import excel using "`popdir'/population_missing_2020-12-01.xlsx", clear firstrow sheet("Long")
+	drop SCALE
+	rename Data pop
+	replace Time = substr(Time,3,.)
+	destring Time, replace
+	rename Time year
+	tempfile specialcases
+	save `specialcases'
+	restore
+	merge 1:1 Country Series year using `specialcases', update nogen
+	
+	//-----------clean
+	replace pop = pop/1e6   // divide by million
+	rename *, lower
     gen coverage = cond(series == "SP.POP.TOTL", "National", /*
     */            cond(series == "SP.RUR.TOTL", "Rural","Urban"))
     
