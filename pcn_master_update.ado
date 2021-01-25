@@ -70,28 +70,11 @@ qui {
   ==================================================*/
   if (lower("`update'") == "cpi") {
     
-    *----------Find most recent version of CPI data in datalibweb
-    if ("`cpivin'" == "") {
-      local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
-      local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
-      
-      local cpivins "0"
-      foreach cpidir of local cpidirs {
-        if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
-        local cpivins "`cpivins', `cpivin'"
-      }
-      local cpivin = max(`cpivins')
-    } // if no cpi vintage is selected
-    
-    cap datalibweb, country(Support) year(2005) type(GMDRAW)   /*
-    */ fileserver surveyid(Support_2005_CPI_v0`cpivin'_M) /*
-    */ filename(Final_CPI_PPP_to_be_used.dta)
-    
-    *Special cases
-    replace cpi2011_unadj = cpi2011 if inlist(code, "IDN", "IND", "CHN")
-    
-    keep if !(code == "BRA" & year >= 2012 & survname == "PNAD")
-    
+	// The version that is loaded should automaticallly be the most recent one. 
+	// Not quite sure how to do that so here I specified v05.
+	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
+	*/	surveyid(Support_2005_CPI_v05_M) filename(Final_CPI_PPP_to_be_used.dta)
+        
     //------------ vector of available years
     
     gen yr = year
@@ -116,7 +99,7 @@ qui {
     contract CountryCode Coverqge CountryName survname
     drop _freq
     local csize = `ymax'- `ymin'
-    expand `csize'
+    expand `csize'+1
     bysort CountryCode Coverqge CountryName survname: egen yr = seq()
     replace yr = yr - 1 + `ymin'
     tempfile cdata
@@ -687,7 +670,7 @@ qui {
     drop if year > `maxyear'
     sort country year
     
-    drop if year < 1977
+    drop if year < 1967
     
     pause POP: after merge with country list
     rename country countrycode 
