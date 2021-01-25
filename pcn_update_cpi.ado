@@ -46,20 +46,10 @@ qui {
 	// Load latest data on datalibweb
 	//========================================================
 
-	if ("`cpivin'" == "") {
-		local cpipath "c:\ado\personal\Datalibweb\data\GMD\SUPPORT\SUPPORT_2005_CPI"
-		local cpidirs: dir "`cpipath'" dirs "*CPI_*_M"
-
-		local cpivins "0"
-		foreach cpidir of local cpidirs {
-			if regexm("`cpidir'", "cpi_v([0-9]+)_m") local cpivin = regexs(1)
-			local cpivins "`cpivins', `cpivin'"
-		}
-		local cpivin = max(`cpivins')
-	} // if no cpi vintage is selected
-
+	// The version that is loaded should automaticallly be the most recent one. 
+	// Not quite sure how to do that so here I specified v05.
 	cap datalibweb, country(Support) year(2005) type(GMDRAW) fileserver /*
-	*/	surveyid(Support_2005_CPI_v0`cpivin'_M) filename(Final_CPI_PPP_to_be_used.dta)
+	*/	surveyid(Support_2005_CPI_v05_M) filename(Final_CPI_PPP_to_be_used.dta)
 
 	replace levelnote = lower(levelnote)
 
