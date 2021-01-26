@@ -493,7 +493,7 @@ qui {
 	// There should be no data for Venezuela after 
 	replace new_pce = .       if countrycode=="VEN" & year>2014
 	// India should be replaced with country specific-sources from 2011
-	replace new_pce = sna_pce if countrycode=="IND" & year>2010
+	replace new_pce = sna_pce if countrycode=="IND" & year>2010 & coverage!="National"
 	// Only keep data from 1960
 	keep if inrange(year,1960, `maxyear')	
     missings dropobs, force
