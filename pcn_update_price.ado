@@ -46,9 +46,16 @@ qui {
 	// Reading from PIP folder now
 	//========================================================
 	
+	if (lower("`c(username)'") != "wb514665") {
 	use "y:\PIP-Data\_aux\pfw\pfw.dta", clear
-	* keep region code year survname ref_year survey_coverage datatype rep_year comparability
 	rename country_code countrycode
+	}
+	if (lower("`c(username)'") == "wb514665") {
+		rename country_code countrycode
+	datalibweb, country(Support) year(2005) type(GMDRAW) surveyid(Support_2005_CPI_v05_M) filename(	Survey_price_framework.dta)
+	rename code countrycode
+	}
+	* keep region code year survname ref_year survey_coverage datatype rep_year comparability
 	
 	//------------Characteristics
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"

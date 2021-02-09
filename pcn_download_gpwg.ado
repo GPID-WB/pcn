@@ -102,7 +102,7 @@ qui {
 	local n = _N
 	
 	if (`n' == 0) {
-		noi disp as error "There is no data in PRIMUS for the convination of " ///
+		noi disp as error "There is no data in PRIMUS for the combination of " ///
 		"country/years selected"
 		error
 	}
@@ -136,9 +136,8 @@ qui {
 		}
 		
 		*--------------------2.2: Load data
-		local dlwcall "datalibweb, country(`country') year(`year') surveyid(`survname') type(GMD) module(`mod') clear `fileserver'"
-		
-		
+		local dlwcall "datalibweb, country(`country') year(`year') surveyid(`survname') type(GMD) module(`mod') clear fileserver"
+				
 		cap pcn_savedata , country(`country') survey(`survname')  year(`year') /*
 		*/                 survey_id(`survey_id') maindir(`maindir')        /*
 		*/                 dlwcall("`dlwcall'") try(`try') `pause' `replace' `force'

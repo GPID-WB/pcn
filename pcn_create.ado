@@ -106,7 +106,7 @@ qui {
 	local n = _N
 	
 	mata: S = st_sdata(.,tokens("survname"))
-	mata: CV = st_sdata(.,tokens("coverage"))
+	mata: CV = st_sdata(.,tokens("survey_coverage"))
 	
 	/*==================================================
 	2:  Loop over surveys
