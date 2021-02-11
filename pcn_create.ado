@@ -27,13 +27,14 @@ replace                                          ///
 vermast(string)                                  ///
 veralt(string)                                   ///
 MODule(string)                                   ///
+server(string)                                   ///
 newsynth					                               ///
 clear                                            ///
 pause                                            ///
 *                                                ///
 ]
 
-version 14
+version 16
 
 *---------- conditions
 if ("`pause'" == "pause") pause on
@@ -136,143 +137,65 @@ qui {
 		//------------ get metadata
 		
 		pause create - before searching for data 
-		local module "GPWG"
-		cap pcn load, count(`country') year(`year') type(GMD) /*
-		*/  module(`module')  survey("`survey'") /*
-		*/ `pause' `clear' `options' noload
+		
+		local dlwnote `"pcn inventory, count(`country') year(`year') type(GMD) survey("`survey'") `pause' `clear' `options'"'
+		
+		cap `dlwnote'
 		
 		if (_rc) {
-			local module "BIN"
-			cap pcn load, count(`country') year(`year') type(GMD) /*
-			*/ module(`module')  survey("`survey'") /*
-			*/ `pause' `clear' `options' noload
+			local status "error. loading inventory"
+			mata: P = pcn_info(P)
+			noi _dots `i' 2
+			continue
+		}
+		if (_N == 0) {
+			local status "error. No survey available"
+			mata: P = pcn_info(P)
+			noi _dots `i' 2
+			continue
+		}
+		
+		
+		// Get the right hierarchical module
+		levelsof module, local(mods) clean
+		local modules = "GPWG BIN HIST"  // the order matters
+		
+		local available_modules: list modules & mods
+		if ("`available_modules'" != "") {
+			local selected_module = 0
+			foreach module of local modules {
+				local selected_module: list module in mods
+				
+				if `selected_module' == 0 continue
+				keep if module == "`module'"
+			}
+			
+			local filename  = id[1]
+			* local survin    = "`r(survin)'"
+			if regexm(id[1], "(.)(_[a-zA-Z\-]+$)") local survid = regexs(1)
+			local survey_id = "`survid'"
+			local surdir    =  "`maindir'/" + countrycode + "/" + dir1 
+			
+		}
+		
+		// If not modules is available, then use synth data
+		else {
+			local module "isynth"
+			
+			cap pcn_create_isynth, country(`country') year(`year') maindir("`maindir'") /* 
+			*/ survey(`survey') server(`server') `newsynth' `replace' `clear' `pause' 
 			
 			if (_rc) {
-				local module "HIST"
-				cap pcn load, count(`country') year(`year') type(GMD) /*
-				*/ module(`module')  survey("`survey'") /*
-				*/ `pause' `clear' `options' noload
-				
-				if (_rc) {
-					local module "isynth"
-					cap isynth distribution, count(`country') year(`year') server(AR) natppp /*
-					*/ `pause' `clear' `options'
-					
-					if (_rc){
-						local status "error. loading"
-						local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options' noload"
-						mata: P = pcn_info(P)
-						
-						noi _dots `i' 2
-						continue
-					
-					} // end of isynth
-					
-				} // end of HIST
-				
-			} // end of BIN
+				local status "error. synthetic data"
+				local dlwnote `"pcn_create_isynth, country(`country') year(`year') maindir("`maindir'") survey(`survey') server(`server') `newsynth' `replace' `clear' `pause'"'
+				mata: P = pcn_info(P)
+				noi _dots `i' 2
+				continue
+			} // end of isynth error
 			
-		} // end of GPWG
-		
-		
-		if ("`module'"=="isynth") { 
-			if ("`survey'" != "")		loc survid = `survey'
-			else						mata: st_local("survm", S[`i'])
-			
-			if ("`country'" == "CHN"){
-				mata: st_local("iscover", CV[`i'])
-				if ("`iscover'" == "N")			loc iscover "A"
-				if ("`iscover'" != "") 			loc iscoverpr "-`iscover'"
-			}
-			local survid "`survm'"
-			local survid = "`country'_`year'_`survid'"
-			local surdir = "P:/01.PovcalNet/01.Vintage_control/`country'/`survid'"
-			local survey_id = "`survid'"
-			di "`survid'"
-			di  "`surdir'"
-			
-		}
-		else{
-			local filename  = "`r(filename)'"
-			local survin    = "`r(survin)'"
-			local survid    = "`r(survid)'"
-			local survey_id = "`survid'"
-			local surdir    = "`r(surdir)'"
-		}
-		return add
+		} // end of synth data
 		
 		pause create - after having searched for data 
-		
-		// if synth check and create needed directories
-		if ("`module'"=="isynth"){
-			*noi di "`year'"
-			// if synth folder does not exist create 
-			capture mkdir "`surdir'"
-			
-			// check versions 
-			local subdirs : dir "`surdir'" dirs "`survid'*"
-			loc j = 0
-			foreach ver of local subdirs{
-				loc ++j
-				if regexm("`ver'", ".+_v([0-9]+)_[M|m]_v([0-9]+)_[A|a]") {
-					loc m_v_`j' = regexs(1)
-					loc a_v_`j' = regexs(2)
-					
-					if (`j' == 1) {
-						loc m_v = `m_v_`j''
-						loc a_v = `a_v_`j''
-					}
-					
-					if (`j' > 1) {
-						if (`m_v_`j'' > `m_v') {
-							loc m_v = `m_v_`j''
-							loc a_v = `a_v_`j''
-						}
-						
-						if (`m_v_`j'' == `m_v') {
-							if (`a_v_`j'' > `a_v')	 loc a_v = `a_v_`j''
-						}
-					}
-					di "`ver'"
-					di "`m_v'"
-					di "``m_v'_`j''"
-					di "`a_v'"
-					di "``a_v'_`j''"
-				}
-				else {
-					loc m_v = 1
-					loc a_v = 1
-				}
-			}
-			
-			if (`j' == 0){
-				loc m_v = 1
-			    loc a_v = 1
-			}
-			
-			if (strlen("`m_v'") == 1) 	loc m_v "0`m_v'"
-			if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
-			
-			loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
-			cap mkdir "`surdir'/`survid'"
-			cap mkdir "`surdir'/`survid'/Data"
-			
-			//  if newsynth is declarated
-			cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
-			if (_rc & "`newsynth'" != ""){
-				
-				loc survid "`survey_id'"
-				
-				loc a_v = `a_v' + 1
-				
-				if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
-				
-				loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
-				cap mkdir "`surdir'/`survid'"
-				cap mkdir "`surdir'/`survid'/Data"
-			}
-		}
-		
 		
 		cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN.dta"
 		if (_rc & "`replace'" == "") {  //  File exists
@@ -285,43 +208,19 @@ qui {
 			continue // there is not need to load data and check datasignature
 		}
 		*--------------------2.2: Load data
-		if ("`module'" != "isynth"){
-			cap pcn load, count(`country') year(`year') type(GMD) /*
-			*/ module(`module') survey("`survey'")  /*
-			*/ `pause' `clear' `options'
+		
+		cap pcn load, count(`country') year(`year') type(GMD) /*
+		*/ module(`module') survey("`survey'")  /*
+		*/ `pause' `clear' `options'
+		
+		if (_rc) {
 			
-			if (_rc) {
-				
-				local status "error. loading"
-				local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options'"
-				mata: P = pcn_info(P)
-				noi _dots `i' 2
-				continue
-				
-			}
-		}
-		else{
-			if ("`allvars'" == ""){
-				if !regexm("`addvar'", "coveragetype") 		local addvar "coveragetype `addvar'"
-			}
+			local status "error. loading"
+			local dlwnote "pcn load, count(`country') year(`year') type(`type') survey("`survey'")  module(`module') `pause' `clear' `options'"
+			mata: P = pcn_info(P)
+			noi _dots `i' 2
+			continue
 			
-			cap isynth distribution, count(`country') year(`year') addvar(`addvar') server(AR) natppp /*
-			*/ `pause' `clear' `options' 			
-			if (_rc) {
-				
-				local status "error. loading"
-				local dlwnote "isynth distribution, count(`country') year(`year') addvar(`addvar') `pause' `clear' `options'"				
-			}
-			else{
-				// condition for synth
-				replace welfare = welfare*(365/12) //to monthly
-				if ("`country'"== "CHN"){
-					if ("`iscover'" == "R") 	keep if coverage == "Rural"
-					if ("`iscover'" == "U") 	keep if coverage == "Urban"
-				}
-				
-				gen urban = inlist(coveragetype, "urban", "Urban")
-			}		
 		}
 		
 		pause after loading data 
@@ -358,10 +257,7 @@ qui {
 		// Already monthly data for IDN 1993, 1996, 1998 and 1999
 		*if ("`country'"!="IDN") | !inlist(`year',1993,1996,1998,1999)	{
 		
-		if ("`module'"!="isynth") {
-			replace welfare=welfare/12
-		}
-		
+		replace welfare=welfare/12
 		
 		
 		* special treatment for IDN and IND
@@ -380,72 +276,7 @@ qui {
 			tempfile ufile
 			save `ufile'
 			
-			restore
-			
-			if ("`module'"!= "isynth"){
-				
-				// This section is problably not longer neeed, but as I'm unsure I leave it there. DV
-				// Loading PPPs, population data and CPI data
-				preserve
-				
-				// PPPs
-				pcn master, load(ppp) qui
-				keep if countrycode == "`country'" & lower(coveragetype) != "national"
-				gen urban = lower(coveragetype) == "urban"
-				keep urban ppp2011
-				tempfile ppp
-				save    `ppp'
-				
-				// Population
-				pcn master, load(population) qui
-				if "`country'"=="IDN" { 
-					keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-				}
-				// Need to account for decimal years with India
-				if "`country'"=="IND" { 
-					keep if countrycode=="`country'" & lower(coveragetype) != "national" & inlist(year,`year',`year'+1)
-					bysort coverage (year): replace pop = (pop+pop[_n+1])/2 
-					keep if year==`year'
-				}
-				gen urban = lower(coveragetype) == "urban"
-				keep urban population
-				tempfile pop
-				save    `pop'
-				
-				// CPI
-				// Special treatment for India 2011.5 where the CPIs are in the 2012 column:
-				if "`country'"=="IND" & `year'==2011 {
-					local year= `year'+1 
-				}
-				pcn master, load(cpi) qui
-				keep if countrycode=="`country'" & lower(coveragetype) != "national" & year==`year'
-				gen urban = lower(coveragetype) == "urban"
-				keep urban cpi
-				tempfile cpi
-				save    `cpi'
-				// Undo special treatment for India 2011.5:
-				if "`country'"=="IND" & `year'==2011 {
-					local year= `year-+1'
-				}
-				
-				restore
-				
-				// Merge with raw data
-				merge m:1 urban using `ppp', nogen
-				merge m:1 urban using `pop', nogen
-				merge m:1 urban using `cpi', nogen
-				
-				// Rescaling weights
-				forvalues x = 0/1 {
-					sum weight if urban==`x'
-					replace weight = weight*pop/`r(sum)'*10^6 if urban==`x'
-				}
-				
-				// Converting into 2011 PPPs (needed to compute the right national inequality 	statitsics and for getting the right median)
-				if ("`module'" != "isynth")			replace welfare = welfare/cpi/ppp
-				label var welfare "Welfare in 2011 USD PPP per month"
-			}
-			
+			restore			
 			
 			keep welfare weight urban
 			compress
@@ -470,7 +301,6 @@ qui {
 			}
 			tempfile wfile
 			char _dta[cov]  ""
-			if ("`module'" == "isynth") 	char _dta[cov]  "`iscover'"
 			save `wfile'
 			local cfiles "`wfile'"
 		}
@@ -501,22 +331,6 @@ qui {
 			// Check if data is the same as the previous one and save.
 			//========================================================
 			
-			// new check for synths  
-			if ("`module'" == "isynth"){
-				cap confirm new file "`surdir'/`survid'/Data/`survid'_PCN`cov'.dta"
-				if (_rc & "`newsynth'" != ""){
-					
-					loc survid "`survey_id'"
-					
-					loc a_v = `a_v' + 1
-					
-					if (strlen("`a_v'") == 1) 	loc a_v "0`a_v'"
-					
-					loc survid = "`survid'_v`m_v'_M_v`a_v'_A_GMD"
-					cap mkdir "`surdir'/`survid'"
-					cap mkdir "`surdir'/`survid'/Data"
-				}
-			}
 			
 			cap datasignature confirm using  "`surdir'/`survid'/Data/`survid'_PCN`cov'"
 			local dsrc = _rc
@@ -537,7 +351,7 @@ qui {
 				*/ saving("`surdir'/`survid'/Data/`survid'_PCN`cov'", replace)
 				
 				char _dta[filename]         "`filename'"
-				char _dta[survin]           "`survin'"
+				* char _dta[survin]           "`survin'"
 				char _dta[survid]           "`survid'"
 				char _dta[surdir]           "`surdir'"
 				char _dta[creationdate]     "`date_time'"
