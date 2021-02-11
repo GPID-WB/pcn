@@ -170,9 +170,11 @@ qui {
 				keep if module == "`module'"
 			}
 			
-			local filename  = id[1]
+			pause: after inventory is loaded and filtered 
+			
+			local id  = id[1]
 			* local survin    = "`r(survin)'"
-			if regexm(id[1], "(.)(_[a-zA-Z\-]+$)") local survid = regexs(1)
+			if regexm("`id'", "(.+)(_[a-zA-Z\-]+)$") local survid = regexs(1)
 			local survey_id = "`survid'"
 			local surdir    =  "`maindir'/" + countrycode + "/" + dir1 
 			
@@ -219,7 +221,7 @@ qui {
 		
 		cap pcn load, count(`country') year(`year') type(GMD) /*
 		*/ module(`module') survey("`survey'")  /*
-		*/ `pause' `clear' `options'
+		*/ `pause' clear `options'
 		
 		if (_rc) {
 			
@@ -358,7 +360,7 @@ qui {
 				cap datasignature set, reset /*
 				*/ saving("`surdir'/`survid'/Data/`survid'_PCN`cov'", replace)
 				
-				char _dta[filename]         "`filename'"
+				char _dta[filename]         "`id'"
 				* char _dta[survin]           "`survin'"
 				char _dta[survid]           "`survid'"
 				char _dta[surdir]           "`surdir'"
