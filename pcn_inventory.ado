@@ -77,6 +77,9 @@ qui {
 		local year = max(0, `years')
 		
 	}
+	else {
+		local years "`year'"
+	}
 	
 	return local years = "`years'"
 	
