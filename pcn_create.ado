@@ -181,6 +181,11 @@ qui {
 		// If not modules is available, then use synth data
 		else {
 			local module "isynth"
+			// NOTE: We have to figure out a way to execute the code for synthetic data
+			// only for the countries that require it. 
+			
+			
+			/* 
 			
 			cap pcn_create_isynth, country(`country') year(`year') maindir("`maindir'") /* 
 			*/ survey(`survey') server(`server') `newsynth' `replace' `clear' `pause' 
@@ -193,6 +198,9 @@ qui {
 				continue
 			} // end of isynth error
 			
+			 */
+			 
+			 continue
 		} // end of synth data
 		
 		pause create - after having searched for data 
