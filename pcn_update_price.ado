@@ -51,7 +51,6 @@ qui {
 	rename country_code countrycode
 	}
 	if (lower("`c(username)'") == "wb514665") {
-		rename country_code countrycode
 	datalibweb, country(Support) year(2005) type(GMDRAW) surveyid(Support_2005_CPI_v05_M) filename(	Survey_price_framework.dta)
 	rename code countrycode
 	}
