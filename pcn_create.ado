@@ -106,7 +106,7 @@ qui {
 	mata: R = st_sdata(.,tokens(st_local("varlist")))
 	local n = _N
 	
-	mata: S = st_sdata(.,tokens("survname"))
+	* mata: S = st_sdata(.,tokens("survname"))
 	mata: CV = st_sdata(.,tokens("survey_coverage"))
 	
 	/*==================================================
@@ -163,11 +163,13 @@ qui {
 		local available_modules: list modules & mods
 		if ("`available_modules'" != "") {
 			local selected_module = 0
-			foreach module of local modules {
-				local selected_module: list module in mods
+			foreach mod of local modules {
+				local selected_module: list mod in mods
+				local module = "`mod'"
 				
-				if `selected_module' == 0 continue
-				keep if module == "`module'"
+				if `selected_module' == 0    continue
+				keep if module == "`module'" 
+				continue, break 
 			}
 			
 			pause: after inventory is loaded and filtered 
@@ -215,7 +217,7 @@ qui {
 			mata: P = pcn_info(P)
 			
 			noi _dots `i' -1
-			continue // there is not need to load data and check datasignature
+			continue // there is not need to load data or check datasignature
 		}
 		*--------------------2.2: Load data
 		
@@ -247,9 +249,9 @@ qui {
 				cap confirm var weight_h, exact
 				if (_rc == 0) rename weight_h weight
 				else {
-					noi disp in red "no weight variable found for country(`country') year(`year') veralt(`veralt') "
+					local dlwnote "no weight variable found for count(`country') year(`year') type(GMD) survey("`survey'")  module(`module')"
+					noi disp in red "`dlwnote'"
 					local status "error. cleaning"
-					local dlwnote "no weight variable found for country(`country') year(`year') "
 					mata: P = pcn_info(P)
 					noi _dots `i' 1
 					continue
@@ -328,7 +330,15 @@ qui {
 			}
 			
 			* keep weight and welfare
-			keep weight welfare `urban'
+			if ("`oth_welfare1_var'" != "") {
+				gen alt_welfare = `oth_welfare1_var'
+			} 
+			else {
+				gen alt_welfare = .
+			}
+			
+			keep weight welfare `urban' alt_welfare
+			missings dropvars, force
 			sort welfare
 			
 			* drop missing values
