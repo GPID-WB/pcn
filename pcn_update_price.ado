@@ -54,9 +54,10 @@ qui {
 	
 	if ("`maindir'" == ""){
 		// Update pfw from R
-		rcall vanilla: library(pipaux);           ///
-										t1 <- "DIR"; ///
-										md <- getOption("pipaux.maindir"); ///
+		rcall vanilla: library(pipaux);                     ///
+										pipaux::update_aux("pfw");          ///
+										t1 <- "DIR";                        ///
+										md <- getOption("pipaux.maindir");  ///
 										md <- paste0(t1, md)
 		
 		if regexm(r(md), "^(DIR)(.+)") local maindir = regexs(2)
