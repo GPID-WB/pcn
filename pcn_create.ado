@@ -302,15 +302,30 @@ qui {
 			local cfiles "`rfile' `ufile' `wfile'"
 		} // end of special cases
 		else {
+			// if urban is available
 			cap confirm variable urban 
-			if (_rc){
-				keep weight welfare
+			if (_rc) {
 				local urban ""
 			}
 			else{
-				keep weight welfare urban
 				local urban "urban"
 			}
+			
+			//  Include alternative welfare variable if available
+			if ("`oth_welfare1_var'" != "") {
+				gen alt_welfare = `oth_welfare1_var'
+			} 
+			else {
+				gen alt_welfare = .
+			}
+			
+			pause create - after generating alternative welfare
+			
+			* keep weight and welfare
+			keep weight welfare `urban' alt_welfare
+			missings dropvars, force
+			
+			
 			tempfile wfile
 			char _dta[cov]  ""
 			save `wfile'
@@ -320,6 +335,8 @@ qui {
 		foreach file of local cfiles {
 			
 			use `file', clear
+			sort welfare
+			
 			local cc: char _dta[cov]  // country coverage
 			if ("`cc'" != "") {
 				local cov "-`cc'"
@@ -328,18 +345,6 @@ qui {
 				local cc "N"
 				local cov ""
 			}
-			
-			* keep weight and welfare
-			if ("`oth_welfare1_var'" != "") {
-				gen alt_welfare = `oth_welfare1_var'
-			} 
-			else {
-				gen alt_welfare = .
-			}
-			
-			keep weight welfare `urban' alt_welfare
-			missings dropvars, force
-			sort welfare
 			
 			* drop missing values
 			drop if welfare < 0 | welfare == .
