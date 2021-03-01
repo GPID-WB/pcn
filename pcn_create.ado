@@ -250,7 +250,6 @@ qui {
 				if (_rc == 0) rename weight_h weight
 				else {
 					local dlwnote "no weight variable found for count(`country') year(`year') type(GMD) survey("`survey'")  module(`module')"
-					noi disp in red "`dlwnote'"
 					local status "error. cleaning"
 					mata: P = pcn_info(P)
 					noi _dots `i' 1
@@ -316,7 +315,6 @@ qui {
 				cap gen alt_welfare = `oth_welfare1_var'
 				if (_rc) {
 					local dlwnote "alternative variable `oth_welfare1_var' is not available in  count(`country') year(`year') type(GMD) survey("`survey'")  module(`module')"
-					noi disp in red "`dlwnote'"
 					local status "error. cleaning"
 					mata: P = pcn_info(P)
 					noi _dots `i' 1
