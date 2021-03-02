@@ -13,7 +13,7 @@ Output:
 ==================================================*/
 
 /*==================================================
-              0: Program set up
+0: Program set up
 ==================================================*/
 program define pcn_update_price, rclass
 syntax [anything], [ ///
@@ -28,7 +28,7 @@ if ("`pause'" == "pause") pause on
 else                      pause off
 
 qui {
-
+	
 	*##s
 	* ---- Initial parameters
 	local date = date("`c(current_date)'", "DMY")  // %tdDDmonCCYY
@@ -41,40 +41,55 @@ qui {
 	// Output directory
 	local outdir "p:/01.PovcalNet/01.Vintage_control/_aux/price_framework"
 	
+	cap which rcall
+	if (_rc) {
+		cap which github
+		if (_rc) {
+			net install github, from("https://haghish.github.io/github/")
+		}
+		github install haghish/rcall, stable
+	}
+	
+	
+	
+	if ("`maindir'" == ""){
+		// Update pfw from R
+		rcall vanilla: library(pipaux);                     ///
+										pipaux::update_aux("pfw");          ///
+										t1 <- "DIR";                        ///
+										md <- getOption("pipaux.maindir");  ///
+										md <- paste0(t1, md)
+		
+		if regexm(r(md), "^(DIR)(.+)") local maindir = regexs(2)
+	}
+	
 	
 	//========================================================
 	// Reading from PIP folder now
 	//========================================================
 	
-	if (lower("`c(username)'") != "wb514665") {
-	use "y:\PIP-Data\_aux\pfw\pfw.dta", clear
+	use "`maindir'_aux\pfw\pfw.dta", clear
 	rename country_code countrycode
-	}
-	if (lower("`c(username)'") == "wb514665") {
-	datalibweb, country(Support) year(2005) type(GMDRAW) surveyid(Support_2005_CPI_v05_M) filename(	Survey_price_framework.dta)
-	rename code countrycode
-	}
-	* keep region code year survname ref_year survey_coverage datatype rep_year comparability
 	
 	//------------Characteristics
 	char _dta[pcn_datetimeHRF]    "`datetimeHRF'"
 	char _dta[pcn_datetime]       "`date_time'"
 	char _dta[pcn_user]           "`user'"
-
+	
 	//========================================================
 	// Save
 	//========================================================
 	compress 
-
+	
 	cap mkdir "`outdir'/vintage"
-
+	
 	cap noi datasignature confirm using "`outdir'/price_framework", strict
 	if (_rc | "`replace'" != "") {
 		datasignature set, reset saving("`outdir'/price_framework", replace)
 		save "`outdir'/vintage/price_framework_`date_time'.dta"
 		noi save "`outdir'/price_framework.dta", replace
 	}
-
+	
 }
 
 
