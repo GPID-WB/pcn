@@ -312,7 +312,7 @@ qui {
 			
 			//  Include alternative welfare variable if available
 			if ("`oth_welfare1_var'" != "") {
-				cap gen alt_welfare = `oth_welfare1_var'
+				cap gen alt_welfare = `oth_welfare1_var'/12
 				if (_rc) {
 					local dlwnote "alternative variable `oth_welfare1_var' is not available in  count(`country') year(`year') type(GMD) survey("`survey'")  module(`module')"
 					local status "error. cleaning"
