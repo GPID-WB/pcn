@@ -128,7 +128,7 @@ qui {
 		
 		local try ""
 		local mod "GPWG"
-		if regexm("`survname'", "(LIS|SILC)$") {
+		if regexm("`survey_acronym'", "(LIS|SILC)$") {
 			local try "BIN"
 		}
 		else {
@@ -136,16 +136,16 @@ qui {
 		}
 		
 		*--------------------2.2: Load data
-		local dlwcall "datalibweb, country(`country') year(`year') surveyid(`survname') type(GMD) module(`mod') clear fileserver"
+		local dlwcall "datalibweb, country(`country') year(`year') surveyid(`survey_acronym') type(GMD) module(`mod') clear fileserver"
 				
-		cap pcn_savedata , country(`country') survey(`survname')  year(`year') /*
+		cap pcn_savedata , country(`country') survey(`survey_acronym')  year(`year') /*
 		*/                 survey_id(`survey_id') maindir(`maindir')        /*
 		*/                 dlwcall("`dlwcall'") try(`try') `pause' `replace' `force'
 		
 		if (_rc) {
 			local status "saving error"
 			
-			local dlwnote "pcn_savedata , country(`country') survey(`survname')  year(`year')  survey_id(`survey_id') maindir(`maindir') dlwcall("`dlwcall'") try(`try')"
+			local dlwnote "pcn_savedata , country(`country') survey(`survey_acronym')  year(`year')  survey_id(`survey_id') maindir(`maindir') dlwcall("`dlwcall'") try(`try')"
 			
 			mata: P = pcn_info(P)
 			noi _dots `i' 2
