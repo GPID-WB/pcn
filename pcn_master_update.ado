@@ -494,6 +494,10 @@ qui {
 	replace new_pce = .       if countrycode=="VEN" & year>2014
 	// India should be replaced with country specific-sources from 2011
 	replace new_pce = sna_pce if countrycode=="IND" & year>2010 & coverage!="National"
+	// Remove HFCE data for Belize before 1992 as data are questionable
+	replace new_pce = .       if countrycode=="BLZ" & year<1992
+	// Remove HFCE data for Iraq as data are questionable
+	replace new_pce = .       if countrycode=="IRQ"
 	// Only keep data from 1960
 	keep if inrange(year,1960, `maxyear')	
     missings dropobs, force
