@@ -60,6 +60,10 @@
     {c |}    8.  To load or create production vintages, see:{col 68}{c |}
     {c |}        {bf:{help pcn_production:[PCN] pcn production}}{col 68}{c |}
     {c |}{col 68}{c |}
+    {c |}{col 68}{c |}
+    {c |}    9.  To generate synthetic distributions, see:{col 68}{c |}
+    {c |}        {bf:{help pcn_synth:[PCN] pcn synth}}{col 68}{c |}
+    {c |}{col 68}{c |}
     {c |} Or check out the {bf:{help pcn_full:pcn full help file}}{col 68}{c |}
     {c |}{col 68}{c |}
     {c BLC}{hline 62}{c BRC}
