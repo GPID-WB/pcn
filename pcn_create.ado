@@ -353,7 +353,8 @@ qui {
 			}
 			
 			* drop missing values
-			drop if welfare < 0 | welfare == .
+			replace welfare = . if welfare < 0
+			* drop if welfare < 0 | welfare == .
 			drop if weight <= 0 | weight == .
 			
 			order weight welfare
