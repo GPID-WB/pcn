@@ -19,6 +19,7 @@ program define pcn_update_price, rclass
 syntax [anything], [ ///
 replace              ///
 cpivin(string)       ///
+maindir(string)      ///
 ]
 
 version 14
