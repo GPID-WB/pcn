@@ -1,0 +1,48 @@
+v 0.9.7
+d 'PCN': pcn
+d 
+d Povcalnet Management
+d 
+d Distribution-Date:   20230109
+d License: MIT
+d 
+F pcn.ado
+F pcn.smcl
+F pcn.sthlp
+F pcn_compare.ado
+F pcn_compare.sthlp
+F pcn_compare_gr.ado
+F pcn_compare_rp.ado
+F pcn_create.ado
+F pcn_create.sthlp
+F pcn_create_isynth.ado
+F pcn_download.sthlp
+F pcn_download_gpwg.ado
+F pcn_download_pending.ado
+F pcn_download_wrk.ado
+F pcn_full.sthlp
+F pcn_functions.mata
+F pcn_gd.sthlp
+F pcn_groupdata.ado
+F pcn_inventory.ado
+F pcn_load.ado
+F pcn_load.sthlp
+F pcn_load_cpi.ado
+F pcn_load_estimates.ado
+F pcn_load_price.ado
+F pcn_load_wrk.ado
+F pcn_master.sthlp
+F pcn_master_load.ado
+F pcn_master_update.ado
+F pcn_primus.sthlp
+F pcn_primus_download.ado
+F pcn_primus_download_estimates.ado
+F pcn_primus_download_trans.ado
+F pcn_primus_load.ado
+F pcn_primus_query.ado
+F pcn_production.ado
+F pcn_production.sthlp
+F pcn_savedata.ado
+F pcn_test.ado
+F pcn_update_cpi.ado
+F pcn_update_price.ado
